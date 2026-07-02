@@ -1,0 +1,303 @@
+- generic [ref=e1]:
+  - link "Skip to content" [ref=e2] [cursor=pointer]:
+    - /url: "#main"
+  - banner [ref=e5]:
+    - navigation [ref=e6]:
+      - link "AKDFA Official home" [ref=e7] [cursor=pointer]:
+        - /url: "#home"
+        - img "AKDFA circle logo" [ref=e8]
+        - strong [ref=e10]: AKDFA Official
+      - button "Open menu" [ref=e11] [cursor=pointer]
+      - generic:
+        - link "Home":
+          - /url: "#home"
+        - link "About AKDFA":
+          - /url: "#about"
+        - link "Our Units":
+          - /url: "#units"
+        - link "Charity Activities":
+          - /url: "#charity"
+        - link "Gallery":
+          - /url: "#gallery"
+        - link "Events":
+          - /url: "#events"
+        - link "News & Updates":
+          - /url: "#news"
+        - link "Contact":
+          - /url: "#contact"
+  - main [ref=e15]:
+    - generic [ref=e17]:
+      - generic [ref=e18]:
+        - paragraph [ref=e19]: Independent registered fan association
+        - heading "All Kerala Dhoni Fans Association" [level=1] [ref=e20]:
+          - generic [ref=e21]: ALL
+          - generic [ref=e22]: KERALA
+          - generic [ref=e23]: DHONI
+          - generic [ref=e24]: FANS
+          - generic [ref=e25]: ASSOCIATION
+        - paragraph [ref=e26]: Official registered fan community of Dhoni fans across Kerala
+        - paragraph [ref=e27]: The world's first registered fan association dedicated to a sportsperson - united by admiration for MS Dhoni and driven by service to society
+        - link "View Activities" [ref=e29] [cursor=pointer]:
+          - /url: "#charity"
+      - generic "Gold number seven with green Dhoni line artwork" [ref=e30]:
+        - generic [ref=e31]: 7 7
+        - img "Green line illustration of Dhoni lifting a cricket helmet"
+        - generic [ref=e32]: "Reg No: 949/17"
+    - generic [ref=e34]:
+      - generic [ref=e35]:
+        - paragraph [ref=e36]: About AKDFA / Who We Are
+        - heading "United by passion. Driven by purpose." [level=2] [ref=e37]
+        - paragraph [ref=e38]: Founded with a passion for celebrating sporting excellence, our association proudly holds the distinction of being the world's first registered fans association dedicated to a sports player. Built on the values of unity, loyalty, and sportsmanship, we bring together thousands of fans who share a common admiration for one of the greatest icons in sports.
+        - paragraph [ref=e39]: Over the years, our association has grown into a vibrant community that goes beyond fandom, engaging in social initiatives, charitable activities, sports promotion programs, and community development efforts. Through our collective spirit, we aim to inspire the next generation while honoring the legacy of the player who unites us all.
+        - paragraph [ref=e40]: More than just a fan club, we are a family connected by passion, respect, and a commitment to making a positive impact on society.
+      - generic [ref=e41]:
+        - article [ref=e42]:
+          - strong [ref=e43]: "17"
+          - generic [ref=e44]: Units
+        - article [ref=e45]:
+          - strong [ref=e46]: "14"
+          - generic [ref=e47]: District Presence
+        - article [ref=e48]:
+          - strong [ref=e49]: Chennai
+          - generic [ref=e50]: Unit
+        - article [ref=e51]:
+          - strong [ref=e52]: Bangalore
+          - generic [ref=e53]: Unit
+        - article [ref=e54]:
+          - strong [ref=e55]: LDU
+          - generic [ref=e56]: Unit
+    - generic [ref=e58]:
+      - generic [ref=e59]:
+        - paragraph [ref=e60]: Our Units
+        - heading "17 units. One AKDFA family." [level=2] [ref=e61]
+        - paragraph [ref=e62]: AKDFA connects 14 Kerala district units with Chennai, Bangalore, and LDU as equal parts of one united network.
+      - generic [ref=e64]:
+        - heading "AKDFA Units" [level=3] [ref=e65]
+        - generic [ref=e66]:
+          - button "Alappuzha" [active] [ref=e67] [cursor=pointer]
+          - button "Ernakulam" [ref=e68] [cursor=pointer]
+          - button "Idukki" [ref=e69] [cursor=pointer]
+          - button "Kannur" [ref=e70] [cursor=pointer]
+          - button "Kasaragod" [ref=e71] [cursor=pointer]
+          - button "Kollam" [ref=e72] [cursor=pointer]
+          - button "Kottayam" [ref=e73] [cursor=pointer]
+          - button "Kozhikode" [ref=e74] [cursor=pointer]
+          - button "Malappuram" [ref=e75] [cursor=pointer]
+          - button "Palakkad" [ref=e76] [cursor=pointer]
+          - button "Pathanamthitta" [ref=e77] [cursor=pointer]
+          - button "Trivandrum" [ref=e78] [cursor=pointer]
+          - button "Thrissur" [ref=e79] [cursor=pointer]
+          - button "Wayanad" [ref=e80] [cursor=pointer]
+          - button "Chennai" [ref=e81] [cursor=pointer]
+          - button "Bangalore" [ref=e82] [cursor=pointer]
+          - button "LDU" [ref=e83] [cursor=pointer]
+    - generic [ref=e85]:
+      - generic [ref=e86]:
+        - paragraph [ref=e87]: Recent Charity Activities
+        - heading "Community action beyond the boundary" [level=2] [ref=e88]
+      - generic [ref=e89]:
+        - article [ref=e90]:
+          - generic [ref=e91]: Charity
+          - heading "Food Kit Distribution" [level=3] [ref=e92]
+          - paragraph [ref=e93]: May 18, 2026 | Ernakulam
+          - paragraph [ref=e94]: Essential grocery kits distributed to families through district volunteers.
+        - article [ref=e95]:
+          - generic [ref=e96]: Charity
+          - heading "Blood Donation Support" [level=3] [ref=e97]
+          - paragraph [ref=e98]: April 27, 2026 | Kozhikode
+          - paragraph [ref=e99]: Member-led donor coordination supporting urgent blood requirements.
+        - article [ref=e100]:
+          - generic [ref=e101]: Charity
+          - heading "Student Support Drive" [level=3] [ref=e102]
+          - paragraph [ref=e103]: March 30, 2026 | Kannur
+          - paragraph [ref=e104]: School supply support for students, organized as a demo activity entry.
+    - generic [ref=e106]:
+      - generic [ref=e107]:
+        - paragraph [ref=e108]: Gallery
+        - heading "Official moments archive" [level=2] [ref=e109]
+      - generic "Gallery categories" [ref=e110]:
+        - button "All" [pressed] [ref=e111] [cursor=pointer]
+        - button "Events" [ref=e112] [cursor=pointer]
+        - button "Charity" [ref=e113] [cursor=pointer]
+        - button "Fan Meets" [ref=e114] [cursor=pointer]
+        - button "Celebrations" [ref=e115] [cursor=pointer]
+        - button "Units" [ref=e116] [cursor=pointer]
+        - button "Media Coverage" [ref=e117] [cursor=pointer]
+      - generic [ref=e118]:
+        - article [ref=e119]:
+          - img "AKDFA Thrissur football tournament poster" [ref=e120]
+          - generic [ref=e121]: Event Poster
+        - article [ref=e122]:
+          - generic [ref=e124]: Food Kit Drive
+        - article [ref=e125]:
+          - generic [ref=e127]: Fan Meet Stage
+        - article [ref=e128]:
+          - generic [ref=e130]: Celebration Night
+        - article [ref=e131]:
+          - img "Dhoni Khel Ratna award news post" [ref=e132]
+          - generic [ref=e133]: News Graphic
+        - article [ref=e134]:
+          - generic [ref=e136]: District Unit Meet
+    - generic [ref=e138]:
+      - generic [ref=e139]:
+        - paragraph [ref=e140]: Events
+        - heading "Upcoming and featured events" [level=2] [ref=e141]
+      - article [ref=e142]:
+        - img "AKDFA Thrissur 5s Football Tournament" [ref=e144]
+        - generic [ref=e145]:
+          - paragraph [ref=e146]: AKDFA Thrissur
+          - heading "AKDFA Thrissur 5s Football Tournament" [level=3] [ref=e147]
+          - list [ref=e148]:
+            - listitem [ref=e149]:
+              - generic [ref=e150]: Organized by
+              - strong [ref=e151]: AKDFA Thrissur
+            - listitem [ref=e152]:
+              - generic [ref=e153]: Date
+              - strong [ref=e154]: June 13, Saturday
+            - listitem [ref=e155]:
+              - generic [ref=e156]: Time
+              - strong [ref=e157]: 7:30 PM
+            - listitem [ref=e158]:
+              - generic [ref=e159]: Location
+              - strong [ref=e160]: LaLiga Turf, Thrissur
+            - listitem [ref=e161]:
+              - generic [ref=e162]: Theme
+              - strong [ref=e163]: In accordance with FIFA World Cup 2026
+          - button "View Event" [ref=e164] [cursor=pointer]
+    - generic [ref=e166]:
+      - generic [ref=e167]:
+        - paragraph [ref=e168]: News & Updates
+        - heading "Association updates and cricket milestones" [level=2] [ref=e169]
+      - article [ref=e170]:
+        - img "Dhoni Khel Ratna award post" [ref=e172]
+        - generic [ref=e173]:
+          - paragraph [ref=e174]: News Update
+          - heading "Dhoni - Quickest to Receive the Dhyan Chand Khel Ratna Award" [level=3] [ref=e175]
+          - paragraph [ref=e176]: Dhoni became one of the quickest cricketers to receive the Dhyan Chand Khel Ratna Award, receiving it within just four years of his international debut.
+          - button "Read News" [ref=e177] [cursor=pointer]
+    - generic [ref=e179]:
+      - generic [ref=e180]:
+        - paragraph [ref=e181]: Testimonials
+        - heading "Voices from the stands" [level=2] [ref=e182]
+      - generic [ref=e183]:
+        - article [ref=e184]:
+          - generic [ref=e185]: A
+          - paragraph [ref=e186]: "\"AKDFA is not just a fan association; it is a family of cricket lovers united by respect, discipline, and passion.\""
+          - strong [ref=e187]: Arun K
+          - generic [ref=e188]: Ernakulam
+        - article [ref=e189]:
+          - generic [ref=e190]: M
+          - paragraph [ref=e191]: "\"The district unit gives every fan a place to contribute, celebrate, and support meaningful activities.\""
+          - strong [ref=e192]: Meera P
+          - generic [ref=e193]: Thrissur
+        - article [ref=e194]:
+          - generic [ref=e195]: S
+          - paragraph [ref=e196]: "\"It feels premium, organized, and rooted in the values that make cricket special for Kerala fans.\""
+          - strong [ref=e197]: Shahid N
+          - generic [ref=e198]: Kannur
+    - generic [ref=e200]:
+      - generic [ref=e201]:
+        - paragraph [ref=e202]: Contact
+        - heading "Connect with AKDFA" [level=2] [ref=e203]
+      - generic [ref=e204]:
+        - generic [ref=e205]:
+          - link "Email info@akdfa.com" [ref=e206] [cursor=pointer]:
+            - /url: mailto:info@akdfa.com
+            - generic [ref=e207]: Email
+            - strong [ref=e208]: info@akdfa.com
+          - link "Website www.akdfa.com" [ref=e209] [cursor=pointer]:
+            - /url: http://www.akdfa.com
+            - generic [ref=e210]: Website
+            - strong [ref=e211]: www.akdfa.com
+          - generic [ref=e212]:
+            - link "Facebook" [ref=e213] [cursor=pointer]:
+              - /url: https://www.facebook.com/KeralaDhoniFans/
+              - generic [ref=e214]: 
+            - link "Instagram" [ref=e215] [cursor=pointer]:
+              - /url: https://www.instagram.com/akdfaofficial/
+              - generic [ref=e216]: 
+            - link "X" [ref=e217] [cursor=pointer]:
+              - /url: https://x.com/AKDFAOfficial
+              - generic [ref=e218]: 
+            - link "YouTube" [ref=e219] [cursor=pointer]:
+              - /url: https://www.youtube.com/@allkeraladhonifansassociat2246
+              - generic [ref=e220]: 
+            - generic "WhatsApp Channel link pending" [ref=e221]:
+              - generic [ref=e222]: 
+          - generic [ref=e223]:
+            - strong [ref=e225]: Kerala Association Network
+            - generic [ref=e226]: Map-style placeholder block
+        - generic [ref=e227]:
+          - generic [ref=e228]:
+            - text: Name
+            - textbox "Name" [ref=e229]:
+              - /placeholder: Your name
+          - generic [ref=e230]:
+            - text: Phone
+            - textbox "Phone" [ref=e231]:
+              - /placeholder: Phone number
+          - generic [ref=e232]:
+            - text: Email
+            - textbox "Email" [ref=e233]:
+              - /placeholder: Email address
+          - generic [ref=e234]:
+            - text: Message
+            - textbox "Message" [ref=e235]:
+              - /placeholder: Write your message
+          - button "Send Message" [ref=e236] [cursor=pointer]
+  - contentinfo [ref=e237]:
+    - generic [ref=e238]:
+      - generic [ref=e239]:
+        - img "AKDFA black logo" [ref=e240]
+        - heading "All Kerala Dhoni Fans Association" [level=3] [ref=e241]
+        - paragraph [ref=e242]: "Reg No: 949/17"
+        - paragraph [ref=e243]: AKDFA is an independent registered fan association and is not affiliated with or endorsed by CSK, IPL, BCCI, or any official cricket body unless explicitly stated.
+      - generic [ref=e244]:
+        - heading "Quick Links" [level=3] [ref=e245]
+        - link "About" [ref=e246] [cursor=pointer]:
+          - /url: "#about"
+        - link "Activities" [ref=e247] [cursor=pointer]:
+          - /url: "#charity"
+        - link "Units" [ref=e248] [cursor=pointer]:
+          - /url: "#units"
+        - link "Gallery" [ref=e249] [cursor=pointer]:
+          - /url: "#gallery"
+        - link "Contact" [ref=e250] [cursor=pointer]:
+          - /url: "#contact"
+      - generic [ref=e251]:
+        - heading "Social Media" [level=3] [ref=e252]
+        - generic [ref=e253]:
+          - link "Facebook" [ref=e254] [cursor=pointer]:
+            - /url: https://www.facebook.com/KeralaDhoniFans/
+            - generic [ref=e255]: 
+          - link "Instagram" [ref=e256] [cursor=pointer]:
+            - /url: https://www.instagram.com/akdfaofficial/
+            - generic [ref=e257]: 
+          - link "X" [ref=e258] [cursor=pointer]:
+            - /url: https://x.com/AKDFAOfficial
+            - generic [ref=e259]: 
+          - link "YouTube" [ref=e260] [cursor=pointer]:
+            - /url: https://www.youtube.com/@allkeraladhonifansassociat2246
+            - generic [ref=e261]: 
+          - generic "WhatsApp Channel link pending" [ref=e262]:
+            - generic [ref=e263]: 
+    - paragraph [ref=e264]: Copyright 2026 AKDFA. All rights reserved.
+  - dialog "Alappuzha Unit Contacts" [ref=e266]:
+    - button "Close unit details" [ref=e267] [cursor=pointer]: ×
+    - paragraph [ref=e268]: AKDFA Unit
+    - heading "Alappuzha Unit Contacts" [level=3] [ref=e269]
+    - generic [ref=e271]:
+      - generic [ref=e272]:
+        - generic [ref=e273]: President
+        - strong [ref=e274]: AKASH
+        - generic [ref=e275]: +91 90377 48560
+        - link "Call AKASH" [ref=e276] [cursor=pointer]:
+          - /url: tel:+919037748560
+          - text: Call
+      - generic [ref=e277]:
+        - generic [ref=e278]: Contact
+        - strong [ref=e279]: JIBIN
+        - generic [ref=e280]: +91 82816 16818
+        - link "Call JIBIN" [ref=e281] [cursor=pointer]:
+          - /url: tel:+918281616818
+          - text: Call

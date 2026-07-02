@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AKDFA Static Website | Admin Placeholder</title>
+  <meta name="description" content="Static admin placeholder for the AKDFA website. Future management content is preserved for later development.">
+  <meta name="theme-color" content="#050505">
+  <link rel="icon" type="image/png" href="assets/akdfa-circle-logo.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+  <link rel="stylesheet" href="style.css?v=6">
+</head>
+<body>
+  <!-- Restore body class="admin-body" when the admin dashboard is re-enabled. -->
+  <div class="page-loader" aria-hidden="true">
+    <div class="loader-orbit">
+      <img src="assets/akdfa-circle-logo.png" alt="">
+    </div>
+  </div>
+
+  <main class="admin-main">
+    <section class="admin-panel">
+      <div class="admin-section-title">
+        <h1>AKDFA Static Website</h1>
+        <a class="btn btn-outline" href="index.html">Back to Website</a>
+      </div>
+      <p>Future management content is preserved in comments for later development.</p>
+    </section>
+  </main>
+
+  <!-- Admin demo markup preserved for future use.
+  <aside class="admin-sidebar">
+    <a class="admin-brand" href="index.html">
+      <img src="assets/akdfa-circle-logo.png" alt="AKDFA circle logo">
+      <span><strong>AKDFA</strong><small>Admin Panel</small></span>
+    </a>
+    <nav>
+      <a href="index.html">Public Website</a>
+      <a href="#dashboard">Dashboard</a>
+      <a href="#modules">Modules</a>
+      <a href="#requests">Requests</a>
+      <a href="#content">Content</a>
+      <a href="#website-settings">Website Settings</a>
+    </nav>
+    <p class="admin-demo-pill">Static demo only</p>
+  </aside>
+
+  <main class="admin-main">
+    <header class="admin-topbar" id="dashboard">
+      <div>
+        <p class="eyebrow">Management preview</p>
+        <h1>AKDFA Admin Panel</h1>
+        <p>No real login, database, upload, or backend is connected in this demo.</p>
+      </div>
+      <button class="btn btn-primary demo-alert" type="button">Demo Login</button>
+    </header>
+
+    <section class="admin-cards">
+      <article class="admin-stat"><span>Units</span><strong>17</strong></article>
+      <article class="admin-stat"><span>Districts</span><strong>14</strong></article>
+      <article class="admin-stat"><span>Events</span><strong>1</strong></article>
+      <article class="admin-stat"><span>Charity Activities</span><strong>3</strong></article>
+      <article class="admin-stat"><span>Gallery Items</span><strong>6</strong></article>
+      <article class="admin-stat"><span>Membership Requests</span><strong>24</strong></article>
+      <article class="admin-stat"><span>Social Links Connected</span><strong>5</strong></article>
+    </section>
+
+    <section class="admin-panel" id="modules">
+      <div class="admin-section-title">
+        <h2>Admin Modules</h2>
+        <button class="btn btn-outline demo-alert" type="button">Add Module</button>
+      </div>
+      <div class="module-grid">
+        <button class="module-card demo-alert" type="button">Manage Home Banner</button>
+        <button class="module-card demo-alert" type="button">Manage About AKDFA</button>
+        <button class="module-card demo-alert" type="button">Manage Units</button>
+        <button class="module-card demo-alert" type="button">Manage District Committees</button>
+        <button class="module-card demo-alert" type="button">Manage Charity Activities</button>
+        <button class="module-card demo-alert" type="button">Manage Gallery</button>
+        <button class="module-card demo-alert" type="button">Manage Events</button>
+        <button class="module-card demo-alert" type="button">Manage News & Updates</button>
+        <button class="module-card demo-alert" type="button">Membership Enquiries</button>
+        <button class="module-card demo-alert" type="button">Contact Enquiries</button>
+        <button class="module-card demo-alert" type="button">Website Settings</button>
+      </div>
+    </section>
+
+    <section class="admin-panel">
+      <div class="admin-section-title">
+        <h2>Manage Units</h2>
+        <button class="btn btn-small demo-alert" type="button">Save Units</button>
+      </div>
+      <div class="admin-grid-two">
+        <div>
+          <h3>AKDFA Units</h3>
+          <div class="unit-admin-list">
+            <span>Alappuzha</span><span>Ernakulam</span><span>Idukki</span><span>Kannur</span><span>Kasaragod</span><span>Kollam</span><span>Kottayam</span><span>Kozhikode</span><span>Malappuram</span><span>Palakkad</span><span>Pathanamthitta</span><span>Trivandrum</span><span>Thrissur</span><span>Wayanad</span><span>Chennai</span><span>Bangalore</span><span>Ladies</span>
+          </div>
+        </div>
+        <div>
+          <h3>Unit Contact Editor</h3>
+          <div class="unit-admin-list special"><span>All 17 units share equal unit value</span></div>
+          <div class="admin-role-editor compact">
+            <label>Unit Name<input type="text" value="Kannur"></label>
+            <label>Unit Type<select><option>AKDFA Unit</option></select></label>
+            <label>Status<select><option>Active</option><option>Inactive</option></select></label>
+            <label>Committee Details<textarea rows="3">Structured role and member details managed here.</textarea></label>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="admin-grid-two" id="content">
+      <article class="admin-panel">
+        <div class="admin-section-title">
+          <h2>Manage District Committees</h2>
+          <button class="btn btn-small demo-alert" type="button">Update Committee</button>
+        </div>
+        <h3>Kannur District Committee 2026-2027</h3>
+        <div class="admin-role-editor">
+          <label>President<input type="text" value="Sayooj.N"></label>
+          <label>Treasurer<input type="text" value="Amal.V.A"></label>
+          <label>Secretary<input type="text" value="Dijin.K.V"></label>
+          <label>Vice President<input type="text" value="Sidin.C"></label>
+          <label>Joint Secretary<input type="text" value="Deekshith Dileep V.P"></label>
+          <label>Executive Committee<textarea rows="3">Shone.F, Akshay.K, Athill.K, Vysakh.K</textarea></label>
+        </div>
+      </article>
+
+      <article class="admin-panel">
+        <div class="admin-section-title">
+          <h2>Manage Charity Activities</h2>
+          <button class="btn btn-small demo-alert" type="button">New Activity</button>
+        </div>
+        <div class="mini-card-list">
+          <div><span>Charity</span><strong>Food Kit Distribution</strong><small>May 18, 2026 | Ernakulam</small></div>
+          <div><span>Charity</span><strong>Blood Donation Support</strong><small>April 27, 2026 | Kozhikode</small></div>
+          <div><span>Charity</span><strong>Student Support Drive</strong><small>March 30, 2026 | Kannur</small></div>
+        </div>
+      </article>
+    </section>
+
+    <section class="admin-grid-two">
+      <article class="admin-panel upload-panel">
+        <div class="admin-section-title">
+          <h2>Manage Gallery</h2>
+          <button class="btn btn-small demo-alert" type="button">Upload Mockup</button>
+        </div>
+        <div class="upload-box">
+          <span>+</span>
+          <strong>Gallery upload mockup</strong>
+          <p>Static placeholder for future image uploads.</p>
+        </div>
+        <div class="admin-role-editor compact">
+          <label>Category<select><option>Events</option><option>Charity</option><option>Fan Meets</option><option>Celebrations</option><option>Units</option><option>Media Coverage</option></select></label>
+          <label>Caption<input type="text" value="Official gallery item"></label>
+          <label>Display Order<input type="number" value="1"></label>
+        </div>
+      </article>
+
+      <article class="admin-panel">
+        <div class="admin-section-title">
+          <h2>Manage Events</h2>
+          <button class="btn btn-small demo-alert" type="button">Edit Event</button>
+        </div>
+        <div class="admin-media-card">
+          <img src="assets/football-tournament.jpg" alt="AKDFA Thrissur 5s Football Tournament">
+          <div>
+            <h3>AKDFA Thrissur 5s Football Tournament</h3>
+            <p>Organized by AKDFA Thrissur | June 13, Saturday | 7:30 PM | LaLiga Turf, Thrissur</p>
+          </div>
+        </div>
+      </article>
+    </section>
+
+    <section class="admin-grid-two">
+      <article class="admin-panel">
+        <div class="admin-section-title">
+          <h2>Manage News & Updates</h2>
+          <button class="btn btn-small demo-alert" type="button">Edit News</button>
+        </div>
+        <div class="admin-media-card">
+          <img src="assets/khel-ratna-post.jpg" alt="Dhoni Khel Ratna award news item">
+          <div>
+            <h3>Dhoni - Quickest to Receive the Dhyan Chand Khel Ratna Award</h3>
+            <p>Demo news item for the public News & Updates section.</p>
+          </div>
+        </div>
+      </article>
+
+      <article class="admin-panel" id="requests">
+        <div class="admin-section-title">
+          <h2>Membership & Contact Enquiries</h2>
+          <button class="btn btn-small demo-alert" type="button">Export</button>
+        </div>
+        <div class="responsive-table">
+          <table>
+            <thead><tr><th>Name</th><th>Type</th><th>District</th><th>Status</th></tr></thead>
+            <tbody>
+              <tr><td>Akhil S</td><td>Membership</td><td>Ernakulam</td><td><span class="status pending">Pending</span></td></tr>
+              <tr><td>Meera K</td><td>Contact</td><td>Thrissur</td><td><span class="status approved">Reviewed</span></td></tr>
+              <tr><td>Riyas P</td><td>Membership</td><td>Malappuram</td><td><span class="status pending">Pending</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </article>
+    </section>
+
+    <section class="admin-panel" id="website-settings">
+      <div class="admin-section-title">
+        <h2>Website Settings</h2>
+        <button class="btn btn-small demo-alert" type="button">Save Settings</button>
+      </div>
+      <div class="settings-grid">
+        <label>Facebook URL<input type="url" value="https://www.facebook.com/KeralaDhoniFans/"></label>
+        <label>Instagram URL<input type="url" value="https://www.instagram.com/dhonifanskerala?igsh=MTM0d2l2djUwcmVtZA%3D%3D"></label>
+        <label>X URL<input type="url" value="https://x.com/AKDFAOfficial"></label>
+        <label>YouTube URL<input type="url" value="https://www.youtube.com/@allkeraladhonifansassociat2246"></label>
+        <label>WhatsApp Channel URL<input type="text" value="WhatsApp Channel link pending"></label>
+        <label>Contact Email<input type="email" value="info@akdfa.com"></label>
+        <label>Website<input type="text" value="www.akdfa.com"></label>
+      </div>
+    </section>
+  </main>
+  -->
+
+  <script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,321 @@
+- generic [active] [ref=e1]:
+  - banner [ref=e4]:
+    - navigation [ref=e5]:
+      - link "AKDFA Official home" [ref=e6] [cursor=pointer]:
+        - /url: "#home"
+        - img "AKDFA circle logo" [ref=e7]
+        - strong [ref=e9]: AKDFA Official
+      - button "Open menu" [ref=e10] [cursor=pointer]
+  - main [ref=e14]:
+    - generic [ref=e16]:
+      - generic [ref=e17]:
+        - paragraph [ref=e18]: Independent registered fan association
+        - heading "ALL KERALA DHONI FANS ASSOCIATION" [level=1] [ref=e19]
+        - paragraph [ref=e20]: Official registered fan community of Dhoni fans across Kerala
+        - paragraph [ref=e21]: The world's first registered fan association dedicated to a sportsperson — united by admiration for MS Dhoni and driven by service to society
+        - link "View Activities" [ref=e23] [cursor=pointer]:
+          - /url: "#charity"
+      - generic "Gold number seven with green Dhoni line artwork" [ref=e24]:
+        - generic [ref=e25]: 7 7
+        - img "Green line illustration of Dhoni lifting a cricket helmet"
+        - generic [ref=e26]: "Reg No: 949/17"
+    - generic [ref=e28]:
+      - generic [ref=e29]:
+        - paragraph [ref=e30]: About AKDFA / Who We Are
+        - heading "United by passion. Driven by purpose." [level=2] [ref=e31]
+        - paragraph [ref=e32]: Founded with a passion for celebrating sporting excellence, our association proudly holds the distinction of being the world's first registered fans association dedicated to a sports player. Built on the values of unity, loyalty, and sportsmanship, we bring together thousands of fans who share a common admiration for one of the greatest icons in sports.
+        - paragraph [ref=e33]: Over the years, our association has grown into a vibrant community that goes beyond fandom, engaging in social initiatives, charitable activities, sports promotion programs, and community development efforts. Through our collective spirit, we aim to inspire the next generation while honoring the legacy of the player who unites us all.
+        - paragraph [ref=e34]: More than just a fan club, we are a family connected by passion, respect, and a commitment to making a positive impact on society.
+      - generic [ref=e35]:
+        - article [ref=e36]:
+          - strong [ref=e37]: "0"
+          - generic [ref=e38]: Units
+        - article [ref=e39]:
+          - strong [ref=e40]: "0"
+          - generic [ref=e41]: District Presence
+        - article [ref=e42]:
+          - strong [ref=e43]: Chennai
+          - generic [ref=e44]: Special Unit
+        - article [ref=e45]:
+          - strong [ref=e46]: Ladies
+          - generic [ref=e47]: Special Unit
+    - generic [ref=e49]:
+      - generic [ref=e50]:
+        - paragraph [ref=e51]: Our Units
+        - heading "Kerala-wide district network" [level=2] [ref=e52]
+        - paragraph [ref=e53]: AKDFA has a strong presence across Kerala with district units and special units connecting fans beyond boundaries.
+      - generic [ref=e54]:
+        - generic "Stylized Kerala map panel" [ref=e55]:
+          - strong [ref=e64]: 14 Districts
+          - paragraph [ref=e65]: Premium map-inspired unit overview for the AKDFA network.
+        - generic [ref=e66]:
+          - heading "District Units" [level=3] [ref=e67]
+          - generic [ref=e68]:
+            - button "Thiruvananthapuram" [ref=e69] [cursor=pointer]
+            - button "Kollam" [ref=e70] [cursor=pointer]
+            - button "Pathanamthitta" [ref=e71] [cursor=pointer]
+            - button "Alappuzha" [ref=e72] [cursor=pointer]
+            - button "Kottayam" [ref=e73] [cursor=pointer]
+            - button "Idukki" [ref=e74] [cursor=pointer]
+            - button "Ernakulam" [ref=e75] [cursor=pointer]
+            - button "Thrissur" [ref=e76] [cursor=pointer]
+            - button "Palakkad" [ref=e77] [cursor=pointer]
+            - button "Malappuram" [ref=e78] [cursor=pointer]
+            - button "Kozhikode" [ref=e79] [cursor=pointer]
+            - button "Wayanad" [ref=e80] [cursor=pointer]
+            - button "Kannur" [ref=e81] [cursor=pointer]
+            - button "Kasaragod" [ref=e82] [cursor=pointer]
+          - heading "Special Units" [level=3] [ref=e83]
+          - generic [ref=e84]:
+            - button "Chennai Unit" [ref=e85] [cursor=pointer]
+            - button "Ladies Unit" [ref=e86] [cursor=pointer]
+    - generic [ref=e88]:
+      - generic [ref=e89]:
+        - paragraph [ref=e90]: Recent Charity Activities
+        - heading "Community action beyond the boundary" [level=2] [ref=e91]
+      - generic [ref=e92]:
+        - article [ref=e93]:
+          - generic [ref=e94]: Charity
+          - heading "Food Kit Distribution" [level=3] [ref=e95]
+          - paragraph [ref=e96]: May 18, 2026 | Ernakulam
+          - paragraph [ref=e97]: Essential grocery kits distributed to families through district volunteers.
+        - article [ref=e98]:
+          - generic [ref=e99]: Charity
+          - heading "Blood Donation Support" [level=3] [ref=e100]
+          - paragraph [ref=e101]: April 27, 2026 | Kozhikode
+          - paragraph [ref=e102]: Member-led donor coordination supporting urgent blood requirements.
+        - article [ref=e103]:
+          - generic [ref=e104]: Charity
+          - heading "Student Support Drive" [level=3] [ref=e105]
+          - paragraph [ref=e106]: March 30, 2026 | Kannur
+          - paragraph [ref=e107]: School supply support for students, organized as a demo activity entry.
+    - generic [ref=e109]:
+      - generic [ref=e110]:
+        - paragraph [ref=e111]: Gallery
+        - heading "Official moments archive" [level=2] [ref=e112]
+      - generic "Gallery categories" [ref=e113]:
+        - button "All" [ref=e114] [cursor=pointer]
+        - button "Events" [ref=e115] [cursor=pointer]
+        - button "Charity" [ref=e116] [cursor=pointer]
+        - button "Fan Meets" [ref=e117] [cursor=pointer]
+        - button "Celebrations" [ref=e118] [cursor=pointer]
+        - button "Units" [ref=e119] [cursor=pointer]
+        - button "Media Coverage" [ref=e120] [cursor=pointer]
+      - generic [ref=e121]:
+        - article [ref=e122]:
+          - img "AKDFA Thrissur football tournament poster" [ref=e123]
+          - generic [ref=e124]: Event Poster
+        - article [ref=e125]:
+          - generic [ref=e127]: Food Kit Drive
+        - article [ref=e128]:
+          - generic [ref=e130]: Fan Meet Stage
+        - article [ref=e131]:
+          - generic [ref=e133]: Celebration Night
+        - article [ref=e134]:
+          - img "Dhoni Khel Ratna award news post" [ref=e135]
+          - generic [ref=e136]: News Graphic
+        - article [ref=e137]:
+          - generic [ref=e139]: District Unit Meet
+    - generic [ref=e141]:
+      - generic [ref=e142]:
+        - paragraph [ref=e143]: Events
+        - heading "Upcoming and featured events" [level=2] [ref=e144]
+      - article [ref=e145]:
+        - img "AKDFA Thrissur 5s Football Tournament" [ref=e147]
+        - generic [ref=e148]:
+          - paragraph [ref=e149]: AKDFA Thrissur
+          - heading "AKDFA Thrissur 5s Football Tournament" [level=3] [ref=e150]
+          - list [ref=e151]:
+            - listitem [ref=e152]:
+              - generic [ref=e153]: Organized by
+              - strong [ref=e154]: AKDFA Thrissur
+            - listitem [ref=e155]:
+              - generic [ref=e156]: Date
+              - strong [ref=e157]: June 13, Saturday
+            - listitem [ref=e158]:
+              - generic [ref=e159]: Time
+              - strong [ref=e160]: 7:30 PM
+            - listitem [ref=e161]:
+              - generic [ref=e162]: Location
+              - strong [ref=e163]: LaLiga Turf, Thrissur
+            - listitem [ref=e164]:
+              - generic [ref=e165]: Theme
+              - strong [ref=e166]: In accordance with FIFA World Cup 2026
+          - button "View Event" [ref=e167] [cursor=pointer]
+    - generic [ref=e169]:
+      - generic [ref=e170]:
+        - paragraph [ref=e171]: News & Updates
+        - heading "Association updates and cricket milestones" [level=2] [ref=e172]
+      - article [ref=e173]:
+        - img "Dhoni Khel Ratna award post" [ref=e175]
+        - generic [ref=e176]:
+          - paragraph [ref=e177]: News Update
+          - heading "Dhoni - Quickest to Receive the Dhyan Chand Khel Ratna Award" [level=3] [ref=e178]
+          - paragraph [ref=e179]: Dhoni became one of the quickest cricketers to receive the Dhyan Chand Khel Ratna Award, receiving it within just four years of his international debut.
+          - button "Read News" [ref=e180] [cursor=pointer]
+    - generic [ref=e182]:
+      - generic [ref=e183]:
+        - paragraph [ref=e184]: Testimonials
+        - heading "Voices from the stands" [level=2] [ref=e185]
+      - generic [ref=e186]:
+        - article [ref=e187]:
+          - generic [ref=e188]: A
+          - paragraph [ref=e189]: "\"AKDFA is not just a fan association; it is a family of cricket lovers united by respect, discipline, and passion.\""
+          - strong [ref=e190]: Arun K
+          - generic [ref=e191]: Ernakulam
+        - article [ref=e192]:
+          - generic [ref=e193]: M
+          - paragraph [ref=e194]: "\"The district unit gives every fan a place to contribute, celebrate, and support meaningful activities.\""
+          - strong [ref=e195]: Meera P
+          - generic [ref=e196]: Thrissur
+        - article [ref=e197]:
+          - generic [ref=e198]: S
+          - paragraph [ref=e199]: "\"It feels premium, organized, and rooted in the values that make cricket special for Kerala fans.\""
+          - strong [ref=e200]: Shahid N
+          - generic [ref=e201]: Kannur
+    - generic [ref=e203]:
+      - heading "Join the Movement" [level=2] [ref=e204]
+      - paragraph [ref=e205]: Become part of AKDFA and connect with passionate fans across Kerala and beyond.
+      - generic [ref=e206]:
+        - link "Become a Member" [ref=e207] [cursor=pointer]:
+          - /url: "#membership"
+        - link "Contact AKDFA" [ref=e208] [cursor=pointer]:
+          - /url: "#contact"
+    - generic [ref=e210]:
+      - generic [ref=e211]:
+        - paragraph [ref=e212]: Membership / Join Form
+        - heading "Start your AKDFA membership enquiry" [level=2] [ref=e213]
+        - paragraph [ref=e214]: This form is a static demo. Final development can connect it to backend validation, PostgreSQL storage, and admin review workflows.
+      - generic [ref=e215]:
+        - generic [ref=e216]:
+          - text: Full Name
+          - textbox "Full Name" [ref=e217]:
+            - /placeholder: Your full name
+        - generic [ref=e218]:
+          - text: Mobile Number
+          - textbox "Mobile Number" [ref=e219]:
+            - /placeholder: Mobile number
+        - generic [ref=e220]:
+          - text: Email
+          - textbox "Email" [ref=e221]:
+            - /placeholder: Email address
+        - generic [ref=e222]:
+          - text: District
+          - combobox "District" [ref=e223]:
+            - option "Select district" [selected]
+            - option "Thiruvananthapuram"
+            - option "Kollam"
+            - option "Pathanamthitta"
+            - option "Alappuzha"
+            - option "Kottayam"
+            - option "Idukki"
+            - option "Ernakulam"
+            - option "Thrissur"
+            - option "Palakkad"
+            - option "Malappuram"
+            - option "Kozhikode"
+            - option "Wayanad"
+            - option "Kannur"
+            - option "Kasaragod"
+            - option "Chennai Unit"
+            - option "Ladies Unit"
+        - generic [ref=e224]:
+          - text: Message
+          - textbox "Message" [ref=e225]:
+            - /placeholder: Tell us how you want to be involved
+        - button "Submit Request" [ref=e226] [cursor=pointer]
+    - generic [ref=e228]:
+      - generic [ref=e229]:
+        - paragraph [ref=e230]: Contact
+        - heading "Connect with AKDFA" [level=2] [ref=e231]
+      - generic [ref=e232]:
+        - generic [ref=e233]:
+          - link "Email info@akdfa.com" [ref=e234] [cursor=pointer]:
+            - /url: mailto:info@akdfa.com
+            - generic [ref=e235]: Email
+            - strong [ref=e236]: info@akdfa.com
+          - link "Website www.akdfa.com" [ref=e237] [cursor=pointer]:
+            - /url: http://www.akdfa.com
+            - generic [ref=e238]: Website
+            - strong [ref=e239]: www.akdfa.com
+          - generic [ref=e240]:
+            - link "Facebook" [ref=e241] [cursor=pointer]:
+              - /url: https://www.facebook.com/KeralaDhoniFans/
+              - generic [ref=e242]: 
+            - link "Instagram" [ref=e243] [cursor=pointer]:
+              - /url: https://www.instagram.com/akdfaofficial/
+              - generic [ref=e244]: 
+            - link "X" [ref=e245] [cursor=pointer]:
+              - /url: https://x.com/AKDFAOfficial
+              - generic [ref=e246]: 
+            - link "YouTube" [ref=e247] [cursor=pointer]:
+              - /url: https://www.youtube.com/@allkeraladhonifansassociat2246
+              - generic [ref=e248]: 
+            - link "WhatsApp Channel link pending" [ref=e249] [cursor=pointer]:
+              - /url: "#"
+              - generic [ref=e250]: 
+          - generic [ref=e251]:
+            - strong [ref=e253]: Kerala Association Network
+            - generic [ref=e254]: Map-style placeholder block
+        - generic [ref=e255]:
+          - generic [ref=e256]:
+            - text: Name
+            - textbox "Name" [ref=e257]:
+              - /placeholder: Your name
+          - generic [ref=e258]:
+            - text: Phone
+            - textbox "Phone" [ref=e259]:
+              - /placeholder: Phone number
+          - generic [ref=e260]:
+            - text: Email
+            - textbox "Email" [ref=e261]:
+              - /placeholder: Email address
+          - generic [ref=e262]:
+            - text: Message
+            - textbox "Message" [ref=e263]:
+              - /placeholder: Write your message
+          - button "Send Message" [ref=e264] [cursor=pointer]
+  - contentinfo [ref=e265]:
+    - generic [ref=e266]:
+      - generic [ref=e267]:
+        - img "AKDFA black logo" [ref=e268]
+        - heading "All Kerala Dhoni Fans Association" [level=3] [ref=e269]
+        - paragraph [ref=e270]: "Reg No: 949/17"
+        - paragraph [ref=e271]: AKDFA is an independent registered fan association. This demo website is not affiliated with or endorsed by CSK, IPL, BCCI, or any official cricket body unless explicitly stated.
+      - generic [ref=e272]:
+        - heading "Quick Links" [level=3] [ref=e273]
+        - link "About" [ref=e274] [cursor=pointer]:
+          - /url: "#about"
+        - link "Activities" [ref=e275] [cursor=pointer]:
+          - /url: "#charity"
+        - link "Units" [ref=e276] [cursor=pointer]:
+          - /url: "#units"
+        - link "Gallery" [ref=e277] [cursor=pointer]:
+          - /url: "#gallery"
+        - link "Contact" [ref=e278] [cursor=pointer]:
+          - /url: "#contact"
+      - generic [ref=e279]:
+        - heading "Social Media" [level=3] [ref=e280]
+        - generic [ref=e281]:
+          - link "Facebook" [ref=e282] [cursor=pointer]:
+            - /url: https://www.facebook.com/KeralaDhoniFans/
+            - generic [ref=e283]: 
+          - link "Instagram" [ref=e284] [cursor=pointer]:
+            - /url: https://www.instagram.com/akdfaofficial/
+            - generic [ref=e285]: 
+          - link "X" [ref=e286] [cursor=pointer]:
+            - /url: https://x.com/AKDFAOfficial
+            - generic [ref=e287]: 
+          - link "YouTube" [ref=e288] [cursor=pointer]:
+            - /url: https://www.youtube.com/@allkeraladhonifansassociat2246
+            - generic [ref=e289]: 
+          - link "WhatsApp Channel link pending" [ref=e290] [cursor=pointer]:
+            - /url: "#"
+            - generic [ref=e291]: 
+    - paragraph [ref=e292]: Copyright 2026 AKDFA. Static live demo only.
+  - navigation "Mobile quick actions" [ref=e293]:
+    - link "Join AKDFA" [ref=e294] [cursor=pointer]:
+      - /url: "#membership"
+    - link "Contact AKDFA" [ref=e295] [cursor=pointer]:
+      - /url: "#contact"
+      - generic [ref=e296]: 
