@@ -448,6 +448,7 @@ const bindDemoForm = (formId, messageId, message) => {
 };
 
 bindDemoForm("#contactForm", "#contactMessage", "Thank you for contacting AKDFA. Please use the official email or social links for direct follow-up.");
+bindDemoForm("#loginForm", "#loginMessage", "Member accounts are coming soon. Please check back later.");
 
 document.querySelectorAll(".demo-alert").forEach((button) => {
   button.addEventListener("click", () => {

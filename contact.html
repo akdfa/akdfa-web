@@ -37,13 +37,11 @@
       <div class="nav-links" id="primaryNavigation" data-nav-links>
         <a href="index.html">Home</a>
         <a href="about.html">About AKDFA</a>
-        <a href="values.html">Our Values</a>
         <a href="units.html">Our Units</a>
-        <a href="charity.html">Charity Activities</a>
-        <a href="events.html">Events</a>
-        <a href="news.html">News & Updates</a>
+        <a href="news.html">Updates</a>
         <a href="gallery.html">Gallery</a>
         <a href="contact.html" aria-current="true">Contact</a>
+        <a href="login.html">Sign In</a>
       </div>
     </nav>
   </header>
@@ -72,7 +70,23 @@
           <h2>Connect with AKDFA</h2>
           <p>Reach the association through its official contact channels and social profiles.</p>
         </div>
-        <div class="contact-layout contact-layout-single">
+        <div class="contact-layout">
+          <form class="demo-form reveal" id="contactForm" novalidate>
+            <label>
+              Name
+              <input type="text" name="name" placeholder="Your name" required>
+            </label>
+            <label>
+              Email
+              <input type="email" name="email" placeholder="you@example.com" required>
+            </label>
+            <label class="full">
+              Message
+              <textarea name="message" placeholder="Tell us what you'd like to know..." required></textarea>
+            </label>
+            <button class="btn btn-primary full" type="submit">Send Enquiry</button>
+            <p class="form-message full" id="contactMessage" role="status"></p>
+          </form>
           <div class="contact-info reveal">
             <a href="mailto:info@akdfa.com"><span>Email</span><strong>info@akdfa.com</strong></a>
             <a href="http://www.akdfa.com" target="_blank" rel="noopener"><span>Website</span><strong>www.akdfa.com</strong></a>
@@ -101,11 +115,8 @@
       <div class="footer-links">
         <h3>Quick Links</h3>
         <a href="about.html">About</a>
-        <a href="values.html">Values</a>
         <a href="units.html">Units</a>
-        <a href="charity.html">Activities</a>
-        <a href="events.html">Events</a>
-        <a href="news.html">News</a>
+        <a href="news.html">Updates</a>
         <a href="gallery.html">Gallery</a>
         <a href="contact.html" aria-current="true">Contact</a>
       </div>

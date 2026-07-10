@@ -3,11 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Events | AKDFA Official</title>
-  <meta name="description" content="Upcoming and featured AKDFA events bringing district units together through sport, celebration, and coordinated participation.">
+  <title>Sign In | AKDFA Official</title>
+  <meta name="description" content="Sign in to your AKDFA member account.">
   <meta name="theme-color" content="#050505">
-  <meta property="og:title" content="Events | AKDFA Official">
-  <meta property="og:description" content="Upcoming and featured AKDFA events across Kerala's district units.">
+  <meta property="og:title" content="Sign In | AKDFA Official">
+  <meta property="og:description" content="Sign in to your AKDFA member account.">
   <meta property="og:type" content="website">
   <meta property="og:image" content="assets/akdfa-circle-logo.png">
   <link rel="icon" type="image/png" href="assets/akdfa-circle-logo.png">
@@ -37,40 +37,41 @@
       <div class="nav-links" id="primaryNavigation" data-nav-links>
         <a href="index.html">Home</a>
         <a href="about.html">About AKDFA</a>
-        <a href="values.html">Our Values</a>
         <a href="units.html">Our Units</a>
-        <a href="charity.html">Charity Activities</a>
-        <a href="events.html" aria-current="true">Events</a>
-        <a href="news.html">News & Updates</a>
+        <a href="news.html">Updates</a>
         <a href="gallery.html">Gallery</a>
         <a href="contact.html">Contact</a>
+        <a href="login.html" aria-current="true">Sign In</a>
       </div>
     </nav>
   </header>
 
   <main id="main">
-    <section class="section" id="events">
-      <div class="section-inner">
-        <div class="section-heading reveal">
-          <p class="eyebrow">Events</p>
-          <h2>Upcoming and featured events</h2>
-          <p>Featured events bring district units together through sport, celebration, and coordinated participation.</p>
-        </div>
-        <article class="feature-card reveal">
-          <div class="image-frame"><img src="assets/football-tournament.jpg" alt="AKDFA Thrissur 5s Football Tournament" loading="lazy" decoding="async"></div>
-          <div>
-            <p class="eyebrow">AKDFA Thrissur</p>
-            <h3>AKDFA Thrissur 5s Football Tournament</h3>
-            <ul class="detail-list">
-              <li><span>Organized by</span><strong>AKDFA Thrissur</strong></li>
-              <li><span>Date</span><strong>June 13, Saturday</strong></li>
-              <li><span>Time</span><strong>7:30 PM</strong></li>
-              <li><span>Location</span><strong>LaLiga Turf, Thrissur</strong></li>
-              <li><span>Theme</span><strong>In accordance with FIFA World Cup 2026</strong></li>
-            </ul>
-            <button class="btn btn-primary demo-alert" type="button">View Event</button>
+    <section class="section" id="login">
+      <div class="section-inner contact-layout">
+        <div class="login-copy">
+          <div class="section-heading reveal">
+            <p class="eyebrow">Members Area</p>
+            <h2>Sign in to AKDFA</h2>
+            <p>Member accounts are coming soon. Sign in below once your unit issues you AKDFA credentials.</p>
           </div>
-        </article>
+          <form class="demo-form reveal" id="loginForm" novalidate>
+            <label class="full">
+              Email
+              <input type="email" name="email" placeholder="you@example.com" required>
+            </label>
+            <label class="full">
+              Password
+              <input type="password" name="password" placeholder="••••••••" required>
+            </label>
+            <button class="btn btn-primary full" type="submit">Sign In</button>
+            <p class="form-message" id="loginMessage" role="status"></p>
+          </form>
+        </div>
+        <div class="login-visual reveal" role="img" aria-label="AKDFA circle logo">
+          <img src="assets/akdfa-circle-logo.png" alt="AKDFA circle logo">
+          <div class="reg-badge">Reg No: 949/17</div>
+        </div>
       </div>
     </section>
   </main>
@@ -86,11 +87,8 @@
       <div class="footer-links">
         <h3>Quick Links</h3>
         <a href="about.html">About</a>
-        <a href="values.html">Values</a>
         <a href="units.html">Units</a>
-        <a href="charity.html">Activities</a>
-        <a href="events.html" aria-current="true">Events</a>
-        <a href="news.html">News</a>
+        <a href="news.html">Updates</a>
         <a href="gallery.html">Gallery</a>
         <a href="contact.html">Contact</a>
       </div>
