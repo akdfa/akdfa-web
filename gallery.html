@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gallery | AKDFA Official</title>
+  <meta name="description" content="Browse visual highlights from AKDFA events, charity drives, fan meets, celebrations, units, and media coverage.">
+  <meta name="theme-color" content="#050505">
+  <meta property="og:title" content="Gallery | AKDFA Official">
+  <meta property="og:description" content="Official moments archive - AKDFA events, charity drives, fan meets, and celebrations.">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="assets/akdfa-circle-logo.png">
+  <link rel="icon" type="image/png" href="assets/akdfa-circle-logo.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+  <link rel="stylesheet" href="style.css?v=6">
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <div class="page-loader" aria-hidden="true">
+    <div class="loader-orbit">
+      <img src="assets/akdfa-circle-logo.png" alt="">
+    </div>
+  </div>
+  <header class="site-header" id="top">
+    <nav class="navbar" aria-label="Primary navigation">
+      <a class="brand" href="index.html" aria-label="AKDFA Official home">
+        <img src="assets/akdfa-circle-logo.png" alt="AKDFA circle logo">
+        <span><strong>AKDFA Official</strong><small>Reg No: 949/17</small></span>
+      </a>
+      <button class="menu-toggle" type="button" aria-label="Open menu" aria-controls="primaryNavigation" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
+      <div class="nav-links" id="primaryNavigation" data-nav-links>
+        <a href="index.html">Home</a>
+        <a href="about.html">About AKDFA</a>
+        <a href="values.html">Our Values</a>
+        <a href="units.html">Our Units</a>
+        <a href="charity.html">Charity Activities</a>
+        <a href="events.html">Events</a>
+        <a href="news.html">News & Updates</a>
+        <a href="gallery.html" aria-current="true">Gallery</a>
+        <a href="contact.html">Contact</a>
+      </div>
+    </nav>
+  </header>
+
+  <main id="main">
+    <section class="section gallery-section" id="gallery">
+      <div class="section-inner">
+        <div class="section-heading reveal">
+          <p class="eyebrow">Gallery</p>
+          <h2>Official moments archive</h2>
+          <p>Browse visual highlights from events, charity drives, fan meets, celebrations, units, and media coverage.</p>
+        </div>
+        <div class="filter-bar" aria-label="Gallery categories">
+          <button class="filter-btn is-active" type="button" data-filter="all" aria-controls="galleryGrid">All</button>
+          <button class="filter-btn" type="button" data-filter="events" aria-controls="galleryGrid">Events</button>
+          <button class="filter-btn" type="button" data-filter="charity" aria-controls="galleryGrid">Charity</button>
+          <button class="filter-btn" type="button" data-filter="fan-meets" aria-controls="galleryGrid">Fan Meets</button>
+          <button class="filter-btn" type="button" data-filter="celebrations" aria-controls="galleryGrid">Celebrations</button>
+          <button class="filter-btn" type="button" data-filter="units" aria-controls="galleryGrid">Units</button>
+          <button class="filter-btn" type="button" data-filter="media" aria-controls="galleryGrid">Media Coverage</button>
+        </div>
+        <div class="masonry-grid" id="galleryGrid" aria-live="polite">
+          <article class="gallery-tile tall reveal" data-category="events"><img src="assets/football-tournament.jpg" alt="AKDFA Thrissur football tournament poster" loading="lazy" decoding="async"><span>Event Poster</span></article>
+          <article class="gallery-tile reveal" data-category="charity"><div class="placeholder-art gold"></div><span>Food Kit Drive</span></article>
+          <article class="gallery-tile wide reveal" data-category="fan-meets"><div class="placeholder-art green"></div><span>Fan Meet Stage</span></article>
+          <article class="gallery-tile reveal" data-category="celebrations"><div class="placeholder-art light"></div><span>Celebration Night</span></article>
+          <article class="gallery-tile tall reveal" data-category="media"><img src="assets/khel-ratna-post.jpg" alt="Dhoni Khel Ratna award news post" loading="lazy" decoding="async"><span>News Graphic</span></article>
+          <article class="gallery-tile reveal" data-category="units"><div class="placeholder-art pitch"></div><span>District Unit Meet</span></article>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="section-inner footer-grid">
+      <div class="footer-brand">
+        <img class="footer-logo" src="assets/akdfa-circle-logo.png" alt="AKDFA emblem">
+        <h3>All Kerala Dhoni Fans Association</h3>
+        <p>Reg No: 949/17</p>
+        <p class="disclaimer">AKDFA is an independent registered fan association and is not affiliated with or endorsed by CSK, IPL, BCCI, or any official cricket body unless explicitly stated.</p>
+      </div>
+      <div class="footer-links">
+        <h3>Quick Links</h3>
+        <a href="about.html">About</a>
+        <a href="values.html">Values</a>
+        <a href="units.html">Units</a>
+        <a href="charity.html">Activities</a>
+        <a href="events.html">Events</a>
+        <a href="news.html">News</a>
+        <a href="gallery.html" aria-current="true">Gallery</a>
+        <a href="contact.html">Contact</a>
+      </div>
+    </div>
+    <p class="copyright">Copyright 2026 AKDFA. All rights reserved.</p>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>

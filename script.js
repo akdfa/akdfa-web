@@ -193,31 +193,6 @@ document.querySelectorAll('a[href^="#"]').forEach((anchor) => {
   });
 });
 
-const navSectionLinks = Array.from(navLinks?.querySelectorAll('a[href^="#"]') || []);
-const navSections = navSectionLinks
-  .map((link) => document.querySelector(link.getAttribute("href")))
-  .filter(Boolean);
-
-const setActiveNavLink = (id) => {
-  navSectionLinks.forEach((link) => {
-    const isActive = link.getAttribute("href") === `#${id}`;
-    if (isActive) link.setAttribute("aria-current", "true");
-    else link.removeAttribute("aria-current");
-  });
-};
-
-if ("IntersectionObserver" in window && navSections.length) {
-  setActiveNavLink(navSections[0].id);
-
-  const navObserver = new IntersectionObserver((entries) => {
-    entries.forEach((entry) => {
-      if (entry.isIntersecting) setActiveNavLink(entry.target.id);
-    });
-  }, { rootMargin: "-38% 0px -52% 0px", threshold: 0.01 });
-
-  navSections.forEach((section) => navObserver.observe(section));
-}
-
 const revealItems = document.querySelectorAll(".reveal");
 revealItems.forEach((item, index) => {
   const isCard = item.matches(".glass-card, .activity-card, .gallery-tile, .unit-card, .trust-item, .principle-card");
