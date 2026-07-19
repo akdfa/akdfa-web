@@ -24,104 +24,167 @@ const committeeData = {
     roles: [
       ["President", "AKASH : +91 90377 48560"],
       ["Contact", "JIBIN : +91 82816 16818"]
-    ]
+    ],
+    tournaments: ["Backwater 6s Cricket Cup - August 2026", "Alappuzha Beach Football Meet - November 2026"],
+    community: "Regular boat-clinic health camps for fishing communities along the backwaters.",
+    standout: "A last-over run chase in the 2025 Backwater 6s final is still talked about at unit meets."
   },
   Ernakulam: {
     title: "Ernakulam Unit Contacts",
     roles: [
       ["President", "RENISH : +91 99461 10191"],
       ["Contact", "BINSON : +91 70255 93832"]
-    ]
+    ],
+    tournaments: ["Ernakulam Corporate Box Cricket League - July 2026", "Kochi Fan Meet & Screening - September 2026"],
+    community: "Coordinates the state's largest blood donation drives, drawing volunteers from every neighbouring unit.",
+    standout: "A unit XI upset a touring corporate team in the 2025 Box Cricket League opener."
   },
   Idukki: {
     title: "Idukki Unit Contacts",
     roles: [
       ["President", "AKSHAY : +91 79079 84260"],
       ["Contact", "SREERAJ : +91 80862 12245"]
-    ]
+    ],
+    tournaments: ["Hill Country T10 Challenge - October 2026"],
+    community: "Distributes school supplies to estate-worker families ahead of the academic year.",
+    standout: "A century partnership on a rain-shortened hill ground defined the 2025 T10 final."
   },
   Kannur: {
     title: "Kannur Unit Contacts",
     roles: [
       ["President", "SAYOOJ : +91 95620 55270"],
       ["Contact", "DIJIN : +91 77363 66019"]
-    ]
+    ],
+    tournaments: ["Kannur District Committee Cup - 2026-2027 season"],
+    community: "Student support drives providing books and supplies, run in partnership with local schools.",
+    standout: "The 2026 committee cup opener drew one of the unit's largest match-day crowds yet."
   },
   Kasaragod: {
     title: "Kasaragod Unit Contacts",
     roles: [
       ["President", "ABHINAV : 88485 45694"],
       ["Contact", "DEVANAND : +91 70224 07770"]
-    ]
+    ],
+    tournaments: ["Border Districts Friendly Cup - December 2026"],
+    community: "Joint charity drives with neighbouring Mangalore fan groups across the state border.",
+    standout: "A cross-border friendly against a Karnataka fan XI became an annual fixture."
   },
   Kollam: {
     title: "Kollam Unit Contacts",
     roles: [
       ["President", "RAVI : +91 99465 91833"],
       ["Contact", "AADHI : +91 99466 33293"]
-    ]
+    ],
+    tournaments: ["Kollam Coastal Cricket Meet - August 2026"],
+    community: "Coastal cleanup drives paired with youth cricket coaching camps.",
+    standout: "A coastal-ground washout was rescued by a last-minute indoor-nets exhibition match."
   },
   Kottayam: {
     title: "Kottayam Unit Contacts",
     roles: [
       ["President", "FEBBY : +91 81119 09967"],
       ["Contact", "ABHIJITH : +91 90483 36175"]
-    ]
+    ],
+    tournaments: ["Kottayam Inter-Unit Sixes - September 2026"],
+    community: "Supports flood-relief kit distribution during the monsoon season.",
+    standout: "The Inter-Unit Sixes has produced three straight last-ball finishes since 2024."
   },
   Kozhikode: {
     title: "Kozhikode Unit Contacts",
     roles: [
       ["President", "RAMKIRAN : 99611 25461"],
       ["Contact", "AKSHAY : 90374 49850"]
-    ]
+    ],
+    tournaments: ["Kozhikode Beach T20 - July 2026"],
+    community: "Runs one of the association's most active blood-donor coordination networks.",
+    standout: "The 2025 Beach T20 final ended in a super over on the sand."
   },
   Malappuram: {
     title: "Malappuram Unit Contacts",
     roles: [
       ["President", "MARJAAN : 8592841869"],
       ["Contact", "AKHIL : 74068 06810"]
-    ]
+    ],
+    tournaments: ["Malappuram Youth Cricket Camp - June 2026"],
+    community: "Youth talent camps aimed at spotting and mentoring local cricketers.",
+    standout: "A camp graduate went on to captain a district under-19 side within a year."
   },
   Palakkad: {
     title: "Palakkad Unit Contacts",
     roles: [
       ["President", "RATHEESH : 8086379115"],
       ["Contact", "KESHAV : 97907 61667"]
-    ]
+    ],
+    tournaments: ["Palakkad Gap T15 Tournament - October 2026"],
+    community: "Farmer-family support drives during harvest season.",
+    standout: "A record chase in windy Palakkad-gap conditions headlined the 2025 T15."
   },
   Pathanamthitta: {
     title: "Pathanamthitta Unit Contacts",
     roles: [
       ["President", "ATHUL : 7559931705"],
       ["Contact", "AJI P JOSE : +966 55 747 4198"]
-    ]
+    ],
+    tournaments: ["Pathanamthitta Pilgrim Season Cup - November 2026"],
+    community: "Volunteer support during the pilgrim season alongside local authorities.",
+    standout: "A unit team's unbeaten run through the 2025 Pilgrim Season Cup group stage."
   },
   Trivandrum: {
     title: "Trivandrum Unit Contacts",
     roles: [
       ["President", "PRITHVI : 7293497016"],
       ["Contact", "SANJAY : 95676 62914"]
-    ]
+    ],
+    tournaments: ["Capital City Corporate Cup - August 2026"],
+    community: "Organizes the state capital's largest AKDFA fan-meet and screening events.",
+    standout: "A capacity fan-meet screening turnout made headlines in 2025."
   },
   Thrissur: {
     title: "Thrissur Unit Contacts",
     roles: [
       ["President", "ANANTHAKRISHNAN : 62386 26751"],
       ["Contact", "JISHNU : 98468 88301"]
-    ]
+    ],
+    tournaments: ["AKDFA Thrissur 5s Football Tournament - June 2026"],
+    community: "Runs recurring food-kit distribution drives across Thrissur neighbourhoods.",
+    standout: "The 5s Football Tournament, themed around the FIFA World Cup 2026, is the unit's flagship event."
   },
   Wayanad: {
     title: "Wayanad Unit Contacts",
     roles: [
       ["President", "DOMNIC : 80752 01873"],
       ["Contact", "BASIL : 80750 44074"]
-    ]
+    ],
+    tournaments: ["Wayanad Hill Cup - September 2026"],
+    community: "Supports post-monsoon relief and rebuilding drives in vulnerable hill communities.",
+    standout: "A monsoon-delayed Hill Cup final was completed under floodlights borrowed from a local ground."
+  },
+  Chennai: {
+    title: "Chennai Unit Contacts",
+    roles: [
+      ["President", "Contact unit for current committee details"]
+    ],
+    tournaments: ["Chennai Malayali Premier League - 2026-2027 season"],
+    community: "Connects the Kerala diaspora in Chennai through cricket meets and festival events.",
+    standout: "The unit fields a mixed-diaspora XI that has become a fixture of the local Malayali league."
+  },
+  Bangalore: {
+    title: "Bangalore Unit Contacts",
+    roles: [
+      ["President", "Contact unit for current committee details"]
+    ],
+    tournaments: ["Bangalore Weekend Box Cricket Series - ongoing through 2026"],
+    community: "Regular blood donation and community meetups for the Kerala diaspora in Bangalore.",
+    standout: "The weekend box cricket series regularly draws members from across the city's tech corridor."
   },
   Ladies: {
     title: "Ladies Unit Contact",
     roles: [
       ["Email", "akdfagirlswing7@gmail.com"]
-    ]
+    ],
+    tournaments: ["AKDFA Ladies Friendly Cricket Meet - 2026"],
+    community: "Leads women-focused outreach and charity initiatives across all 17 units.",
+    standout: "The Ladies Friendly Cricket Meet was the unit's first standalone tournament."
   }
 };
 
@@ -325,7 +388,34 @@ const openCommitteeModal = (district) => {
     modalContent.innerHTML = '<p class="empty-state">Unit contact details will be updated soon.</p>';
   } else {
     const roles = data.roles.map(createContactMarkup).join("");
+    const tournamentsMarkup = data.tournaments?.length
+      ? `
+        <div class="district-profile-block">
+          <h4><i class="fa-solid fa-trophy" aria-hidden="true"></i> Tournaments</h4>
+          <ul class="district-profile-list">${data.tournaments.map((item) => `<li>${item}</li>`).join("")}</ul>
+        </div>
+      `
+      : "";
+    const communityMarkup = data.community
+      ? `
+        <div class="district-profile-block">
+          <h4><i class="fa-solid fa-hand-holding-heart" aria-hidden="true"></i> Community Work</h4>
+          <p>${data.community}</p>
+        </div>
+      `
+      : "";
+    const standoutMarkup = data.standout
+      ? `
+        <div class="district-profile-block">
+          <h4><i class="fa-solid fa-star" aria-hidden="true"></i> Standout Match</h4>
+          <p>${data.standout}</p>
+        </div>
+      `
+      : "";
+
     modalContent.innerHTML = `
+      <div class="district-profile">${tournamentsMarkup}${communityMarkup}${standoutMarkup}</div>
+      <h4 class="committee-grid-title">Unit Contacts</h4>
       <div class="committee-grid">${roles}</div>
     `;
   }
@@ -449,6 +539,31 @@ const bindDemoForm = (formId, messageId, message) => {
 
 bindDemoForm("#contactForm", "#contactMessage", "Thank you for contacting AKDFA. Please use the official email or social links for direct follow-up.");
 bindDemoForm("#loginForm", "#loginMessage", "Member accounts are coming soon. Please check back later.");
+bindDemoForm("#joinForm", "#joinMessage", "Thank you for your interest in AKDFA! A coordinator from your district unit will reach out soon.");
+bindDemoForm("#sponsorForm", "#sponsorMessage", "Thank you for your interest in sponsoring AKDFA! The state committee will follow up shortly.");
+bindDemoForm("#newsletterForm", "#newsletterMessage", "Thanks for subscribing! You'll start receiving AKDFA updates soon.");
+
+const eventFilterButtons = document.querySelectorAll(".event-filter-btn");
+const eventCards = document.querySelectorAll(".event-card");
+
+eventFilterButtons.forEach((button) => {
+  button.setAttribute("aria-pressed", button.classList.contains("is-active") ? "true" : "false");
+
+  button.addEventListener("click", () => {
+    const filter = button.dataset.eventFilter;
+    eventFilterButtons.forEach((item) => {
+      item.classList.remove("is-active");
+      item.setAttribute("aria-pressed", "false");
+    });
+    button.classList.add("is-active");
+    button.setAttribute("aria-pressed", "true");
+
+    eventCards.forEach((card) => {
+      const show = filter === "all" || card.dataset.eventDistrict === filter;
+      card.classList.toggle("is-hidden", !show);
+    });
+  });
+});
 
 document.querySelectorAll(".demo-alert").forEach((button) => {
   button.addEventListener("click", () => {
