@@ -54,16 +54,16 @@
           <div class="section-heading reveal">
             <p class="eyebrow">Members Area</p>
             <h2>Sign in to AKDFA</h2>
-            <p>Member accounts are coming soon. Sign in below once your unit issues you AKDFA credentials.</p>
+            <p>Access your digital membership card, district feed, cricket hub, events and more. New here? <a href="join.html">Request membership</a> — your unit admin approves you.</p>
           </div>
           <form class="demo-form reveal" id="loginForm" novalidate>
             <label class="full">
               Email
-              <input type="email" name="email" placeholder="you@example.com" required>
+              <input type="email" name="email" placeholder="you@example.com" required autocomplete="email">
             </label>
             <label class="full">
               Password
-              <input type="password" name="password" placeholder="••••••••" required>
+              <input type="password" name="password" placeholder="••••••••" required autocomplete="current-password">
             </label>
             <button class="btn btn-primary full" type="submit">Sign In</button>
             <p class="form-message" id="loginMessage" role="status"></p>
@@ -99,6 +99,8 @@
     <p class="copyright">Copyright 2026 AKDFA. All rights reserved.</p>
   </footer>
 
+  <script src="js/api.js"></script>
   <script src="script.js"></script>
+  <script src="js/public.js"></script>
 </body>
 </html>

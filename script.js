@@ -537,11 +537,9 @@ const bindDemoForm = (formId, messageId, message) => {
   });
 };
 
-bindDemoForm("#contactForm", "#contactMessage", "Thank you for contacting AKDFA. Please use the official email or social links for direct follow-up.");
-bindDemoForm("#loginForm", "#loginMessage", "Member accounts are coming soon. Please check back later.");
-bindDemoForm("#joinForm", "#joinMessage", "Thank you for your interest in AKDFA! A coordinator from your district unit will reach out soon.");
-bindDemoForm("#sponsorForm", "#sponsorMessage", "Thank you for your interest in sponsoring AKDFA! The state committee will follow up shortly.");
-bindDemoForm("#newsletterForm", "#newsletterMessage", "Thanks for subscribing! You'll start receiving AKDFA updates soon.");
+// Live form handlers (contact, sponsor lead, newsletter, join, login) are bound
+// in js/public.js against the AKDFA API. bindDemoForm remains for any page that
+// still needs a purely static acknowledgement.
 
 const eventFilterButtons = document.querySelectorAll(".event-filter-btn");
 const eventCards = document.querySelectorAll(".event-card");

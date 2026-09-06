@@ -2,10 +2,16 @@
   "version": "0.0.1",
   "configurations": [
     {
-      "name": "http-server",
+      "name": "site",
       "runtimeExecutable": "npx",
-      "runtimeArgs": ["http-server", "-p", "8000", "-c-1"],
-      "port": 8000
+      "runtimeArgs": ["--yes", "serve", "-l", "5500", "."],
+      "port": 5500
+    },
+    {
+      "name": "api",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["--prefix", "backend", "run", "dev"],
+      "port": 4000
     }
   ]
 }

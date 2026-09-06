@@ -1327,6 +1327,21 @@ textarea:invalid:not(:placeholder-shown) {
   display: block;
 }
 
+.form-message--ok {
+  color: var(--green);
+}
+
+.form-message--error {
+  color: #f27575;
+}
+
+.form-hint {
+  margin: 4px 0 0;
+  color: var(--muted-soft);
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
 .login-copy {
   display: grid;
   gap: clamp(20px, 3vw, 28px);

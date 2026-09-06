@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My AKDFA | Member Portal</title>
+  <meta name="description" content="AKDFA member and committee portal — digital card, feed, events, cricket hub, store and governance tools.">
+  <meta name="theme-color" content="#050505">
+  <meta name="robots" content="noindex">
+  <link rel="icon" type="image/png" href="assets/akdfa-circle-logo.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+  <link rel="stylesheet" href="style.css?v=6">
+  <link rel="stylesheet" href="css/app.css?v=1">
+</head>
+<body class="portal-body">
+  <div class="portal-boot" id="portalBoot">
+    <div class="loader-orbit"><img src="assets/akdfa-circle-logo.png" alt=""></div>
+  </div>
+
+  <div class="portal-shell" id="portalShell" hidden>
+    <aside class="portal-sidebar" id="portalSidebar">
+      <a class="portal-brand" href="index.html">
+        <img src="assets/akdfa-circle-logo.png" alt="AKDFA">
+        <span><strong>My AKDFA</strong><small>Member Portal</small></span>
+      </a>
+      <nav class="portal-nav" id="portalNav" aria-label="Portal sections"></nav>
+      <div class="portal-sidebar-foot">
+        <button class="btn btn-outline btn-block" id="logoutBtn" type="button">Sign out</button>
+      </div>
+    </aside>
+
+    <div class="portal-main">
+      <header class="portal-topbar">
+        <button class="portal-menu-toggle" id="portalMenuToggle" type="button" aria-label="Toggle menu">
+          <i class="fa-solid fa-bars"></i>
+        </button>
+        <div class="portal-topbar-title" id="portalTitle">Dashboard</div>
+        <a class="portal-bell" href="#/notifications" aria-label="Notifications">
+          <i class="fa-regular fa-bell"></i>
+          <span class="portal-bell-dot" id="bellDot" hidden></span>
+        </a>
+        <div class="portal-whoami" id="portalWhoami"></div>
+      </header>
+      <main class="portal-view" id="portalView" tabindex="-1"></main>
+    </div>
+    <div class="portal-scrim" id="portalScrim" hidden></div>
+  </div>
+
+  <script src="js/api.js"></script>
+  <script src="js/app.js?v=1"></script>
+</body>
+</html>

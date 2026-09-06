@@ -1,0 +1,741 @@
+// AKDFA — Prisma schema (single source of truth for the database)
+// Covers Phase 1 (auth/core) through Phase 5 (payments/store).
+// Generate the ER diagram from this file with: npx prisma generate (see docs/database/ERD.md for the rendered version).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─────────────────────────────────────────────────────────────
+// Enums
+// ─────────────────────────────────────────────────────────────
+
+enum Role {
+  MEMBER
+  UNIT_ADMIN
+  DISTRICT_ADMIN
+  STATE_ADMIN
+}
+
+enum MembershipStatus {
+  PENDING
+  ACTIVE
+  LAPSED
+  SUSPENDED
+}
+
+enum ApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum EventType {
+  TOURNAMENT
+  CHARITY
+  MATCH
+  MEETING
+  TRIAL
+  OTHER
+}
+
+enum EventScope {
+  STATE
+  DISTRICT
+  UNIT
+}
+
+enum RsvpStatus {
+  GOING
+  INTERESTED
+  NOT_GOING
+}
+
+enum MatchStatus {
+  SCHEDULED
+  LIVE
+  COMPLETED
+  CANCELLED
+}
+
+enum TrialApplicationStatus {
+  APPLIED
+  SHORTLISTED
+  SELECTED
+  REJECTED
+}
+
+enum DocumentVisibility {
+  PUBLIC
+  STATE_ONLY
+  DISTRICT_ONLY
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCESS
+  FAILED
+  REFUNDED
+}
+
+enum OrderStatus {
+  PENDING
+  PAID
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
+enum NotificationChannel {
+  EMAIL
+  PUSH
+  SMS
+}
+
+enum SponsorTier {
+  PLATINUM
+  GOLD
+  SILVER
+  BRONZE
+  COMMUNITY
+}
+
+enum ReferralStatus {
+  PENDING
+  JOINED
+  REWARDED
+}
+
+// ─────────────────────────────────────────────────────────────
+// Phase 0/1 — Structure, Auth, Public Site
+// ─────────────────────────────────────────────────────────────
+
+model District {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  code      String   @unique // e.g. "TVM", "EKM"
+  region    String?
+  bio       String?  @db.Text // "brought to life" district story (Phase 1)
+  bannerUrl String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  units           Unit[]
+  members         Member[]
+  events          Event[]
+  newsPosts       NewsPost[]
+  documents       Document[]
+  sponsors        Sponsor[]
+  sponsorshipLogs SponsorshipLog[]
+  activityReports DistrictActivityReport[]
+  announcements   Notification[]           @relation("DistrictBroadcast")
+
+  @@map("districts")
+}
+
+model Unit {
+  id            String         @id @default(cuid())
+  district      District       @relation(fields: [districtId], references: [id], onDelete: Restrict)
+  districtId    String
+  name          String
+  status        ApprovalStatus @default(PENDING)
+  address       String? // encrypted
+  contactEmail  String? // encrypted
+  contactPhone  String? // encrypted
+  establishedOn DateTime?
+  approvedBy    Member?        @relation("UnitApprover", fields: [approvedById], references: [id])
+  approvedById  String?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  members Member[]
+  teams   Team[]
+  events  Event[]
+
+  @@index([districtId])
+  @@map("units")
+}
+
+model Member {
+  id                  String           @id @default(cuid())
+  memberNumber        String           @unique // human-facing ID printed on the digital card
+  unit                Unit             @relation(fields: [unitId], references: [id], onDelete: Restrict)
+  unitId              String
+  district            District         @relation(fields: [districtId], references: [id], onDelete: Restrict)
+  districtId          String // denormalized for fast state/district queries
+  fullName            String
+  email               String // AES-256-GCM encrypted; look up via emailHash
+  emailHash           String           @unique // keyed blind index of the lowercased email
+  phone               String // AES-256-GCM encrypted; look up via phoneHash
+  phoneHash           String           @unique // keyed blind index of the phone
+  passwordHash        String
+  role                Role             @default(MEMBER)
+  status              MembershipStatus @default(PENDING)
+  profilePhotoUrl     String?
+  dateOfBirth         String? // AES-256-GCM encrypted ISO date string
+  joinedAt            DateTime         @default(now())
+  membershipExpiresAt DateTime?
+  createdAt           DateTime         @default(now())
+  updatedAt           DateTime         @updatedAt
+
+  // Phase 3/4 — units this member approved as a district/unit admin
+  approvedUnits   Unit[]   @relation("UnitApprover")
+  approvedMembers Member[] @relation("MemberApprover")
+  approvedBy      Member?  @relation("MemberApprover", fields: [approvedById], references: [id])
+  approvedById    String?
+
+  refreshTokens        RefreshToken[]
+  auditLogs            AuditLog[]               @relation("AuditActor")
+  newsPosts            NewsPost[]               @relation("NewsAuthor")
+  documentsUploaded    Document[]               @relation("DocumentUploader")
+  eventRsvps           EventRsvp[]
+  eventsCreated        Event[]                  @relation("EventCreator")
+  pollsCreated         Poll[]                   @relation("PollCreator")
+  pollVotes            PollVote[]
+  playerProfile        Player?
+  teamsCaptained       Team[]                   @relation("TeamCaptain")
+  matchPredictions     MatchPrediction[]
+  trialApplications    TrialApplication[]
+  sponsorshipLogsAdded SponsorshipLog[]         @relation("SponsorshipLogger")
+  badges               MemberBadge[]
+  referralsMade        Referral[]               @relation("Referrer")
+  referredBy           Referral?                @relation("Referred")
+  notifications        Notification[]
+  notificationPrefs    NotificationPreference[]
+  membershipFees       MembershipFee[]
+  orders               Order[]
+  activityReportsFiled DistrictActivityReport[] @relation("ReportSubmitter")
+
+  @@index([unitId])
+  @@index([districtId])
+  @@index([role])
+  @@map("members")
+}
+
+model RefreshToken {
+  id         String    @id @default(cuid())
+  member     Member    @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  memberId   String
+  tokenHash  String    @unique
+  deviceInfo String?
+  expiresAt  DateTime
+  revokedAt  DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([memberId])
+  @@map("refresh_tokens")
+}
+
+// Phase 4 — "keep a record of who changed what and when"
+model AuditLog {
+  id         String   @id @default(cuid())
+  actor      Member   @relation("AuditActor", fields: [actorId], references: [id])
+  actorId    String
+  action     String // e.g. "MEMBER_APPROVED", "EVENT_DELETED"
+  entityType String // e.g. "Member", "Event", "Document"
+  entityId   String
+  metadata   Json? // before/after snapshot or extra context
+  createdAt  DateTime @default(now())
+
+  @@index([entityType, entityId])
+  @@index([actorId])
+  @@map("audit_logs")
+}
+
+// Phase 4 — bylaws, meeting minutes, circulars stored centrally
+model Document {
+  id           String             @id @default(cuid())
+  title        String
+  type         String // "BYLAW" | "MINUTES" | "CIRCULAR" | "OTHER"
+  fileUrl      String // encrypted
+  visibility   DocumentVisibility @default(STATE_ONLY)
+  district     District?          @relation(fields: [districtId], references: [id])
+  districtId   String?
+  uploadedBy   Member             @relation("DocumentUploader", fields: [uploadedById], references: [id])
+  uploadedById String
+  createdAt    DateTime           @default(now())
+
+  @@index([districtId])
+  @@map("documents")
+}
+
+// Phase 1/2 — state + district news feed, and the public press/newsletter strip
+model NewsPost {
+  id            String     @id @default(cuid())
+  title         String
+  body          String     @db.Text
+  coverImageUrl String?
+  scope         EventScope @default(STATE)
+  district      District?  @relation(fields: [districtId], references: [id])
+  districtId    String?
+  author        Member     @relation("NewsAuthor", fields: [authorId], references: [id])
+  authorId      String
+  publishedAt   DateTime?
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+
+  @@index([districtId])
+  @@index([scope])
+  @@map("news_posts")
+}
+
+// Public site — non-member newsletter signup
+model NewsletterSubscriber {
+  id             String    @id @default(cuid())
+  email          String // encrypted
+  emailHash      String    @unique // keyed blind index for upsert / unsubscribe
+  subscribedAt   DateTime  @default(now())
+  unsubscribedAt DateTime?
+
+  @@map("newsletter_subscribers")
+}
+
+// Public site — contact form submissions
+model ContactMessage {
+  id        String   @id @default(cuid())
+  name      String
+  email     String // encrypted
+  phone     String? // encrypted
+  subject   String?
+  message   String   @db.Text // encrypted
+  handled   Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@map("contact_messages")
+}
+
+// ─────────────────────────────────────────────────────────────
+// Phase 1/3 — Events calendar (tournaments, charity drives, meetings, trials)
+// ─────────────────────────────────────────────────────────────
+
+model Event {
+  id          String         @id @default(cuid())
+  title       String
+  type        EventType
+  scope       EventScope     @default(DISTRICT)
+  district    District?      @relation(fields: [districtId], references: [id])
+  districtId  String?
+  unit        Unit?          @relation(fields: [unitId], references: [id])
+  unitId      String?
+  description String?        @db.Text
+  location    String?
+  startsAt    DateTime
+  endsAt      DateTime?
+  status      ApprovalStatus @default(APPROVED)
+  createdBy   Member         @relation("EventCreator", fields: [createdById], references: [id])
+  createdById String
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  rsvps   EventRsvp[]
+  matches Match[]
+  trials  Trial[]
+
+  @@index([districtId])
+  @@index([unitId])
+  @@index([startsAt])
+  @@map("events")
+}
+
+model EventRsvp {
+  id        String     @id @default(cuid())
+  event     Event      @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  eventId   String
+  member    Member     @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  memberId  String
+  status    RsvpStatus @default(GOING)
+  createdAt DateTime   @default(now())
+
+  @@unique([eventId, memberId])
+  @@map("event_rsvps")
+}
+
+// Phase 2 — polls / "guess match results" style engagement
+model Poll {
+  id          String     @id @default(cuid())
+  question    String
+  scope       EventScope @default(STATE)
+  createdBy   Member     @relation("PollCreator", fields: [createdById], references: [id])
+  createdById String
+  closesAt    DateTime?
+  createdAt   DateTime   @default(now())
+
+  options PollOption[]
+
+  @@map("polls")
+}
+
+model PollOption {
+  id     String @id @default(cuid())
+  poll   Poll   @relation(fields: [pollId], references: [id], onDelete: Cascade)
+  pollId String
+  label  String
+
+  votes PollVote[]
+
+  @@map("poll_options")
+}
+
+model PollVote {
+  id        String     @id @default(cuid())
+  option    PollOption @relation(fields: [optionId], references: [id], onDelete: Cascade)
+  optionId  String
+  member    Member     @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  memberId  String
+  createdAt DateTime   @default(now())
+
+  @@unique([optionId, memberId])
+  @@map("poll_votes")
+}
+
+// ─────────────────────────────────────────────────────────────
+// Phase 2/3 — Cricket hub: teams, players, matches, trials
+// ─────────────────────────────────────────────────────────────
+
+model Team {
+  id        String   @id @default(cuid())
+  unit      Unit     @relation(fields: [unitId], references: [id], onDelete: Cascade)
+  unitId    String
+  name      String
+  season    String // e.g. "2026"
+  captain   Member?  @relation("TeamCaptain", fields: [captainId], references: [id])
+  captainId String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  players     Player[]
+  homeMatches Match[]  @relation("HomeTeam")
+  awayMatches Match[]  @relation("AwayTeam")
+  trials      Trial[]
+
+  @@unique([unitId, name, season])
+  @@map("teams")
+}
+
+model Player {
+  id           String  @id @default(cuid())
+  member       Member  @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  memberId     String  @unique // one active player profile per member
+  team         Team    @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  teamId       String
+  jerseyNumber Int?
+  position     String?
+  battingStyle String?
+  bowlingStyle String?
+
+  stats PlayerMatchStat[]
+
+  @@index([teamId])
+  @@map("players")
+}
+
+model Match {
+  id            String      @id @default(cuid())
+  event         Event?      @relation(fields: [eventId], references: [id])
+  eventId       String?
+  homeTeam      Team        @relation("HomeTeam", fields: [homeTeamId], references: [id])
+  homeTeamId    String
+  awayTeam      Team        @relation("AwayTeam", fields: [awayTeamId], references: [id])
+  awayTeamId    String
+  venue         String?
+  scheduledAt   DateTime
+  status        MatchStatus @default(SCHEDULED)
+  resultSummary String? // e.g. "Kochi Unit won by 5 wickets"
+  homeScore     String?
+  awayScore     String?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  predictions MatchPrediction[]
+  playerStats PlayerMatchStat[]
+
+  @@index([homeTeamId])
+  @@index([awayTeamId])
+  @@index([scheduledAt])
+  @@map("matches")
+}
+
+model PlayerMatchStat {
+  id       String  @id @default(cuid())
+  match    Match   @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  matchId  String
+  player   Player  @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  playerId String
+  runs     Int?
+  wickets  Int?
+  catches  Int?
+  notes    String?
+
+  @@unique([matchId, playerId])
+  @@map("player_match_stats")
+}
+
+// Phase 2 — "guess match results"
+model MatchPrediction {
+  id                    String   @id @default(cuid())
+  match                 Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  matchId               String
+  member                Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  memberId              String
+  predictedWinnerTeamId String?
+  createdAt             DateTime @default(now())
+
+  @@unique([matchId, memberId])
+  @@map("match_predictions")
+}
+
+model Trial {
+  id          String   @id @default(cuid())
+  event       Event?   @relation(fields: [eventId], references: [id])
+  eventId     String?
+  team        Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  teamId      String
+  scheduledAt DateTime
+  location    String?
+  description String?
+
+  applications TrialApplication[]
+
+  @@map("trials")
+}
+
+model TrialApplication {
+  id        String                 @id @default(cuid())
+  trial     Trial                  @relation(fields: [trialId], references: [id], onDelete: Cascade)
+  trialId   String
+  member    Member                 @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  memberId  String
+  status    TrialApplicationStatus @default(APPLIED)
+  notes     String?
+  createdAt DateTime               @default(now())
+
+  @@unique([trialId, memberId])
+  @@map("trial_applications")
+}
+
+// ─────────────────────────────────────────────────────────────
+// Phase 1/3/5 — Sponsors
+// ─────────────────────────────────────────────────────────────
+
+model Sponsor {
+  id           String      @id @default(cuid())
+  name         String
+  logoUrl      String?
+  tier         SponsorTier @default(COMMUNITY)
+  district     District?   @relation(fields: [districtId], references: [id]) // null = state-level sponsor
+  districtId   String?
+  contactName  String? // encrypted
+  contactEmail String? // encrypted
+  contactPhone String? // encrypted
+  website      String?
+  isPublic     Boolean     @default(true)
+  createdAt    DateTime    @default(now())
+
+  payments SponsorPayment[]
+
+  @@map("sponsors")
+}
+
+// Phase 5 — sponsor pays & receives an invoice through the payment gateway
+model SponsorPayment {
+  id            String        @id @default(cuid())
+  sponsor       Sponsor       @relation(fields: [sponsorId], references: [id], onDelete: Cascade)
+  sponsorId     String
+  amount        Decimal       @db.Decimal(10, 2)
+  currency      String        @default("INR")
+  status        PaymentStatus @default(PENDING)
+  gatewayRef    String? // Razorpay order/payment id
+  invoiceNumber String?       @unique
+  invoiceUrl    String?
+  createdAt     DateTime      @default(now())
+
+  @@map("sponsor_payments")
+}
+
+// Phase 3 — district-level lightweight tracking of local sponsor support/expenses
+model SponsorshipLog {
+  id          String   @id @default(cuid())
+  district    District @relation(fields: [districtId], references: [id], onDelete: Cascade)
+  districtId  String
+  sponsorName String // encrypted
+  amount      Decimal  @db.Decimal(10, 2)
+  type        String // "INCOME" | "EXPENSE"
+  notes       String? // encrypted
+  loggedBy    Member   @relation("SponsorshipLogger", fields: [loggedById], references: [id])
+  loggedById  String
+  createdAt   DateTime @default(now())
+
+  @@index([districtId])
+  @@map("sponsorship_logs")
+}
+
+// ─────────────────────────────────────────────────────────────
+// Phase 2 — Badges & referrals
+// ─────────────────────────────────────────────────────────────
+
+model Badge {
+  id          String  @id @default(cuid())
+  name        String  @unique
+  description String?
+  iconUrl     String?
+  criteria    String? // human-readable rule, e.g. "Attend 5 events"
+
+  members MemberBadge[]
+
+  @@map("badges")
+}
+
+model MemberBadge {
+  id        String   @id @default(cuid())
+  member    Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  memberId  String
+  badge     Badge    @relation(fields: [badgeId], references: [id], onDelete: Cascade)
+  badgeId   String
+  awardedAt DateTime @default(now())
+
+  @@unique([memberId, badgeId])
+  @@map("member_badges")
+}
+
+model Referral {
+  id              String         @id @default(cuid())
+  referrer        Member         @relation("Referrer", fields: [referrerId], references: [id])
+  referrerId      String
+  referred        Member         @relation("Referred", fields: [referredId], references: [id])
+  referredId      String         @unique // a member is referred at most once
+  status          ReferralStatus @default(PENDING)
+  rewardGrantedAt DateTime?
+  createdAt       DateTime       @default(now())
+
+  @@index([referrerId])
+  @@map("referrals")
+}
+
+// ─────────────────────────────────────────────────────────────
+// Phase 2 — Notifications
+// ─────────────────────────────────────────────────────────────
+
+model Notification {
+  id                  String              @id @default(cuid())
+  member              Member?             @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  memberId            String? // null when part of a broadcast (see broadcastDistrict)
+  broadcastDistrict   District?           @relation("DistrictBroadcast", fields: [broadcastDistrictId], references: [id])
+  broadcastDistrictId String? // Phase 4 state -> district/unit/member broadcasts
+  title               String
+  body                String
+  category            String // "EVENT" | "NEWS" | "PAYMENT" | "ANNOUNCEMENT" | ...
+  channel             NotificationChannel @default(PUSH)
+  readAt              DateTime?
+  sentAt              DateTime            @default(now())
+
+  @@index([memberId])
+  @@map("notifications")
+}
+
+model NotificationPreference {
+  id       String              @id @default(cuid())
+  member   Member              @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  memberId String
+  category String // matches Notification.category
+  channel  NotificationChannel
+  enabled  Boolean             @default(true)
+
+  @@unique([memberId, category, channel])
+  @@map("notification_preferences")
+}
+
+// ─────────────────────────────────────────────────────────────
+// Phase 4 — District -> State reporting
+// ─────────────────────────────────────────────────────────────
+
+model DistrictActivityReport {
+  id            String   @id @default(cuid())
+  district      District @relation(fields: [districtId], references: [id], onDelete: Cascade)
+  districtId    String
+  month         DateTime // first-of-month marker
+  eventsRun     Int      @default(0)
+  teamsManaged  Int      @default(0)
+  summary       String?  @db.Text
+  submittedBy   Member   @relation("ReportSubmitter", fields: [submittedById], references: [id])
+  submittedById String
+  submittedAt   DateTime @default(now())
+
+  @@unique([districtId, month])
+  @@map("district_activity_reports")
+}
+
+// ─────────────────────────────────────────────────────────────
+// Phase 5 — Payments & the AKDFA Store
+// ─────────────────────────────────────────────────────────────
+
+model MembershipFee {
+  id         String        @id @default(cuid())
+  member     Member        @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  memberId   String
+  period     Int // membership year, e.g. 2026
+  amount     Decimal       @db.Decimal(10, 2)
+  currency   String        @default("INR")
+  status     PaymentStatus @default(PENDING)
+  gatewayRef String? // Razorpay order/payment id
+  receiptUrl String?
+  paidAt     DateTime?
+  createdAt  DateTime      @default(now())
+
+  @@unique([memberId, period])
+  @@map("membership_fees")
+}
+
+model Product {
+  id             String   @id @default(cuid())
+  name           String
+  description    String?
+  category       String // "JERSEY" | "CAP" | "SCARF" | ...
+  price          Decimal  @db.Decimal(10, 2)
+  memberPrice    Decimal  @db.Decimal(10, 2)
+  imageUrl       String?
+  sizesAvailable String[] @default([])
+  stock          Int      @default(0)
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+
+  orderItems OrderItem[]
+
+  @@map("products")
+}
+
+model Order {
+  id              String      @id @default(cuid())
+  member          Member      @relation(fields: [memberId], references: [id], onDelete: Restrict)
+  memberId        String
+  status          OrderStatus @default(PENDING)
+  totalAmount     Decimal     @db.Decimal(10, 2)
+  currency        String      @default("INR")
+  gatewayRef      String?
+  shippingAddress String?     @db.Text
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  items OrderItem[]
+
+  @@index([memberId])
+  @@map("orders")
+}
+
+model OrderItem {
+  id        String  @id @default(cuid())
+  order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  orderId   String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Restrict)
+  productId String
+  size      String?
+  quantity  Int     @default(1)
+  unitPrice Decimal @db.Decimal(10, 2)
+
+  @@map("order_items")
+}

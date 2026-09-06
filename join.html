@@ -74,45 +74,35 @@
           <form class="demo-form reveal" id="joinForm" novalidate>
             <label>
               Full Name
-              <input type="text" name="name" placeholder="Your full name" required>
+              <input type="text" name="name" placeholder="Your full name" required autocomplete="name">
             </label>
             <label>
               Phone Number
-              <input type="tel" name="phone" placeholder="+91 90000 00000" required>
+              <input type="tel" name="phone" placeholder="+91 90000 00000" required autocomplete="tel">
             </label>
             <label class="full">
               Email
-              <input type="email" name="email" placeholder="you@example.com" required>
+              <input type="email" name="email" placeholder="you@example.com" required autocomplete="email">
             </label>
-            <label class="full">
+            <label>
               District
               <select name="district" required>
-                <option value="" disabled selected>Select your district</option>
-                <option>Alappuzha</option>
-                <option>Ernakulam</option>
-                <option>Idukki</option>
-                <option>Kannur</option>
-                <option>Kasaragod</option>
-                <option>Kollam</option>
-                <option>Kottayam</option>
-                <option>Kozhikode</option>
-                <option>Malappuram</option>
-                <option>Palakkad</option>
-                <option>Pathanamthitta</option>
-                <option>Trivandrum</option>
-                <option>Thrissur</option>
-                <option>Wayanad</option>
-                <option>Chennai</option>
-                <option>Bangalore</option>
-                <option>Ladies Unit</option>
+                <option value="" disabled selected>Loading districts…</option>
+              </select>
+            </label>
+            <label>
+              Unit
+              <select name="unit" required disabled>
+                <option value="">Select your district first</option>
               </select>
             </label>
             <label class="full">
-              Why do you want to join? (optional)
-              <textarea name="message" placeholder="Tell us what draws you to AKDFA..."></textarea>
+              Create a Password
+              <input type="password" name="password" placeholder="At least 8 characters" required minlength="8" autocomplete="new-password">
             </label>
-            <button class="btn btn-primary full" type="submit">Submit Membership Interest</button>
+            <button class="btn btn-primary full" type="submit">Request Membership</button>
             <p class="form-message full" id="joinMessage" role="status"></p>
+            <p class="form-hint full">Your local unit admin reviews new members. Once approved, sign in at the member portal to get your digital card.</p>
           </form>
           <div class="contact-info reveal">
             <a href="mailto:info@akdfa.com"><span>Email</span><strong>info@akdfa.com</strong></a>
@@ -152,6 +142,8 @@
     <p class="copyright">Copyright 2026 AKDFA. All rights reserved.</p>
   </footer>
 
+  <script src="js/api.js"></script>
   <script src="script.js"></script>
+  <script src="js/public.js"></script>
 </body>
 </html>
