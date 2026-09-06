@@ -80,6 +80,16 @@ router.post(
   })
 );
 
+router.delete(
+  "/players/:id",
+  requireAuth,
+  requireRole("UNIT_ADMIN"),
+  asyncHandler(async (req, res) => {
+    await prisma.player.delete({ where: { id: req.params.id } });
+    res.status(204).send();
+  })
+);
+
 // ---- Matches --------------------------------------------------------------
 // Phase 2 — "upcoming matches" / Phase 3 — "schedule practice matches" / submit scorecards.
 
@@ -146,6 +156,7 @@ router.patch(
       resultSummary: z.string().optional(),
       homeScore: z.string().optional(),
       awayScore: z.string().optional(),
+      photos: z.array(z.string().url()).optional(),
       stats: z
         .array(z.object({ playerId: z.string(), runs: z.number().int().optional(), wickets: z.number().int().optional(), catches: z.number().int().optional() }))
         .optional(),

@@ -2,7 +2,14 @@
 
 Source of truth for the schema is [`backend/prisma/schema.prisma`](../../backend/prisma/schema.prisma). These diagrams are a human-readable view of the same model, grouped by phase so each one stays legible. A full master diagram (entities + relationships only, no columns) is at the bottom.
 
-Regenerate an interactive version anytime with `npx prisma studio` (needs `DATABASE_URL` set) or `npx prisma-erd-generator` against the schema file.
+Regenerate an interactive version anytime with `npx prisma studio` (needs `DATABASE_URL` set) or `npx prisma-erd-generator` against the schema file. The exact DDL is in [`SCHEMA.sql`](SCHEMA.sql).
+
+### Changes since first draft (not all redrawn below)
+
+- **PII encryption**: `MEMBER.email/phone` are AES-GCM ciphertext with `emailHash` / `phoneHash` blind-index columns for lookup; `MEMBER.dateOfBirth` is an encrypted string; `UNIT` / `SPONSOR` contact fields, `SPONSORSHIP_LOG` text, `DOCUMENT.fileKey`, `NEWSLETTER_SUBSCRIBER.email`, `CONTACT_MESSAGE` and `FEEDBACK` bodies are encrypted.
+- **`DOCUMENT`**: `fileUrl` → `fileKey` (private on-disk name) plus `mimeType` / `originalName` / `fileSize`.
+- **New entities**: `PASSWORD_RESET` (Member 1—* ), `FEEDBACK` (Member/Unit), `CHARITY_REPORT` (Event 1—1), plus `EVENT.photos[]` / `EVENT.bracket` / `MATCH.photos[]`, `MEMBER.renewalReminderAt`, `SPONSOR_PAYMENT.payToken` / `note` / `paidAt`.
+- **`MembershipStatus`** gains `REJECTED`.
 
 ## 1. Org structure & auth (Phase 0/1)
 

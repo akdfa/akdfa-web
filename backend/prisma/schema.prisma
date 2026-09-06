@@ -27,6 +27,7 @@ enum MembershipStatus {
   ACTIVE
   LAPSED
   SUSPENDED
+  REJECTED
 }
 
 enum ApprovalStatus {
@@ -112,6 +113,12 @@ enum ReferralStatus {
   REWARDED
 }
 
+enum FeedbackStatus {
+  OPEN
+  ACKNOWLEDGED
+  RESOLVED
+}
+
 // ─────────────────────────────────────────────────────────────
 // Phase 0/1 — Structure, Auth, Public Site
 // ─────────────────────────────────────────────────────────────
@@ -154,9 +161,10 @@ model Unit {
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
 
-  members Member[]
-  teams   Team[]
-  events  Event[]
+  members  Member[]
+  teams    Team[]
+  events   Event[]
+  feedback Feedback[]
 
   @@index([districtId])
   @@map("units")
@@ -181,6 +189,7 @@ model Member {
   dateOfBirth         String? // AES-256-GCM encrypted ISO date string
   joinedAt            DateTime         @default(now())
   membershipExpiresAt DateTime?
+  renewalReminderAt   DateTime? // last time a lapse reminder was sent (Phase 5)
   createdAt           DateTime         @default(now())
   updatedAt           DateTime         @updatedAt
 
@@ -191,6 +200,7 @@ model Member {
   approvedById    String?
 
   refreshTokens        RefreshToken[]
+  passwordResets       PasswordReset[]
   auditLogs            AuditLog[]               @relation("AuditActor")
   newsPosts            NewsPost[]               @relation("NewsAuthor")
   documentsUploaded    Document[]               @relation("DocumentUploader")
@@ -211,6 +221,9 @@ model Member {
   membershipFees       MembershipFee[]
   orders               Order[]
   activityReportsFiled DistrictActivityReport[] @relation("ReportSubmitter")
+  charityReports       CharityReport[]          @relation("CharityReporter")
+  feedbackSent         Feedback[]               @relation("FeedbackAuthor")
+  feedbackHandled      Feedback[]               @relation("FeedbackHandler")
 
   @@index([unitId])
   @@index([districtId])
@@ -232,6 +245,21 @@ model RefreshToken {
   @@map("refresh_tokens")
 }
 
+// Single-use, short-lived token for the forgot-password flow. Only the SHA-256
+// hash is stored, so a DB leak can't be used to reset anyone's password.
+model PasswordReset {
+  id        String    @id @default(cuid())
+  member    Member    @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  memberId  String
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([memberId])
+  @@map("password_resets")
+}
+
 // Phase 4 — "keep a record of who changed what and when"
 model AuditLog {
   id         String   @id @default(cuid())
@@ -248,18 +276,25 @@ model AuditLog {
   @@map("audit_logs")
 }
 
-// Phase 4 — bylaws, meeting minutes, circulars stored centrally
+// Phase 4 — bylaws, meeting minutes, circulars stored centrally.
+// Files live in a NON-public directory; access is checked per request and the
+// bytes are streamed through GET /admin/documents/:id/file (or the public route
+// for PUBLIC docs). fileKey is the opaque on-disk filename, encrypted at rest.
 model Document {
   id           String             @id @default(cuid())
   title        String
   type         String // "BYLAW" | "MINUTES" | "CIRCULAR" | "OTHER"
-  fileUrl      String // encrypted
+  fileKey      String // encrypted — private filename, never exposed to the client
+  mimeType     String?
+  originalName String?
+  fileSize     Int?
   visibility   DocumentVisibility @default(STATE_ONLY)
   district     District?          @relation(fields: [districtId], references: [id])
   districtId   String?
   uploadedBy   Member             @relation("DocumentUploader", fields: [uploadedById], references: [id])
   uploadedById String
   createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @default(now()) @updatedAt
 
   @@index([districtId])
   @@map("documents")
@@ -310,6 +345,28 @@ model ContactMessage {
   @@map("contact_messages")
 }
 
+// Phase 2 — "send feedback straight to your unit leaders"
+model Feedback {
+  id          String         @id @default(cuid())
+  author      Member         @relation("FeedbackAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+  authorId    String
+  unit        Unit           @relation(fields: [unitId], references: [id], onDelete: Cascade)
+  unitId      String
+  districtId  String // denormalized so district admins can triage too
+  subject     String
+  message     String         @db.Text
+  status      FeedbackStatus @default(OPEN)
+  response    String?        @db.Text
+  handledBy   Member?        @relation("FeedbackHandler", fields: [handledById], references: [id])
+  handledById String?
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @default(now()) @updatedAt
+
+  @@index([unitId])
+  @@index([districtId])
+  @@map("feedback")
+}
+
 // ─────────────────────────────────────────────────────────────
 // Phase 1/3 — Events calendar (tournaments, charity drives, meetings, trials)
 // ─────────────────────────────────────────────────────────────
@@ -328,19 +385,41 @@ model Event {
   startsAt    DateTime
   endsAt      DateTime?
   status      ApprovalStatus @default(APPROVED)
+  photos      String[]       @default([]) // uploaded photo URLs (Phase 3 "submit ... photos")
+  bracket     Json? // optional tournament bracket structure (Phase 3 "submit scores, brackets")
   createdBy   Member         @relation("EventCreator", fields: [createdById], references: [id])
   createdById String
   createdAt   DateTime       @default(now())
   updatedAt   DateTime       @updatedAt
 
-  rsvps   EventRsvp[]
-  matches Match[]
-  trials  Trial[]
+  rsvps         EventRsvp[]
+  matches       Match[]
+  trials        Trial[]
+  charityReport CharityReport?
 
   @@index([districtId])
   @@index([unitId])
   @@index([startsAt])
   @@map("events")
+}
+
+// Phase 3 — "charity reports up to the state"
+model CharityReport {
+  id            String   @id @default(cuid())
+  event         Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  eventId       String   @unique
+  peopleHelped  Int?
+  amountRaised  Decimal? @db.Decimal(10, 2)
+  amountSpent   Decimal? @db.Decimal(10, 2)
+  beneficiary   String? // who/what the drive supported
+  summary       String?  @db.Text
+  photos        String[] @default([])
+  submittedBy   Member   @relation("CharityReporter", fields: [submittedById], references: [id])
+  submittedById String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @default(now()) @updatedAt
+
+  @@map("charity_reports")
 }
 
 model EventRsvp {
@@ -449,6 +528,7 @@ model Match {
   resultSummary String? // e.g. "Kochi Unit won by 5 wickets"
   homeScore     String?
   awayScore     String?
+  photos        String[]    @default([])
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
 
@@ -551,8 +631,11 @@ model SponsorPayment {
   currency      String        @default("INR")
   status        PaymentStatus @default(PENDING)
   gatewayRef    String? // Razorpay order/payment id
+  payToken      String?       @unique // opaque token for the sponsor's public pay link
+  note          String?
   invoiceNumber String?       @unique
   invoiceUrl    String?
+  paidAt        DateTime?
   createdAt     DateTime      @default(now())
 
   @@map("sponsor_payments")

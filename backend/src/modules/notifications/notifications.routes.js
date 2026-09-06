@@ -5,6 +5,7 @@ const validate = require("../../middleware/validate");
 const { requireAuth } = require("../../middleware/auth");
 const { requireRole } = require("../../middleware/requireRole");
 const asyncHandler = require("../../utils/asyncHandler");
+const { notify } = require("./notify.service");
 
 const router = Router();
 
@@ -34,29 +35,37 @@ router.patch(
 );
 
 // Phase 4 — "Broadcast announcements: send urgent notices to every district, unit, and member at once."
+// Phase 4 — State broadcasts to everyone / one district.
+// Phase 3 — "send announcements ... to their own district only": a DISTRICT_ADMIN
+// may broadcast, but only ever to their own district.
 router.post(
   "/broadcast",
   requireAuth,
-  requireRole("STATE_ADMIN"),
+  requireRole("DISTRICT_ADMIN"),
   validate({
     body: z.object({
       title: z.string().min(2),
       body: z.string().min(1),
       category: z.string().default("ANNOUNCEMENT"),
-      districtId: z.string().optional(), // omit = every district
+      districtId: z.string().optional(), // omit = every district (state only)
     }),
   }),
   asyncHandler(async (req, res) => {
-    const { title, body, category, districtId } = req.body;
+    const { title, body, category } = req.body;
+    const districtId = req.auth.role === "STATE_ADMIN" ? req.body.districtId : req.auth.districtId;
+
     const members = await prisma.member.findMany({
       where: { districtId: districtId || undefined, status: "ACTIVE" },
       select: { id: true },
     });
 
-    await prisma.notification.createMany({
-      data: members.map((m) => ({ memberId: m.id, title, body, category, broadcastDistrictId: districtId })),
-    });
-    res.status(201).json({ sent: members.length });
+    // Urgent circulars (ANNOUNCEMENT) always land; NEWS/EVENT-tagged broadcasts
+    // respect the member's notification preferences.
+    const sent = await notify(
+      members.map((m) => m.id),
+      { title, body, category, broadcastDistrictId: districtId, force: category === "ANNOUNCEMENT" }
+    );
+    res.status(201).json({ sent, scope: districtId ? "district" : "state" });
   })
 );
 

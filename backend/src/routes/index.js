@@ -19,5 +19,6 @@ router.use("/payments", require("../modules/payments/payments.routes"));
 router.use("/store", require("../modules/store/store.routes"));
 router.use("/public", require("../modules/public/public.routes"));
 router.use("/uploads", require("../modules/uploads/uploads.routes"));
+router.use("/feedback", require("../modules/feedback/feedback.routes"));
 
 module.exports = router;

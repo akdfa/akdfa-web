@@ -84,7 +84,7 @@
     return refreshing;
   }
 
-  async function request(path, { method = "GET", body, auth = true, isForm = false, retry = true } = {}) {
+  async function request(path, { method = "GET", body, auth = true, isForm = false, retry = true, accept } = {}) {
     const headers = {};
     if (!isForm) headers["Content-Type"] = "application/json";
     if (auth && store.access) headers.Authorization = "Bearer " + store.access;
@@ -102,7 +102,16 @@
 
     if (res.status === 401 && auth && retry && store.refresh) {
       const ok = await tryRefresh();
-      if (ok) return request(path, { method, body, auth, isForm, retry: false });
+      if (ok) return request(path, { method, body, auth, isForm, retry: false, accept });
+    }
+
+    if (accept === "blob") {
+      if (!res.ok) {
+        let msg = res.statusText;
+        try { msg = (await res.json()).error?.message || msg; } catch (_) {}
+        throw new ApiError(res.status, msg);
+      }
+      return res.blob();
     }
 
     const text = await res.text();
@@ -123,6 +132,15 @@
     currentMember: () => store.member,
 
     get: (p) => request(p),
+    getBlob: (p) => request(p, { accept: "blob" }),
+    async openFile(p) {
+      // Fetch an auth-protected file and open it in a new tab (can't put a
+      // bearer token on a plain <a href>).
+      const blob = await request(p, { accept: "blob" });
+      const url = URL.createObjectURL(blob);
+      window.open(url, "_blank", "noopener");
+      setTimeout(() => URL.revokeObjectURL(url), 60000);
+    },
     post: (p, body, opts) => request(p, { method: "POST", body, ...(opts || {}) }),
     patch: (p, body) => request(p, { method: "PATCH", body }),
     put: (p, body) => request(p, { method: "PUT", body }),

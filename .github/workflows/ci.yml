@@ -1,0 +1,68 @@
+name: CI
+
+on:
+  push:
+    branches: [main, Dev]
+  pull_request:
+
+jobs:
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Syntax-check frontend scripts
+        run: for f in js/*.js script.js; do node --check "$f"; done
+
+  backend:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: akdfa
+          POSTGRES_PASSWORD: akdfa
+          POSTGRES_DB: akdfa_test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      NODE_ENV: test
+      DATABASE_URL: postgresql://akdfa:akdfa@localhost:5432/akdfa_test?schema=public
+      JWT_ACCESS_SECRET: ci-access
+      JWT_REFRESH_SECRET: ci-refresh
+      ENCRYPTION_KEY: "0000000000000000000000000000000000000000000000000000000000000000"
+      BOOTSTRAP_ADMIN_EMAIL: admin@akdfa.org
+      BOOTSTRAP_ADMIN_PASSWORD: akdfa-admin-2026
+      PUBLIC_BASE_URL: http://localhost:4000
+      SITE_BASE_URL: http://localhost:5500
+      SEED_DEMO: "on"
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+      - run: npm ci
+      - run: npx prisma generate
+      - name: Unit tests
+        run: npm test
+      - name: Migrate + seed
+        run: |
+          npx prisma migrate deploy
+          node prisma/seed.js
+      - name: Start API
+        run: |
+          node src/server.js & echo $! > /tmp/api.pid
+          npx --yes wait-on http://localhost:4000/health -t 30000
+      - name: Smoke test
+        run: npm run smoke
+      - name: Stop API
+        if: always()
+        run: kill "$(cat /tmp/api.pid)" || true

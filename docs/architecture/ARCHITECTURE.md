@@ -61,6 +61,22 @@ dump / stolen disk / over-broad `SELECT` yields ciphertext, not member data.
   pass (same shape as `scripts/encrypt-backfill.js`). Losing it = losing the data.
 - Pair this with database/volume-level encryption on the host for defence in depth.
 
+### Official documents
+
+Bylaws / minutes / circulars are the one place the site stores genuinely
+confidential files, so they get stricter handling than other uploads:
+
+- Files land in `backend/private/documents/` — **not** under the
+  `express.static("/uploads")` mount, so there is no public URL for them.
+- Every download goes through `GET /admin/documents/:id/file` (or the public
+  route for `PUBLIC` docs), which re-runs the visibility check
+  (`src/modules/admin/documents.access.js`) before streaming a byte.
+- `fileKey` (the on-disk name) is encrypted at rest and never leaves the server.
+- `visibility` is `PUBLIC` (website), `DISTRICT_ONLY` (that district's members +
+  admins + State), or `STATE_ONLY` (State Committee only). District admins can
+  only see / edit / delete documents in their own district.
+- Upload, edit and delete write `DOCUMENT_*` entries to the audit log.
+
 ## Security notes for the team
 
 - Passwords: `bcryptjs`, 12 salt rounds. Never log or return `passwordHash`.

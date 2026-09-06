@@ -53,4 +53,10 @@ function isEncrypted(value) {
   return typeof value === "string" && value.startsWith(PREFIX);
 }
 
-module.exports = { encrypt, decrypt, blindIndex, isEncrypted };
+// Short keyed tag printed on the digital card's QR so a gate check can confirm
+// the card wasn't hand-typed. Not a secret — just unforgeable without the key.
+function cardVerifyToken(memberNumber) {
+  return crypto.createHmac("sha256", KEY).update("card:" + memberNumber).digest("hex").slice(0, 16);
+}
+
+module.exports = { encrypt, decrypt, blindIndex, isEncrypted, cardVerifyToken };

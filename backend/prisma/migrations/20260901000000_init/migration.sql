@@ -2,7 +2,7 @@
 CREATE TYPE "Role" AS ENUM ('MEMBER', 'UNIT_ADMIN', 'DISTRICT_ADMIN', 'STATE_ADMIN');
 
 -- CreateEnum
-CREATE TYPE "MembershipStatus" AS ENUM ('PENDING', 'ACTIVE', 'LAPSED', 'SUSPENDED');
+CREATE TYPE "MembershipStatus" AS ENUM ('PENDING', 'ACTIVE', 'LAPSED', 'SUSPENDED', 'REJECTED');
 
 -- CreateEnum
 CREATE TYPE "ApprovalStatus" AS ENUM ('PENDING', 'APPROVED', 'REJECTED');
@@ -39,6 +39,9 @@ CREATE TYPE "SponsorTier" AS ENUM ('PLATINUM', 'GOLD', 'SILVER', 'BRONZE', 'COMM
 
 -- CreateEnum
 CREATE TYPE "ReferralStatus" AS ENUM ('PENDING', 'JOINED', 'REWARDED');
+
+-- CreateEnum
+CREATE TYPE "FeedbackStatus" AS ENUM ('OPEN', 'ACKNOWLEDGED', 'RESOLVED');
 
 -- CreateTable
 CREATE TABLE "districts" (
@@ -89,6 +92,7 @@ CREATE TABLE "members" (
     "dateOfBirth" TEXT,
     "joinedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "membershipExpiresAt" TIMESTAMP(3),
+    "renewalReminderAt" TIMESTAMP(3),
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
     "approvedById" TEXT,
@@ -110,6 +114,18 @@ CREATE TABLE "refresh_tokens" (
 );
 
 -- CreateTable
+CREATE TABLE "password_resets" (
+    "id" TEXT NOT NULL,
+    "memberId" TEXT NOT NULL,
+    "tokenHash" TEXT NOT NULL,
+    "expiresAt" TIMESTAMP(3) NOT NULL,
+    "usedAt" TIMESTAMP(3),
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "password_resets_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
 CREATE TABLE "audit_logs" (
     "id" TEXT NOT NULL,
     "actorId" TEXT NOT NULL,
@@ -127,11 +143,15 @@ CREATE TABLE "documents" (
     "id" TEXT NOT NULL,
     "title" TEXT NOT NULL,
     "type" TEXT NOT NULL,
-    "fileUrl" TEXT NOT NULL,
+    "fileKey" TEXT NOT NULL,
+    "mimeType" TEXT,
+    "originalName" TEXT,
+    "fileSize" INTEGER,
     "visibility" "DocumentVisibility" NOT NULL DEFAULT 'STATE_ONLY',
     "districtId" TEXT,
     "uploadedById" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "documents_pkey" PRIMARY KEY ("id")
 );
@@ -178,6 +198,23 @@ CREATE TABLE "contact_messages" (
 );
 
 -- CreateTable
+CREATE TABLE "feedback" (
+    "id" TEXT NOT NULL,
+    "authorId" TEXT NOT NULL,
+    "unitId" TEXT NOT NULL,
+    "districtId" TEXT NOT NULL,
+    "subject" TEXT NOT NULL,
+    "message" TEXT NOT NULL,
+    "status" "FeedbackStatus" NOT NULL DEFAULT 'OPEN',
+    "response" TEXT,
+    "handledById" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "feedback_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
 CREATE TABLE "events" (
     "id" TEXT NOT NULL,
     "title" TEXT NOT NULL,
@@ -190,11 +227,30 @@ CREATE TABLE "events" (
     "startsAt" TIMESTAMP(3) NOT NULL,
     "endsAt" TIMESTAMP(3),
     "status" "ApprovalStatus" NOT NULL DEFAULT 'APPROVED',
+    "photos" TEXT[] DEFAULT ARRAY[]::TEXT[],
+    "bracket" JSONB,
     "createdById" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "events_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "charity_reports" (
+    "id" TEXT NOT NULL,
+    "eventId" TEXT NOT NULL,
+    "peopleHelped" INTEGER,
+    "amountRaised" DECIMAL(10,2),
+    "amountSpent" DECIMAL(10,2),
+    "beneficiary" TEXT,
+    "summary" TEXT,
+    "photos" TEXT[] DEFAULT ARRAY[]::TEXT[],
+    "submittedById" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "charity_reports_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -277,6 +333,7 @@ CREATE TABLE "matches" (
     "resultSummary" TEXT,
     "homeScore" TEXT,
     "awayScore" TEXT,
+    "photos" TEXT[] DEFAULT ARRAY[]::TEXT[],
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
@@ -356,8 +413,11 @@ CREATE TABLE "sponsor_payments" (
     "currency" TEXT NOT NULL DEFAULT 'INR',
     "status" "PaymentStatus" NOT NULL DEFAULT 'PENDING',
     "gatewayRef" TEXT,
+    "payToken" TEXT,
+    "note" TEXT,
     "invoiceNumber" TEXT,
     "invoiceUrl" TEXT,
+    "paidAt" TIMESTAMP(3),
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "sponsor_payments_pkey" PRIMARY KEY ("id")
@@ -544,6 +604,12 @@ CREATE UNIQUE INDEX "refresh_tokens_tokenHash_key" ON "refresh_tokens"("tokenHas
 CREATE INDEX "refresh_tokens_memberId_idx" ON "refresh_tokens"("memberId");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "password_resets_tokenHash_key" ON "password_resets"("tokenHash");
+
+-- CreateIndex
+CREATE INDEX "password_resets_memberId_idx" ON "password_resets"("memberId");
+
+-- CreateIndex
 CREATE INDEX "audit_logs_entityType_entityId_idx" ON "audit_logs"("entityType", "entityId");
 
 -- CreateIndex
@@ -562,6 +628,12 @@ CREATE INDEX "news_posts_scope_idx" ON "news_posts"("scope");
 CREATE UNIQUE INDEX "newsletter_subscribers_emailHash_key" ON "newsletter_subscribers"("emailHash");
 
 -- CreateIndex
+CREATE INDEX "feedback_unitId_idx" ON "feedback"("unitId");
+
+-- CreateIndex
+CREATE INDEX "feedback_districtId_idx" ON "feedback"("districtId");
+
+-- CreateIndex
 CREATE INDEX "events_districtId_idx" ON "events"("districtId");
 
 -- CreateIndex
@@ -569,6 +641,9 @@ CREATE INDEX "events_unitId_idx" ON "events"("unitId");
 
 -- CreateIndex
 CREATE INDEX "events_startsAt_idx" ON "events"("startsAt");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "charity_reports_eventId_key" ON "charity_reports"("eventId");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "event_rsvps_eventId_memberId_key" ON "event_rsvps"("eventId", "memberId");
@@ -602,6 +677,9 @@ CREATE UNIQUE INDEX "match_predictions_matchId_memberId_key" ON "match_predictio
 
 -- CreateIndex
 CREATE UNIQUE INDEX "trial_applications_trialId_memberId_key" ON "trial_applications"("trialId", "memberId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "sponsor_payments_payToken_key" ON "sponsor_payments"("payToken");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "sponsor_payments_invoiceNumber_key" ON "sponsor_payments"("invoiceNumber");
@@ -655,6 +733,9 @@ ALTER TABLE "members" ADD CONSTRAINT "members_approvedById_fkey" FOREIGN KEY ("a
 ALTER TABLE "refresh_tokens" ADD CONSTRAINT "refresh_tokens_memberId_fkey" FOREIGN KEY ("memberId") REFERENCES "members"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE "password_resets" ADD CONSTRAINT "password_resets_memberId_fkey" FOREIGN KEY ("memberId") REFERENCES "members"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE "audit_logs" ADD CONSTRAINT "audit_logs_actorId_fkey" FOREIGN KEY ("actorId") REFERENCES "members"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
@@ -670,6 +751,15 @@ ALTER TABLE "news_posts" ADD CONSTRAINT "news_posts_districtId_fkey" FOREIGN KEY
 ALTER TABLE "news_posts" ADD CONSTRAINT "news_posts_authorId_fkey" FOREIGN KEY ("authorId") REFERENCES "members"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE "feedback" ADD CONSTRAINT "feedback_authorId_fkey" FOREIGN KEY ("authorId") REFERENCES "members"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "feedback" ADD CONSTRAINT "feedback_unitId_fkey" FOREIGN KEY ("unitId") REFERENCES "units"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "feedback" ADD CONSTRAINT "feedback_handledById_fkey" FOREIGN KEY ("handledById") REFERENCES "members"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE "events" ADD CONSTRAINT "events_districtId_fkey" FOREIGN KEY ("districtId") REFERENCES "districts"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
@@ -677,6 +767,12 @@ ALTER TABLE "events" ADD CONSTRAINT "events_unitId_fkey" FOREIGN KEY ("unitId") 
 
 -- AddForeignKey
 ALTER TABLE "events" ADD CONSTRAINT "events_createdById_fkey" FOREIGN KEY ("createdById") REFERENCES "members"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "charity_reports" ADD CONSTRAINT "charity_reports_eventId_fkey" FOREIGN KEY ("eventId") REFERENCES "events"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "charity_reports" ADD CONSTRAINT "charity_reports_submittedById_fkey" FOREIGN KEY ("submittedById") REFERENCES "members"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "event_rsvps" ADD CONSTRAINT "event_rsvps_eventId_fkey" FOREIGN KEY ("eventId") REFERENCES "events"("id") ON DELETE CASCADE ON UPDATE CASCADE;

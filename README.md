@@ -27,6 +27,17 @@ companion "AKDFA Database Overview".
 - **Phase 5 — payments & store:** Razorpay-backed membership fees and the AKDFA store
   (cart → order → checkout), member pricing, order tracking, store product management.
 
+## Public site is data-driven
+
+The marketing pages read live data through `js/public-content.js`: `units.html` shows each
+district "brought to life" (story, events, results, charity impact via
+`GET /districts/:id/showcase`), `news.html` renders the live news feed + events calendar,
+`sponsors.html` lists real sponsors. Pages fall back to their static content if the API is
+unreachable. Sponsors pay via `sponsor-pay.html?token=…` (no login) and get an invoice.
+
+> If you serve the site with a host that rewrites `.html` URLs, make sure it **preserves
+> query strings** so `sponsor-pay.html?token=…` works.
+
 ## Run it locally
 
 ### 1. Database + API
@@ -34,10 +45,16 @@ companion "AKDFA Database Overview".
 ```bash
 cd backend
 npm install
-cp .env.example .env          # then set DATABASE_URL to your local Postgres
-npm run setup                  # migrate + generate + seed (14 districts, 17 units, admin, demo data)
+# .env.development is committed with working local defaults. If your Postgres
+# password isn't "postgres", create backend/.env with:
+#   DATABASE_URL="postgresql://postgres:YOURPASS@localhost:5432/akdfa_dev?schema=public"
+npm run setup                  # migrate + generate + seed (districts, units, admin, demo data)
 npm run dev                    # API on http://localhost:4000
 ```
+
+Environment files load in order `.env.<NODE_ENV>.local` → `.env.local` → `.env.<NODE_ENV>` → `.env`
+(first wins; host env beats all). For live: fill `backend/.env.production` (or the host's env) and
+run `NODE_ENV=production npm start` — it refuses to boot without the required secrets.
 
 `npm run setup` prints the bootstrap **State Committee** login (default
 `admin@akdfa.org` / `akdfa-admin-2026` — change via `.env`).
@@ -74,11 +91,26 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 Never change the key once real data exists. For a database that already holds plaintext:
 `node backend/scripts/encrypt-backfill.js`. Details in `docs/architecture/ARCHITECTURE.md`.
 
-## Payments
+## Integrations (all optional — sensible defaults out of the box)
 
-Set `RAZORPAY_KEY_ID` / `RAZORPAY_KEY_SECRET` in `backend/.env` to enable checkout. The browser
-checkout handler verifies each payment via `POST /payments/verify`; configure the dashboard
-webhook (`/payments/webhook`, `RAZORPAY_WEBHOOK_SECRET`) for production.
+| What | Default | Production |
+|---|---|---|
+| **Payments** | off (checkout → 503) | set `RAZORPAY_KEY_ID` / `RAZORPAY_KEY_SECRET` (+ `RAZORPAY_WEBHOOK_SECRET` for the dashboard webhook) |
+| **File storage** | `UPLOAD_DRIVER=local` (disk) | `UPLOAD_DRIVER=s3` + `S3_BUCKET` / `S3_REGION` / keys — works with AWS S3, Cloudflare R2, MinIO |
+| **Email** | `MAIL_DRIVER=log` (prints) | `MAIL_DRIVER=smtp` + `SMTP_HOST` / `SMTP_USER` / `SMTP_PASS` |
+| **Renewal reminders** | manual | schedule `npm run reminders` daily (cron / Task Scheduler) |
+
+The S3 and SMTP SDKs are `optionalDependencies`, loaded only when their driver is selected.
+
+## Tests & CI
+
+```bash
+cd backend && npm test          # unit tests (crypto, access rules, notify, receipts) — no DB
+cd backend && npm run smoke     # end-to-end against a running API + seeded DB
+```
+
+`.github/workflows/ci.yml` runs the syntax checks, unit tests, and a full migrate → seed →
+smoke pass against a Postgres service on every push / PR.
 
 ## Docs
 

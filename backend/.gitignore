@@ -1,6 +1,12 @@
 node_modules/
-.env
 dist/
 *.log
 uploads/
 !uploads/.gitkeep
+private/
+
+# Secrets & machine-specific overrides — .env.development and .env.production
+# ARE committed (safe defaults / template); these are not.
+.env
+.env.local
+.env.*.local

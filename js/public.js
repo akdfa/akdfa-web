@@ -42,6 +42,30 @@
     });
   }
 
+  /* ---- public official documents (about.html) ------------------------- */
+  const docSection = document.querySelector("[data-public-documents]");
+  if (docSection) {
+    api.get("/public/documents").then(({ documents }) => {
+      if (!documents || !documents.length) return;
+      const list = document.getElementById("publicDocList");
+      list.innerHTML = documents
+        .map((d) => {
+          const kb = d.fileSize ? ` · ${Math.max(1, Math.round(d.fileSize / 1024))} KB` : "";
+          return `<a class="doc-link" href="${api.API}/public/documents/${d.id}/file" target="_blank" rel="noopener">
+            <span><strong>${escapeHtml(d.title)}</strong><small>${escapeHtml(cap(d.type))}${kb}</small></span>
+            <i class="fa-solid fa-download" aria-hidden="true"></i></a>`;
+        })
+        .join("");
+      docSection.hidden = false;
+    }).catch(() => {});
+  }
+  function escapeHtml(s) {
+    return String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  }
+  function cap(s) {
+    return String(s || "").charAt(0) + String(s || "").slice(1).toLowerCase();
+  }
+
   /* ---- contact form ---------------------------------------------------- */
   const contactForm = $("#contactForm");
   if (contactForm) {
@@ -155,6 +179,35 @@
       } catch (err) {
         setMsg(msg, err.status === 409 ? "That email or phone is already registered. Try signing in." : (err.message || "Registration failed."), false);
       } finally { busy(joinForm, false); }
+    });
+  }
+
+  /* ---- forgot password (login.html) ----------------------------- */
+  const forgotToggle = $("#forgotToggle");
+  const forgotForm = $("#forgotForm");
+  if (forgotToggle && forgotForm) {
+    forgotToggle.addEventListener("click", () => {
+      forgotForm.hidden = !forgotForm.hidden;
+      if (!forgotForm.hidden) forgotForm.querySelector("input").focus();
+    });
+    forgotForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const msg = $("#forgotMessage");
+      const f = fields(forgotForm);
+      busy(forgotForm, true);
+      try {
+        const r = await api.publicPost("/auth/forgot-password", { email: f.email });
+        setMsg(msg, r.message || "If that email has an account, a reset link is on its way.", true);
+        if (r.devResetUrl) {
+          const a = document.createElement("a");
+          a.href = r.devResetUrl;
+          a.textContent = "Open reset link (dev)";
+          a.style.cssText = "display:block;margin-top:8px";
+          msg.after(a);
+        }
+      } catch (err) {
+        setMsg(msg, err.status === 0 ? "Can't reach the server." : err.message, false);
+      } finally { busy(forgotForm, false); }
     });
   }
 

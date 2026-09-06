@@ -1342,6 +1342,36 @@ textarea:invalid:not(:placeholder-shown) {
   font-weight: 500;
 }
 
+.doc-link {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 18px;
+  margin-bottom: 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--card);
+  color: var(--text);
+  text-decoration: none;
+  transition: border-color var(--transition), transform var(--transition);
+}
+.doc-link:hover {
+  border-color: var(--border-strong);
+  transform: translateY(-1px);
+}
+.doc-link span {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.doc-link small {
+  color: var(--muted-soft);
+}
+.doc-link i {
+  color: var(--gold-soft);
+}
+
 .login-copy {
   display: grid;
   gap: clamp(20px, 3vw, 28px);

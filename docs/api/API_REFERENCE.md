@@ -133,12 +133,25 @@ Full request/response shapes are defined by the route handlers in `backend/src/m
 
 ## Admin — `/admin` (Phase 4)
 
+Official documents are stored **outside the web root**; the file bytes are only
+served through the visibility-checked streaming routes below (never a static URL).
+Upload / update / delete are all written to the audit log.
+
 | Method | Path | Auth | Notes |
 |---|---|---|---|
-| GET | `/admin/documents` | Member | State admin sees all; others see public + own district |
-| POST | `/admin/documents` | District admin | Bylaws, minutes, circulars |
-| DELETE | `/admin/documents/:id` | District admin | |
-| GET | `/admin/audit-logs` | State admin | Filter by `entityType`, `entityId` |
+| GET | `/admin/documents` | Member | STATE_ADMIN → all; DISTRICT_ADMIN/member → `PUBLIC` + `DISTRICT_ONLY` for their own district. `fileKey` is never returned |
+| GET | `/admin/documents/:id/file` | per-document | Streams the file after re-checking visibility (`PUBLIC` works anonymously) |
+| POST | `/admin/documents` | District admin | **multipart/form-data**: `file` + `title`, `type`, `visibility`, optional `districtId` (state admin only). Max 20 MB, PDF/Word/image/text |
+| PATCH | `/admin/documents/:id` | District admin (own district) / state admin | Edit `title`, `type`, `visibility`, `districtId` |
+| DELETE | `/admin/documents/:id` | District admin (own district) / state admin | Removes the row and the underlying file |
+| GET | `/admin/audit-logs` | State admin | Filter by `entityType`, `entityId`. Now includes `DOCUMENT_UPLOADED/UPDATED/DELETED` |
+
+## Public — `/public` additions
+
+| Method | Path | Auth | Notes |
+|---|---|---|---|
+| GET | `/public/documents` | — | Metadata for `PUBLIC` documents (for the website) |
+| GET | `/public/documents/:id/file` | — | Streams a `PUBLIC` document; 404 for anything else |
 
 ## Payments — `/payments` (Phase 5)
 
@@ -180,6 +193,100 @@ Full request/response shapes are defined by the route handlers in `backend/src/m
 | POST | `/public/newsletter` | — | Newsletter signup |
 | POST | `/public/newsletter/unsubscribe` | — | |
 | POST | `/public/contact` | — | Contact form submission |
+
+## Feedback — `/feedback` (Phase 2 — "feedback straight to your unit leaders")
+
+| Method | Path | Auth | Notes |
+|---|---|---|---|
+| POST | `/feedback` | Member | `{ subject, message }` → goes to the member's unit; notifies unit/district admins |
+| GET | `/feedback/me` | Member | The member's own threads + any replies |
+| GET | `/feedback` | Unit admin | Inbox — unit admin sees their unit, district admin their district. `?status=` |
+| PATCH | `/feedback/:id` | Unit admin (own scope) | `{ status?, response? }` — a `response` notifies the member |
+
+## Reports additions
+
+| Method | Path | Auth | Notes |
+|---|---|---|---|
+| GET | `/reports` | District admin | State admin now gets `district` + `submittedBy` on each row (all districts) |
+| GET | `/reports/trends` | State admin | 12-month series of `newMembers` + `feesCollected`, plus per-district counts |
+
+## Events / cricket additions (Phase 3 — "scores, brackets, photos, charity reports")
+
+| Method | Path | Auth | Notes |
+|---|---|---|---|
+| PATCH | `/events/:id/photos` | Unit admin | `{ photos: [url] }` — replace an event's photo list |
+| PATCH | `/events/:id` | Unit admin | now also accepts `photos`, `bracket` (JSON) |
+| GET | `/events/:id/charity-report` | — | The charity report for a CHARITY event |
+| PUT | `/events/:id/charity-report` | Unit admin | Upsert `{ peopleHelped, amountRaised, amountSpent, beneficiary, summary, photos }` |
+| PATCH | `/cricket/matches/:id/result` | Unit admin | now also accepts `photos: [url]` |
+| GET | `/districts/:id/showcase` | — | "Brought to life": story, upcoming events, recent results, charity impact |
+
+## Notifications
+
+- `POST /notifications/broadcast` is now **District admin+**. A district admin can only broadcast to their own district; a state admin can target one district or everyone.
+
+## Payments additions (Phase 5 — receipts, invoices, sponsor pay links)
+
+| Method | Path | Auth | Notes |
+|---|---|---|---|
+| GET | `/payments/membership-fees/:id/receipt` | Member (self) / admin | HTML receipt (browser → Save as PDF); `receiptUrl` set on payment success |
+| GET | `/store/orders/:id/receipt` | Member (self) / admin | HTML order receipt |
+| POST | `/payments/sponsors/:sponsorId/request` | District admin | `{ amount, note? }` → `{ payUrl }` — shareable link for the sponsor |
+| GET | `/payments/sponsors/payments` | District admin | All sponsor payments |
+| GET | `/payments/sponsor-payments/by-token/:token` | — | Sponsor loads their pay link |
+| POST | `/payments/sponsor-payments/by-token/:token/checkout` | — | Creates the Razorpay order |
+| POST | `/payments/sponsor-payments/by-token/:token/verify` | — | Confirms payment, issues an invoice number |
+| GET | `/payments/sponsor-payments/:id/invoice` | — (paid only) | HTML tax invoice |
+
+On any successful payment (verify or webhook) a receipt/invoice URL is generated and, for membership fees, the member is marked `ACTIVE` with a fresh expiry and a `PAYMENT` notification.
+
+## Public additions
+
+| Method | Path | Auth | Notes |
+|---|---|---|---|
+| GET | `/news` | — | (was already public) now returned with `district` for the public feed |
+| GET | `/events` | — | now returns `district` per event for the public calendar |
+
+## Scheduled job
+
+`npm run reminders` (`scripts/send-reminders.js`) — creates renewal-reminder notifications for members expiring within 30 days and moves overdue members to `LAPSED`. Run daily via cron / Task Scheduler.
+
+## Auth — password management
+
+| Method | Path | Auth | Notes |
+|---|---|---|---|
+| POST | `/auth/forgot-password` | — | `{ email }` — always 200; emails a 1-hour reset link. In non-prod the response also carries `devResetUrl` |
+| POST | `/auth/reset-password` | — | `{ token, password }` — sets the password, revokes all refresh tokens |
+| POST | `/auth/change-password` | Member | `{ currentPassword, newPassword }` — revokes other sessions, returns a fresh token pair |
+
+## Membership card verification
+
+| Method | Path | Auth | Notes |
+|---|---|---|---|
+| GET | `/members/:id/card` | Member/admin | now also returns `verifyUrl` (signed) for the QR |
+| GET | `/public/members/verify?m=&sig=` | — | Gate check: `{ valid, reason, member }`; `sig` is a keyed HMAC of the member number |
+
+## CRUD additions (portal "edit / delete" gaps)
+
+| Method | Path | Auth | Notes |
+|---|---|---|---|
+| POST | `/members/:id/reject` | Unit admin | Pending → `REJECTED` (can't log in) |
+| POST | `/units/:id/reject` | District admin | Pending unit → `REJECTED` |
+| PATCH | `/polls/:id` · POST `/polls/:id/close` · DELETE `/polls/:id` | Unit admin | Edit / close early / delete; voting a closed poll is rejected |
+| PATCH | `/store/products/:id` | State admin | Price, stock, `isActive`, … |
+| GET | `/store/products?all=true` | State admin | Includes hidden products |
+| PATCH `/sponsors/:id` · DELETE `/sponsors/:id` | | District admin | Edit / remove; `isPublic` toggle |
+| DELETE | `/cricket/players/:id` | Unit admin | Remove a player from a roster |
+
+Deleting a news post or event now also removes its uploaded images.
+
+## Notifications
+
+Notification creation runs through `notify()` (`src/modules/notifications/notify.service.js`), which skips members who have disabled **every** channel for that category. `ANNOUNCEMENT` broadcasts, payment receipts, feedback and approvals are sent with `force` and always deliver.
+
+## Environment
+
+`backend/src/config/env.js` loads `.env.<NODE_ENV>.local` → `.env.local` → `.env.<NODE_ENV>` → `.env` (first wins; real host env beats all). Commit `.env.development` (safe defaults) and `.env.production` (template); keep secrets in `.env` / `*.local`. In `NODE_ENV=production` the server refuses to boot without `DATABASE_URL`, `JWT_ACCESS_SECRET`, `JWT_REFRESH_SECRET`, `ENCRYPTION_KEY`.
 
 ## Error shape
 

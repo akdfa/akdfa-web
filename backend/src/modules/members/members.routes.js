@@ -7,6 +7,7 @@ const { requireRole, RANK } = require("../../middleware/requireRole");
 const asyncHandler = require("../../utils/asyncHandler");
 const ApiError = require("../../utils/ApiError");
 const { logAudit } = require("../admin/audit.service");
+const { notify } = require("../notifications/notify.service");
 
 const router = Router();
 
@@ -113,6 +114,11 @@ router.get(
     if (!member) throw ApiError.notFound("Member not found");
     if (member.status !== "ACTIVE") throw ApiError.badRequest("Card is only valid for active members");
 
+    const sig = require("../../utils/crypto").cardVerifyToken(member.memberNumber);
+    const verifyUrl = `${require("../../config/env").siteBaseUrl.replace(/\/$/, "")}/verify.html?m=${encodeURIComponent(
+      member.memberNumber
+    )}&sig=${sig}`;
+
     res.json({
       card: {
         memberNumber: member.memberNumber,
@@ -121,6 +127,7 @@ router.get(
         district: member.district.name,
         unit: member.unit.name,
         expiresAt: member.membershipExpiresAt,
+        verifyUrl,
       },
     });
   })
@@ -150,15 +157,32 @@ router.post(
       where: { referredId: member.id, status: "PENDING" },
       data: { status: "JOINED" },
     });
-    await prisma.notification.create({
-      data: {
-        memberId: member.id,
-        title: "Welcome to AKDFA",
-        body: "Your membership has been approved. Your digital card is now active.",
-        category: "ANNOUNCEMENT",
-      },
+    await notify(member.id, {
+      title: "Welcome to AKDFA",
+      body: "Your membership has been approved. Your digital card is now active.",
+      category: "ANNOUNCEMENT",
+      force: true,
     });
     await logAudit(req.auth.id, "MEMBER_APPROVED", "Member", member.id);
+    res.json({ member: publicMember(member) });
+  })
+);
+
+// Reject a pending application.
+router.post(
+  "/:id/reject",
+  requireAuth,
+  requireRole("UNIT_ADMIN"),
+  validate({ body: z.object({ reason: z.string().optional() }).optional() }),
+  asyncHandler(async (req, res) => {
+    const target = await prisma.member.findUnique({ where: { id: req.params.id } });
+    if (!target) throw ApiError.notFound("Member not found");
+    if (target.status !== "PENDING") throw ApiError.badRequest("Only pending members can be rejected");
+    if (req.auth.role === "UNIT_ADMIN" && target.unitId !== req.auth.unitId) throw ApiError.forbidden();
+    if (req.auth.role === "DISTRICT_ADMIN" && target.districtId !== req.auth.districtId) throw ApiError.forbidden();
+
+    const member = await prisma.member.update({ where: { id: target.id }, data: { status: "REJECTED" } });
+    await logAudit(req.auth.id, "MEMBER_REJECTED", "Member", member.id, { reason: req.body?.reason });
     res.json({ member: publicMember(member) });
   })
 );

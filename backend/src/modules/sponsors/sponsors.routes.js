@@ -69,6 +69,39 @@ router.post(
   })
 );
 
+router.patch(
+  "/:id",
+  requireAuth,
+  requireRole("DISTRICT_ADMIN"),
+  validate({
+    body: z.object({
+      name: z.string().min(2).optional(),
+      logoUrl: z.string().url().optional(),
+      tier: z.enum(["PLATINUM", "GOLD", "SILVER", "BRONZE", "COMMUNITY"]).optional(),
+      districtId: z.string().nullable().optional(),
+      contactName: z.string().optional(),
+      contactEmail: z.string().email().optional(),
+      contactPhone: z.string().optional(),
+      website: z.string().url().optional(),
+      isPublic: z.boolean().optional(),
+    }),
+  }),
+  asyncHandler(async (req, res) => {
+    const sponsor = await prisma.sponsor.update({ where: { id: req.params.id }, data: req.body });
+    res.json({ sponsor });
+  })
+);
+
+router.delete(
+  "/:id",
+  requireAuth,
+  requireRole("DISTRICT_ADMIN"),
+  asyncHandler(async (req, res) => {
+    await prisma.sponsor.delete({ where: { id: req.params.id } });
+    res.status(204).send();
+  })
+);
+
 // Phase 3 — "Track local sponsorships: a simple way to log local sponsor support and small expenses."
 router.get(
   "/districts/:districtId/logs",

@@ -22,9 +22,10 @@ const ENCRYPTED = {
   Unit: { fields: ["address", "contactEmail", "contactPhone"], blind: {} },
   Sponsor: { fields: ["contactName", "contactEmail", "contactPhone"], blind: {} },
   SponsorshipLog: { fields: ["sponsorName", "notes"], blind: {} },
-  Document: { fields: ["fileUrl"], blind: {} },
+  Document: { fields: ["fileKey"], blind: {} },
   NewsletterSubscriber: { fields: ["email"], blind: { email: "emailHash" } },
   ContactMessage: { fields: ["email", "phone", "message"], blind: {} },
+  Feedback: { fields: ["message", "response"], blind: {} },
 };
 
 const DECRYPT_KEYS = new Set(

@@ -21,6 +21,22 @@
 
   let me = null; // current member
   let districtsCache = null;
+  let _cardVerifyUrl = null;
+
+  // Load an external script once; resolve true when its global is available.
+  const _scripts = {};
+  function loadScript(src, globalName) {
+    if (globalName && window[globalName]) return Promise.resolve(true);
+    if (_scripts[src]) return _scripts[src];
+    _scripts[src] = new Promise((resolve) => {
+      const s = document.createElement("script");
+      s.src = src;
+      s.onload = () => resolve(true);
+      s.onerror = () => resolve(false);
+      document.head.appendChild(s);
+    });
+    return _scripts[src];
+  }
 
   function can(role) {
     return me && RANK[me.role] >= RANK[role];
@@ -122,6 +138,7 @@
       ["#/feed", "News Feed", "fa-newspaper"],
       ["#/events", "Events", "fa-calendar-days"],
       ["#/polls", "Polls", "fa-square-poll-vertical"],
+      ["#/feedback", "Feedback", "fa-comment-dots"],
       ["#/notifications", "Notifications", "fa-bell"],
     ]},
     { group: "Cricket", items: [
@@ -133,17 +150,20 @@
     ]},
     { group: "Committee", role: "UNIT_ADMIN", items: [
       ["#/admin/members", "Members", "fa-users", "UNIT_ADMIN"],
+      ["#/admin/feedback", "Feedback Inbox", "fa-inbox", "UNIT_ADMIN"],
       ["#/admin/cricket", "Manage Cricket", "fa-clipboard-list", "UNIT_ADMIN"],
       ["#/admin/content", "News / Events / Polls", "fa-pen-nib", "UNIT_ADMIN"],
+      ["#/admin/broadcast", "Broadcast", "fa-tower-broadcast", "DISTRICT_ADMIN"],
       ["#/admin/units", "Units", "fa-sitemap", "DISTRICT_ADMIN"],
       ["#/admin/sponsors", "Sponsors & Logs", "fa-handshake", "DISTRICT_ADMIN"],
+      ["#/admin/orders", "Store Orders", "fa-box-open", "DISTRICT_ADMIN"],
       ["#/admin/reports", "District Report", "fa-file-lines", "DISTRICT_ADMIN"],
       ["#/admin/documents", "Documents", "fa-folder-open", "DISTRICT_ADMIN"],
     ]},
     { group: "State Committee", role: "STATE_ADMIN", items: [
       ["#/admin/overview", "State Overview", "fa-chart-line", "STATE_ADMIN"],
+      ["#/admin/all-reports", "District Reports", "fa-folder-tree", "STATE_ADMIN"],
       ["#/admin/roles", "Roles & Audit", "fa-user-shield", "STATE_ADMIN"],
-      ["#/admin/broadcast", "Broadcast", "fa-tower-broadcast", "STATE_ADMIN"],
       ["#/admin/store-admin", "Store Products", "fa-tags", "STATE_ADMIN"],
     ]},
   ];
@@ -242,6 +262,7 @@
       try {
         const r = await api.get(`/members/${me.id}/card`);
         card = r.card;
+        _cardVerifyUrl = card.verifyUrl;
       } catch (e) {
         /* not active */
       }
@@ -262,17 +283,21 @@
             <div><span>Valid till</span><strong>${card.expiresAt ? fmtDate(card.expiresAt) : "—"}</strong></div>
           </div>
         </div>
-        <div class="card" style="margin-top:16px;max-width:460px">
-          <div id="qrbox" style="display:grid;place-items:center;padding:10px"></div>
-          <p class="card-muted" style="text-align:center">Verification code · ${esc(card.memberNumber)}</p>
+        <div class="card" style="margin-top:16px;max-width:460px;text-align:center">
+          <div id="qrbox" style="display:inline-block;padding:12px;background:#fff;border-radius:12px"></div>
+          <p class="card-muted" style="margin-top:10px">Gate staff scan this to verify · ${esc(card.memberNumber)}</p>
         </div>`;
     },
-    after: () => {
+    after: async () => {
       const box = $("#qrbox");
-      if (box && window.location) {
-        // lightweight visual code (not a real QR lib) — encodes the member number
-        const code = esc(me.memberNumber);
-        box.innerHTML = `<div style="font-family:monospace;letter-spacing:.3em;font-size:1.4rem;font-weight:800;color:var(--gold-soft)">${code}</div>`;
+      const url = _cardVerifyUrl || `${location.origin}/verify.html`;
+      if (!box) return;
+      const ok = await loadScript("https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js", "QRCode");
+      if (ok && window.QRCode) {
+        box.innerHTML = "";
+        new window.QRCode(box, { text: url, width: 176, height: 176, correctLevel: window.QRCode.CorrectLevel.M });
+      } else {
+        box.innerHTML = `<div style="font-family:monospace;letter-spacing:.2em;color:#111;font-weight:800">${esc(me.memberNumber)}</div>`;
       }
     },
   });
@@ -515,8 +540,18 @@
       return `<div class="pv-head"><h1>My Orders</h1></div><div class="list">${orders
         .map((o) => `<div class="card"><div class="row-between"><strong>${money(o.totalAmount)}</strong><span class="pill">${titleCase(o.status)}</span></div>
           <small class="card-muted">${fmtDate(o.createdAt)} · ${o.items.map((i) => `${esc(i.product.name)}${i.size ? " (" + esc(i.size) + ")" : ""} ×${i.quantity}`).join(", ")}</small>
-          <div style="margin-top:6px"><small class="card-muted">Ship to: ${esc(o.shippingAddress || "—")}</small></div></div>`)
+          <div style="margin-top:6px"><small class="card-muted">Ship to: ${esc(o.shippingAddress || "—")}</small></div>
+          ${["PAID", "PROCESSING", "SHIPPED", "DELIVERED"].includes(o.status) ? `<div style="margin-top:8px"><button class="btn-ghost btn-small" data-act="orderReceipt" data-id="${o.id}">Download receipt</button></div>` : ""}
+        </div>`)
         .join("")}</div>`;
+    },
+    after: () => {
+      view().addEventListener("click", async (e) => {
+        const t = e.target.closest('[data-act="orderReceipt"]');
+        if (!t) return;
+        try { await api.openFile(`/store/orders/${t.dataset.id}/receipt`); }
+        catch (err) { toast(err.message, "error"); }
+      });
     },
   });
 
@@ -532,19 +567,25 @@
         <div class="card" style="max-width:460px">
           <div class="row-between"><h2>${year} membership</h2>${paid ? '<span class="pill pill--ok">Paid</span>' : '<span class="pill pill--warn">Due</span>'}</div>
           ${paid
-            ? `<p class="card-muted">Paid on ${fmtDate(thisYear.paidAt)}. ${thisYear.receiptUrl ? `<a href="${esc(thisYear.receiptUrl)}" target="_blank">Receipt</a>` : ""}</p>`
+            ? `<p class="card-muted">Paid on ${fmtDate(thisYear.paidAt)}.</p><button class="btn-ghost btn-small" data-act="feeReceipt" data-id="${thisYear.id}">Download receipt</button>`
             : `<p class="card-muted">Complete your ${year} fee to keep your digital card active for the year.</p>
                <button class="btn btn-primary" data-act="payFee" data-period="${year}">Pay now</button>`}
         </div>
         <div class="card" style="margin-top:16px">
           <h2>Payment history</h2>
-          ${fees.length ? `<div class="table-wrap"><table class="pv-table"><thead><tr><th>Year</th><th>Amount</th><th>Status</th><th>Paid</th></tr></thead>
-            <tbody>${fees.map((f) => `<tr><td>${f.period}</td><td>${money(f.amount)}</td><td>${titleCase(f.status)}</td><td>${fmtDate(f.paidAt)}</td></tr>`).join("")}</tbody></table></div>`
+          ${fees.length ? `<div class="table-wrap"><table class="pv-table"><thead><tr><th>Year</th><th>Amount</th><th>Status</th><th>Paid</th><th></th></tr></thead>
+            <tbody>${fees.map((f) => `<tr><td>${f.period}</td><td>${money(f.amount)}</td><td>${titleCase(f.status)}</td><td>${fmtDate(f.paidAt)}</td><td>${f.status === "SUCCESS" ? `<button class="btn-ghost btn-small" data-act="feeReceipt" data-id="${f.id}">Receipt</button>` : ""}</td></tr>`).join("")}</tbody></table></div>`
             : '<p class="card-muted">No payments yet.</p>'}
         </div>`;
     },
     after: () => {
       view().addEventListener("click", async (e) => {
+        const rec = e.target.closest('[data-act="feeReceipt"]');
+        if (rec) {
+          try { await api.openFile(`/payments/membership-fees/${rec.dataset.id}/receipt`); }
+          catch (err) { toast(err.message, "error"); }
+          return;
+        }
         const t = e.target.closest('[data-act="payFee"]');
         if (!t) return;
         busy(t, true, "Starting…");
@@ -651,6 +692,13 @@
             <div class="list">${referrals.length ? referrals.map((r) => `<div class="list-item"><div class="li-main"><strong>${esc(r.referred.fullName)}</strong><small>${esc(r.referred.memberNumber || "pending")}</small></div><span class="pill">${titleCase(r.status)}</span></div>`).join("") : '<p class="card-muted">None yet.</p>'}</div>
           </div>
         </div>
+        <div class="card" style="margin-top:16px;max-width:420px"><h2>Change password</h2>
+          <div class="pv-form" id="pwForm" style="margin-top:10px">
+            <label>Current password<input type="password" name="currentPassword" autocomplete="current-password"></label>
+            <label>New password<input type="password" name="newPassword" autocomplete="new-password" minlength="8"></label>
+            <button class="btn btn-primary" data-act="changePw">Update password</button><span class="pv-msg" id="pwMsg"></span>
+          </div>
+        </div>
         <div class="card" style="margin-top:16px"><h2>Badges</h2>
           <div class="grid grid-3" style="margin-top:10px">
             ${(allBadges.length ? allBadges : badges.map((b) => b.badge)).map((b) => {
@@ -662,6 +710,22 @@
     },
     after: () => {
       view().addEventListener("click", async (e) => {
+        const pw = e.target.closest('[data-act="changePw"]');
+        if (pw) {
+          const d = readForm($("#pwForm"));
+          if (!d.currentPassword || !d.newPassword || d.newPassword.length < 8) {
+            return setMsg("pwMsg", "Enter your current password and a new one (8+ chars).", false);
+          }
+          busy(pw, true, "Updating…");
+          try {
+            const r = await api.post("/auth/change-password", d);
+            api.session.set(r); // rotated tokens
+            setMsg("pwMsg", "Password updated. Other devices have been signed out.", true);
+            $("#pwForm").querySelectorAll("input").forEach((i) => (i.value = ""));
+          } catch (err) { setMsg("pwMsg", err.message, false); }
+          finally { busy(pw, false); }
+          return;
+        }
         const t = e.target.closest('[data-act="saveProfile"]');
         if (!t) return;
         const msg = $("#profMsg");
@@ -711,7 +775,7 @@
             <td>${esc(m.unit?.name || m.unitId)}</td>
             <td><span class="pill ${m.status === "ACTIVE" ? "pill--ok" : m.status === "PENDING" ? "pill--warn" : "pill--bad"}">${titleCase(m.status)}</span></td>
             <td>${canRole ? `<select class="btn-ghost btn-small" data-act="setRole" data-id="${m.id}">${["MEMBER", "UNIT_ADMIN", "DISTRICT_ADMIN", "STATE_ADMIN"].map((r) => `<option ${r === m.role ? "selected" : ""}>${r}</option>`).join("")}</select>` : titleCase(m.role)}</td>
-            <td>${m.status === "PENDING" ? `<button class="btn-ghost btn-small" data-act="approveM" data-id="${m.id}">Approve</button>` : ""}</td>
+            <td>${m.status === "PENDING" ? `<button class="btn-ghost btn-small" data-act="approveM" data-id="${m.id}">Approve</button> <button class="btn-ghost btn-small btn-danger" data-act="rejectM" data-id="${m.id}">Reject</button>` : ""}</td>
           </tr>`).join("")}</tbody></table></div>`
           : '<div class="empty">No members in this view.</div>'}`;
     },
@@ -733,6 +797,16 @@
             toast(err.message, "error");
             busy(ap, false);
           }
+        }
+        const rj = e.target.closest('[data-act="rejectM"]');
+        if (rj) {
+          if (!confirm("Reject this membership application?")) return;
+          busy(rj, true, "…");
+          try {
+            await api.post(`/members/${rj.dataset.id}/reject`, {});
+            toast("Application rejected", "ok");
+            render();
+          } catch (err) { toast(err.message, "error"); busy(rj, false); }
         }
       });
       view().addEventListener("change", async (e) => {
@@ -760,7 +834,7 @@
         <div class="pv-head"><h1>Units</h1><p>Approve local clubs and register new ones.</p></div>
         <div class="grid grid-2">
           <div class="card"><h2>Pending approval (${pending.length})</h2>
-            <div class="list" style="margin-top:10px">${pending.length ? pending.map((u) => `<div class="list-item"><div class="li-main"><strong>${esc(u.name)}</strong><small>${esc(u.address || "")}</small></div><button class="btn-ghost btn-small" data-act="approveU" data-id="${u.id}">Approve</button></div>`).join("") : '<p class="card-muted">Nothing pending.</p>'}</div>
+            <div class="list" style="margin-top:10px">${pending.length ? pending.map((u) => `<div class="list-item"><div class="li-main"><strong>${esc(u.name)}</strong><small>${esc(u.address || "")}</small></div><div class="row"><button class="btn-ghost btn-small" data-act="approveU" data-id="${u.id}">Approve</button><button class="btn-ghost btn-small btn-danger" data-act="rejectU" data-id="${u.id}">Reject</button></div></div>`).join("") : '<p class="card-muted">Nothing pending.</p>'}</div>
           </div>
           <div class="card"><h2>Register a unit</h2>
             <div class="pv-form" id="unitForm" style="margin-top:10px">
@@ -784,6 +858,13 @@
           busy(a, true, "…");
           try { await api.post(`/units/${a.dataset.id}/approve`, {}); toast("Unit approved", "ok"); render(); }
           catch (err) { toast(err.message, "error"); busy(a, false); }
+        }
+        const ru = e.target.closest('[data-act="rejectU"]');
+        if (ru) {
+          if (!confirm("Reject this unit?")) return;
+          busy(ru, true, "…");
+          try { await api.post(`/units/${ru.dataset.id}/reject`, {}); toast("Unit rejected", "ok"); render(); }
+          catch (err) { toast(err.message, "error"); busy(ru, false); }
         }
         const c = e.target.closest('[data-act="createUnit"]');
         if (c) {
@@ -839,6 +920,38 @@
             <label>Description<textarea name="description"></textarea></label>
             <button class="btn btn-primary" data-act="createEvent">Create</button><span class="pv-msg" id="evtMsg"></span>
           </div></div>
+
+          <div class="card" style="margin-top:14px"><h2>Photos, brackets &amp; charity reports</h2>
+            <div class="pv-form" style="margin-top:10px">
+              <label>Event<select id="evtPick"><option value="">Select an event…</option></select></label>
+            </div>
+            <div id="evtExtras" hidden style="margin-top:12px">
+              <div class="pv-form" id="evtEdit">
+                <label>Title<input name="title"></label>
+                <div class="form-row"><label>Starts<input type="datetime-local" name="startsAt"></label><label>Location<input name="location"></label></div>
+                <div class="row"><button class="btn btn-primary btn-small" data-act="saveEvent">Save details</button>
+                <button class="btn-ghost btn-small btn-danger" data-act="deleteEvent">Delete event</button></div>
+              </div>
+              <div class="pv-form" style="margin-top:12px">
+                <label>Add photos<input type="file" id="evtPhotos" accept="image/*" multiple></label>
+                <button class="btn-ghost btn-small" data-act="uploadEvtPhotos">Upload photos</button>
+                <div id="evtPhotoStrip" class="row" style="margin-top:6px"></div>
+              </div>
+              <div class="pv-form" id="brk" style="margin-top:12px">
+                <label>Tournament bracket (one line per match: <code>Team A vs Team B — winner</code>)<textarea name="bracketText" rows="4"></textarea></label>
+                <button class="btn-ghost btn-small" data-act="saveBracket">Save bracket</button>
+              </div>
+              <div class="pv-form" id="charityForm" style="margin-top:12px">
+                <h3>Charity report</h3>
+                <div class="form-row"><label>People helped<input type="number" name="peopleHelped"></label>
+                <label>Raised (₹)<input type="number" name="amountRaised"></label>
+                <label>Spent (₹)<input type="number" name="amountSpent"></label></div>
+                <label>Beneficiary<input name="beneficiary"></label>
+                <label>Summary<textarea name="summary"></textarea></label>
+                <button class="btn btn-primary btn-small" data-act="saveCharity">Save charity report</button><span class="pv-msg" id="charMsg"></span>
+              </div>
+            </div>
+          </div>
         </div>
 
         <div data-panel="poll" hidden><div class="card"><h2>New poll</h2>
@@ -851,6 +964,7 @@
             </div>
             <button class="btn btn-primary" data-act="createPoll">Create poll</button><span class="pv-msg" id="pollMsg"></span>
           </div></div>
+          <div class="card" style="margin-top:14px"><h2>Existing polls</h2><div id="pollList" class="list" style="margin-top:10px"></div></div>
         </div>`;
     },
     after: async () => {
@@ -860,12 +974,98 @@
         $("#newsList").innerHTML = posts.slice(0, 10).map((p) => `<div class="list-item"><div class="li-main"><strong>${esc(p.title)}</strong><small>${titleCase(p.scope)} · ${fmtDate(p.publishedAt || p.createdAt)}</small></div><button class="btn-ghost btn-small btn-danger" data-act="delNews" data-id="${p.id}">Delete</button></div>`).join("") || '<p class="card-muted">None.</p>';
       };
       refreshNews();
+
+      // ---- event photos / brackets / charity reports ----
+      let currentEvent = null;
+      const drawPhotos = () => {
+        $("#evtPhotoStrip").innerHTML = (currentEvent?.photos || [])
+          .map((u) => `<a href="${esc(u)}" target="_blank"><img src="${esc(u)}" style="height:52px;border-radius:6px;object-fit:cover"></a>`)
+          .join("");
+      };
+      const refreshPolls = async () => {
+        const box = $("#pollList");
+        if (!box) return;
+        const { polls } = await api.get("/polls");
+        box.innerHTML = polls.length
+          ? polls.map((p) => {
+              const closed = p.closesAt && new Date(p.closesAt) < Date.now();
+              return `<div class="list-item"><div class="li-main"><strong>${esc(p.question)}</strong><small>${p.totalVotes || 0} votes${closed ? " · closed" : p.closesAt ? " · closes " + fmtDate(p.closesAt) : ""}</small></div>
+                <div class="row">${closed ? "" : `<button class="btn-ghost btn-small" data-act="closePoll" data-id="${p.id}">Close</button>`}
+                <button class="btn-ghost btn-small btn-danger" data-act="delPoll" data-id="${p.id}">Delete</button></div></div>`;
+            }).join("")
+          : '<p class="card-muted">No polls.</p>';
+      };
+      refreshPolls();
+
+      const selectEvent = async (id) => {
+        if (!id) { $("#evtExtras").hidden = true; return; }
+        const { event } = await api.get("/events/" + id);
+        currentEvent = event;
+        $("#evtExtras").hidden = false;
+        $('#evtEdit [name="title"]').value = event.title || "";
+        $('#evtEdit [name="location"]').value = event.location || "";
+        $('#evtEdit [name="startsAt"]').value = event.startsAt ? new Date(event.startsAt).toISOString().slice(0, 16) : "";
+        $("#brk").hidden = event.type !== "TOURNAMENT";
+        $("#charityForm").hidden = event.type !== "CHARITY";
+        $('#brk textarea[name="bracketText"]').value = Array.isArray(event.bracket) ? event.bracket.join("\n") : "";
+        const cr = event.charityReport || {};
+        ["peopleHelped", "amountRaised", "amountSpent", "beneficiary", "summary"].forEach((k) => {
+          const el = view().querySelector(`#charityForm [name="${k}"]`);
+          if (el) el.value = cr[k] ?? "";
+        });
+        drawPhotos();
+      };
+      try {
+        const { events } = await api.get("/events?from=" + new Date(Date.now() - 180 * 86400000).toISOString());
+        $("#evtPick").innerHTML =
+          '<option value="">Select an event…</option>' +
+          events.map((e) => `<option value="${e.id}">${esc(e.title)} — ${fmtDate(e.startsAt)}</option>`).join("");
+        $("#evtPick").onchange = (ev) => selectEvent(ev.target.value).catch((err) => toast(err.message, "error"));
+      } catch (_) {}
+
       view().addEventListener("click", async (e) => {
         const t = e.target.closest("[data-act]");
         if (!t) return;
         const act = t.dataset.act;
         try {
-          if (act === "createNews") {
+          if (act === "uploadEvtPhotos") {
+            const files = [...$("#evtPhotos").files];
+            if (!files.length || !currentEvent) return;
+            busy(t, true, "Uploading…");
+            const urls = [];
+            for (const f of files) urls.push(await api.upload(f));
+            const merged = [...(currentEvent.photos || []), ...urls];
+            await api.patch(`/events/${currentEvent.id}/photos`, { photos: merged });
+            currentEvent.photos = merged;
+            drawPhotos();
+            toast("Photos added", "ok");
+          } else if (act === "saveEvent") {
+            busy(t, true, "…");
+            await api.patch(`/events/${currentEvent.id}`, readForm($("#evtEdit")));
+            toast("Event updated", "ok");
+          } else if (act === "deleteEvent") {
+            if (!confirm("Delete this event?")) return;
+            await api.del(`/events/${currentEvent.id}`);
+            toast("Event deleted", "ok");
+            render();
+          } else if (act === "closePoll") {
+            await api.post(`/polls/${t.dataset.id}/close`, {});
+            refreshPolls();
+          } else if (act === "delPoll") {
+            if (!confirm("Delete this poll and its votes?")) return;
+            await api.del(`/polls/${t.dataset.id}`);
+            refreshPolls();
+          } else if (act === "saveBracket") {
+            const lines = $('#brk textarea[name="bracketText"]').value.split("\n").map((s) => s.trim()).filter(Boolean);
+            await api.patch(`/events/${currentEvent.id}`, { bracket: lines });
+            toast("Bracket saved", "ok");
+          } else if (act === "saveCharity") {
+            const d = readForm($("#charityForm"));
+            delete d.bracketText;
+            busy(t, true, "…");
+            await api.put(`/events/${currentEvent.id}/charity-report`, d);
+            setMsg("charMsg", "Charity report saved.", true);
+          } else if (act === "createNews") {
             const d = readForm($("#newsForm"));
             const f = $("#newsImg").files[0];
             if (f) d.coverImageUrl = await api.upload(f);
@@ -934,15 +1134,17 @@
         </div>
         <div class="card" style="margin-top:16px"><h2>Teams &amp; rosters</h2>
           <div class="stack" style="margin-top:10px">${teams.map((t) => `
-            <div class="list-item"><div class="li-main"><strong>${esc(t.name)}</strong><small>${t._count?.players || 0} players · ${esc(t.season)}</small></div>
+            <div class="list-item" style="flex-wrap:wrap"><div class="li-main"><strong>${esc(t.name)}</strong><small>${t._count?.players || 0} players · ${esc(t.season)}</small></div>
             <div class="row"><select class="btn-ghost btn-small" data-roster="${t.id}"><option value="">Add player…</option>${memberOpts}</select>
-            <button class="btn-ghost btn-small" data-act="addPlayer" data-id="${t.id}">Add</button></div></div>`).join("") || '<p class="card-muted">No teams.</p>'}</div>
+            <button class="btn-ghost btn-small" data-act="addPlayer" data-id="${t.id}">Add</button>
+            <button class="btn-ghost btn-small" data-act="viewRoster" data-id="${t.id}" data-name="${esc(t.name)}">Roster</button></div></div>`).join("") || '<p class="card-muted">No teams.</p>'}</div>
         </div>
         <div class="card" style="margin-top:16px"><h2>Post a result</h2>
           <div class="pv-form" id="resultForm" style="margin-top:10px">
             <label>Match<select name="matchId" id="resMatch"><option value="">Loading…</option></select></label>
             <div class="form-row"><label>Home score<input name="homeScore"></label><label>Away score<input name="awayScore"></label></div>
             <label>Result summary<input name="resultSummary" placeholder="e.g. Kochi Unit won by 5 wickets"></label>
+            <label>Match photos<input type="file" id="resPhotos" accept="image/*" multiple></label>
             <input type="hidden" name="status" value="COMPLETED">
             <button class="btn btn-primary" data-act="postResult">Save result</button><span class="pv-msg" id="resMsg"></span>
           </div>
@@ -954,6 +1156,9 @@
             <label>Notes<input name="description"></label>
             <button class="btn btn-primary" data-act="createTrial">Create trial</button><span class="pv-msg" id="trialMsg"></span>
           </div>
+        </div>
+        <div class="card" style="margin-top:16px"><h2>Trials &amp; applicants</h2>
+          <div id="trialList" class="stack" style="margin-top:10px"><p class="card-muted">Loading…</p></div>
         </div>`;
     },
     after: async () => {
@@ -964,6 +1169,29 @@
           ? matches.map((m) => `<option value="${m.id}">${esc(m.homeTeam?.name)} vs ${esc(m.awayTeam?.name)} · ${fmtDate(m.scheduledAt)}</option>`).join("")
           : '<option value="">No scheduled matches</option>';
       } catch (_) {}
+
+      const refreshTrials = async () => {
+        const box = $("#trialList");
+        if (!box) return;
+        const { trials } = await api.get("/cricket/trials");
+        const upcoming = trials.filter((t) => new Date(t.scheduledAt) >= Date.now() - 30 * 86400000);
+        if (!upcoming.length) { box.innerHTML = '<p class="card-muted">No trials.</p>'; return; }
+        const withApps = await Promise.all(
+          upcoming.map((t) => api.get(`/cricket/trials/${t.id}/applications`).then((r) => ({ ...t, apps: r.applications })).catch(() => ({ ...t, apps: [] })))
+        );
+        box.innerHTML = withApps
+          .map((t) => `<div class="card"><strong>Trial · ${fmtDate(t.scheduledAt)}</strong> <small class="card-muted">${esc(t.location || "")}</small>
+            <div class="list" style="margin-top:8px">${t.apps.length ? t.apps.map((a) => `<div class="list-item"><div class="li-main"><strong>${esc(a.member?.fullName)}</strong><small>${esc(a.member?.memberNumber)} · ${esc(a.member?.phone || "")}</small></div>
+              <select class="btn-ghost btn-small" data-act="trialAppStatus" data-id="${a.id}">${["APPLIED", "SHORTLISTED", "SELECTED", "REJECTED"].map((s) => `<option ${s === a.status ? "selected" : ""}>${s}</option>`).join("")}</select></div>`).join("") : '<p class="card-muted">No applicants yet.</p>'}</div></div>`)
+          .join("");
+      };
+      refreshTrials();
+      view().addEventListener("change", async (e) => {
+        const s = e.target.closest('[data-act="trialAppStatus"]');
+        if (!s || s.value === "APPLIED") return;
+        try { await api.patch(`/cricket/trials/applications/${s.dataset.id}`, { status: s.value }); toast("Updated", "ok"); }
+        catch (err) { toast(err.message, "error"); }
+      });
       view().addEventListener("click", async (e) => {
         const t = e.target.closest("[data-act]");
         if (!t) return;
@@ -977,9 +1205,26 @@
             if (!memberId) { busy(t, false); return; }
             await api.post(`/cricket/teams/${t.dataset.id}/players`, { memberId });
             toast("Player added", "ok"); render();
+          } else if (a === "viewRoster") {
+            busy(t, false);
+            const { team } = await api.get(`/cricket/teams/${t.dataset.id}`);
+            openModal(t.dataset.name + " roster", `<div class="list">${(team.players || []).length ? team.players.map((p) => `<div class="list-item"><div class="li-main"><strong>${esc(p.member?.fullName || "Player")}</strong><small>${esc(p.position || "")}${p.jerseyNumber ? " · #" + p.jerseyNumber : ""}</small></div><button class="btn-ghost btn-small btn-danger" data-act="removePlayer" data-id="${p.id}">Remove</button></div>`).join("") : '<p class="card-muted">No players.</p>'}</div>`, (modal) => {
+              modal.addEventListener("click", async (ev) => {
+                const rm = ev.target.closest('[data-act="removePlayer"]');
+                if (!rm) return;
+                try { await api.del(`/cricket/players/${rm.dataset.id}`); rm.closest(".list-item").remove(); toast("Removed", "ok"); }
+                catch (err) { toast(err.message, "error"); }
+              });
+            });
           } else if (a === "postResult") {
             const d = readForm($("#resultForm"));
             const id = d.matchId; delete d.matchId;
+            const files = [...($("#resPhotos").files || [])];
+            if (files.length) {
+              const urls = [];
+              for (const f of files) urls.push(await api.upload(f));
+              d.photos = urls;
+            }
             await api.patch(`/cricket/matches/${id}/result`, d);
             setMsg("resMsg", "Result saved.", true);
           } else if (a === "createTrial") { await api.post("/cricket/trials", readForm($("#trialForm"))); setMsg("trialMsg", "Trial created.", true); }
@@ -1025,8 +1270,25 @@
           </div>
         </div>
         <div class="card" style="margin-top:16px"><h2>Sponsors (${sponsors.length})</h2>
-          <div class="table-wrap"><table class="pv-table"><thead><tr><th>Name</th><th>Tier</th><th>Scope</th><th>Public</th></tr></thead>
-          <tbody>${sponsors.map((s) => `<tr><td>${esc(s.name)}</td><td>${titleCase(s.tier)}</td><td>${s.districtId ? esc((ds.find((d) => d.id === s.districtId) || {}).name || "District") : "State"}</td><td>${s.isPublic ? "Yes" : "No"}</td></tr>`).join("")}</tbody></table></div>
+          <div class="stack" style="margin-top:10px">${sponsors.map((s) => `
+            <div class="list-item" style="flex-wrap:wrap">
+              <div class="li-main"><strong>${esc(s.name)}</strong> <span class="pill">${titleCase(s.tier)}</span> ${s.isPublic ? '<span class="pill pill--ok">public</span>' : '<span class="pill">private</span>'}
+                <br><small class="card-muted">${s.districtId ? esc((ds.find((d) => d.id === s.districtId) || {}).name || "District") : "State-level"} · ${s._count?.payments || 0} payment(s)</small></div>
+              <div class="row">
+                <button class="btn-ghost btn-small" data-act="reqPay" data-id="${s.id}" data-name="${esc(s.name)}">Request payment</button>
+                <button class="btn-ghost btn-small" data-act="editSp" data-id="${s.id}">Edit</button>
+                <button class="btn-ghost btn-small btn-danger" data-act="delSp" data-id="${s.id}">Delete</button>
+              </div>
+              <div class="pv-form" id="spedit-${s.id}" hidden style="width:100%;margin-top:8px;border-top:1px solid var(--border);padding-top:8px">
+                <label>Name<input name="name" value="${esc(s.name)}"></label>
+                <div class="form-row">
+                  <label>Tier<select name="tier">${["PLATINUM", "GOLD", "SILVER", "BRONZE", "COMMUNITY"].map((x) => `<option ${x === s.tier ? "selected" : ""}>${x}</option>`).join("")}</select></label>
+                  <label>Website<input name="website" value="${esc(s.website || "")}"></label>
+                </div>
+                <label class="row" style="flex-direction:row;align-items:center;gap:8px"><input type="checkbox" name="isPublic" ${s.isPublic ? "checked" : ""} style="width:auto"> Show on the public sponsors page</label>
+                <button class="btn btn-primary btn-small" data-act="saveSp" data-id="${s.id}">Save</button>
+              </div>
+            </div>`).join("") || '<p class="card-muted">No sponsors.</p>'}</div>
         </div>
         <div class="card" style="margin-top:16px"><h2>District ledger</h2>
           ${logs.length ? `<div class="table-wrap"><table class="pv-table"><thead><tr><th>Date</th><th>Name</th><th>Type</th><th>Amount</th><th>Notes</th></tr></thead>
@@ -1051,9 +1313,32 @@
             await api.post(`/sponsors/districts/${me.districtId}/logs`, readForm($("#logForm")));
             setMsg("logMsg", "Recorded.", true);
             render();
+          } else if (t.dataset.act === "reqPay") {
+            busy(t, false);
+            const amount = Number(prompt(`Payment amount (₹) to request from ${t.dataset.name}:`));
+            if (!amount || amount <= 0) return;
+            const note = prompt("Note for the invoice (optional):") || undefined;
+            const { payUrl } = await api.post(`/payments/sponsors/${t.dataset.id}/request`, { amount, note });
+            openModal("Payment link created", `<p class="card-muted">Send this link to the sponsor. They pay and get an invoice — no login needed.</p>
+              <input class="btn-ghost" style="width:100%" readonly value="${esc(payUrl)}" onclick="this.select()">`);
+          } else if (t.dataset.act === "editSp") {
+            busy(t, false);
+            const box = document.getElementById("spedit-" + t.dataset.id);
+            if (box) box.hidden = !box.hidden;
+          } else if (t.dataset.act === "saveSp") {
+            await api.patch(`/sponsors/${t.dataset.id}`, readForm(document.getElementById("spedit-" + t.dataset.id)));
+            toast("Sponsor updated", "ok");
+            render();
+          } else if (t.dataset.act === "delSp") {
+            busy(t, false);
+            if (!confirm("Delete this sponsor?")) return;
+            await api.del(`/sponsors/${t.dataset.id}`);
+            toast("Sponsor deleted", "ok");
+            render();
           }
         } catch (err) {
-          setMsg(t.dataset.act === "addSponsor" ? "spMsg" : "logMsg", err.message, false);
+          if (["addSponsor", "addLog"].includes(t.dataset.act)) setMsg(t.dataset.act === "addSponsor" ? "spMsg" : "logMsg", err.message, false);
+          else toast(err.message, "error");
           busy(t, false);
         }
       });
@@ -1101,51 +1386,124 @@
   R("/admin/documents", "Documents", {
     role: "DISTRICT_ADMIN",
     render: async () => {
-      const { documents } = await api.get("/admin/documents");
+      const isState = can("STATE_ADMIN");
+      const [{ documents }, ds] = await Promise.all([
+        api.get("/admin/documents"),
+        isState ? districts() : Promise.resolve([]),
+      ]);
+      const VIS = ["DISTRICT_ONLY", "STATE_ONLY", "PUBLIC"];
+      const TYPES = ["BYLAW", "MINUTES", "CIRCULAR", "OTHER"];
+      const districtField = isState
+        ? `<label>District<select name="districtId"><option value="">— none (state / public) —</option>${ds.map((d) => `<option value="${d.id}">${esc(d.name)}</option>`).join("")}</select></label>`
+        : "";
       return `
-        <div class="pv-head"><h1>Official Documents</h1><p>Bylaws, meeting minutes and circulars.</p></div>
-        <div class="card" style="max-width:520px"><h2>Upload</h2>
+        <div class="pv-head"><h1>Official Documents</h1><p>Bylaws, meeting minutes and circulars. Files are stored privately — access follows the visibility you set.</p></div>
+        <div class="card" style="max-width:560px"><h2>Upload</h2>
           <div class="pv-form" id="docForm" style="margin-top:10px">
             <label>Title<input name="title"></label>
-            <div class="form-row"><label>Type<select name="type">${["BYLAW", "MINUTES", "CIRCULAR", "OTHER"].map((x) => `<option>${x}</option>`).join("")}</select></label>
-            <label>Visibility<select name="visibility">${["DISTRICT_ONLY", "STATE_ONLY", "PUBLIC"].map((x) => `<option>${x}</option>`).join("")}</select></label></div>
-            <label>File (PDF/image)<input type="file" id="docFile" accept="application/pdf,image/*"></label>
+            <div class="form-row">
+              <label>Type<select name="type">${TYPES.map((x) => `<option>${x}</option>`).join("")}</select></label>
+              <label>Visibility<select name="visibility">${VIS.map((x) => `<option>${x}</option>`).join("")}</select></label>
+            </div>
+            ${districtField}
+            <label>File (PDF, Word, image or text — max 20 MB)<input type="file" id="docFile" accept="application/pdf,image/*,.doc,.docx,.txt"></label>
             <button class="btn btn-primary" data-act="uploadDoc">Upload</button><span class="pv-msg" id="docMsg"></span>
           </div>
         </div>
-        <div class="card" style="margin-top:16px"><h2>Library</h2>
-          <div class="list" style="margin-top:10px">${documents.length ? documents.map((d) => `<div class="list-item"><div class="li-main"><strong>${esc(d.title)}</strong><small>${titleCase(d.type)} · ${titleCase(d.visibility)} · ${fmtDate(d.createdAt)}</small></div>
-            <div class="row"><a class="btn-ghost btn-small" href="${esc(d.fileUrl)}" target="_blank">Open</a><button class="btn-ghost btn-small btn-danger" data-act="delDoc" data-id="${d.id}">Delete</button></div></div>`).join("") : '<p class="card-muted">Empty.</p>'}</div>
+        <div class="card" style="margin-top:16px"><h2>Library (${documents.length})</h2>
+          <div class="list" style="margin-top:10px" id="docList">${documents.length ? documents.map((d) => docRow(d, isState, ds)).join("") : '<p class="card-muted">Empty.</p>'}</div>
         </div>`;
     },
     after: () => {
       view().addEventListener("click", async (e) => {
-        const up = e.target.closest('[data-act="uploadDoc"]');
-        const del = e.target.closest('[data-act="delDoc"]');
-        if (up) {
+        const t = e.target.closest("[data-act]");
+        if (!t) return;
+        const act = t.dataset.act;
+        if (act === "uploadDoc") {
           const f = $("#docFile").files[0];
           if (!f) return setMsg("docMsg", "Choose a file.", false);
-          busy(up, true, "Uploading…");
+          const d = readForm($("#docForm"));
+          if (!d.title) return setMsg("docMsg", "Give it a title.", false);
+          const fd = new FormData();
+          fd.append("file", f);
+          fd.append("title", d.title);
+          fd.append("type", d.type);
+          fd.append("visibility", d.visibility);
+          if (d.districtId) fd.append("districtId", d.districtId);
+          busy(t, true, "Uploading…");
           try {
-            const fileUrl = await api.upload(f);
-            await api.post("/admin/documents", { ...readForm($("#docForm")), fileUrl });
+            await api.post("/admin/documents", fd, { isForm: true });
             setMsg("docMsg", "Uploaded.", true);
             render();
-          } catch (err) { setMsg("docMsg", err.message, false); busy(up, false); }
-        }
-        if (del) {
-          await api.del(`/admin/documents/${del.dataset.id}`);
-          render();
+          } catch (err) { setMsg("docMsg", err.message, false); busy(t, false); }
+        } else if (act === "openDoc") {
+          try { await api.openFile(`/admin/documents/${t.dataset.id}/file`); }
+          catch (err) { toast(err.message, "error"); }
+        } else if (act === "editDoc") {
+          const box = document.getElementById("edit-" + t.dataset.id);
+          if (box) box.hidden = !box.hidden;
+        } else if (act === "saveDoc") {
+          const form = document.getElementById("edit-" + t.dataset.id);
+          busy(t, true, "…");
+          try {
+            await api.patch(`/admin/documents/${t.dataset.id}`, readForm(form));
+            toast("Saved", "ok");
+            render();
+          } catch (err) { toast(err.message, "error"); busy(t, false); }
+        } else if (act === "delDoc") {
+          if (!confirm("Delete this document permanently?")) return;
+          try { await api.del(`/admin/documents/${t.dataset.id}`); render(); }
+          catch (err) { toast(err.message, "error"); }
         }
       });
     },
   });
 
+  function docRow(d, isState, ds) {
+    const TYPES = ["BYLAW", "MINUTES", "CIRCULAR", "OTHER"];
+    const VIS = ["DISTRICT_ONLY", "STATE_ONLY", "PUBLIC"];
+    const kb = d.fileSize ? " · " + Math.max(1, Math.round(d.fileSize / 1024)) + " KB" : "";
+    const districtField = isState
+      ? `<label>District<select name="districtId"><option value="">— none —</option>${(ds || []).map((x) => `<option value="${x.id}" ${x.id === d.districtId ? "selected" : ""}>${esc(x.name)}</option>`).join("")}</select></label>`
+      : "";
+    return `<div class="list-item" style="flex-wrap:wrap">
+      <div class="li-main">
+        <strong>${esc(d.title)}</strong>
+        <small>${titleCase(d.type)} · ${titleCase(d.visibility)}${d.district ? " · " + esc(d.district.name) : ""}${kb} · ${fmtDate(d.createdAt)}${d.uploadedBy ? " · by " + esc(d.uploadedBy.fullName) : ""}</small>
+      </div>
+      <div class="row">
+        ${d.hasFile ? `<button class="btn-ghost btn-small" data-act="openDoc" data-id="${d.id}">Open</button>` : ""}
+        <button class="btn-ghost btn-small" data-act="editDoc" data-id="${d.id}">Edit</button>
+        <button class="btn-ghost btn-small btn-danger" data-act="delDoc" data-id="${d.id}">Delete</button>
+      </div>
+      <div class="pv-form" id="edit-${d.id}" hidden style="width:100%;margin-top:10px;border-top:1px solid var(--border);padding-top:10px">
+        <label>Title<input name="title" value="${esc(d.title)}"></label>
+        <div class="form-row">
+          <label>Type<select name="type">${TYPES.map((x) => `<option ${x === d.type ? "selected" : ""}>${x}</option>`).join("")}</select></label>
+          <label>Visibility<select name="visibility">${VIS.map((x) => `<option ${x === d.visibility ? "selected" : ""}>${x}</option>`).join("")}</select></label>
+        </div>
+        ${districtField}
+        <button class="btn btn-primary btn-small" data-act="saveDoc" data-id="${d.id}">Save changes</button>
+      </div>
+    </div>`;
+  }
+
   /* ---------- State overview ---------- */
   R("/admin/overview", "State Overview", {
     role: "STATE_ADMIN",
     render: async () => {
-      const [ov, ds] = await Promise.all([api.get("/reports/state-overview"), districts()]);
+      const [ov, ds, trends] = await Promise.all([
+        api.get("/reports/state-overview"),
+        districts(),
+        api.get("/reports/trends").catch(() => ({ series: [], districts: [] })),
+      ]);
+      const s = trends.series || [];
+      const maxNew = Math.max(1, ...s.map((x) => x.newMembers));
+      const maxFee = Math.max(1, ...s.map((x) => x.feesCollected));
+      const bars = (key, max, colour) =>
+        s.map((x) => `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px">
+          <div title="${x[key]}" style="width:70%;height:${Math.round((x[key] / max) * 90) + 2}px;background:${colour};border-radius:3px 3px 0 0"></div>
+          <small style="font-size:.6rem;color:var(--muted-soft)">${x.month.slice(5)}</small></div>`).join("");
       return `
         <div class="pv-head"><h1>State Overview</h1></div>
         <div class="grid grid-4">
@@ -1154,6 +1512,10 @@
           <div class="stat"><span>Districts</span><strong>${ov.districts}</strong></div>
           <div class="stat"><span>Fees collected</span><strong>${money(ov.feesCollected)}</strong></div>
         </div>
+        ${s.length ? `<div class="grid grid-2" style="margin-top:16px">
+          <div class="card"><h3>New members · last 12 months</h3><div style="display:flex;align-items:flex-end;gap:3px;height:120px;margin-top:10px">${bars("newMembers", maxNew, "rgba(212,175,55,.55)")}</div></div>
+          <div class="card"><h3>Fee collection · last 12 months</h3><div style="display:flex;align-items:flex-end;gap:3px;height:120px;margin-top:10px">${bars("feesCollected", maxFee, "rgba(47,155,97,.55)")}</div></div>
+        </div>` : ""}
         <div class="card" style="margin-top:16px"><h2>Districts</h2>
           <div class="table-wrap"><table class="pv-table"><thead><tr><th>District</th><th>Region</th><th>Units</th><th>Members</th></tr></thead>
           <tbody>${ds.map((d) => `<tr><td>${esc(d.name)}</td><td>${esc(d.region || "")}</td><td>${d._count?.units ?? "—"}</td><td>${d._count?.members ?? "—"}</td></tr>`).join("")}</tbody></table></div>
@@ -1177,18 +1539,22 @@
 
   /* ---------- Broadcast ---------- */
   R("/admin/broadcast", "Broadcast", {
-    role: "STATE_ADMIN",
+    role: "DISTRICT_ADMIN",
     render: async () => {
-      const ds = await districts();
+      const isState = can("STATE_ADMIN");
+      const ds = isState ? await districts() : [];
+      const audience = isState
+        ? `<label>Audience<select name="districtId"><option value="">Every district (state-wide)</option>${ds.map((d) => `<option value="${d.id}">${esc(d.name)}</option>`).join("")}</select></label>`
+        : `<label>Audience<input value="Your district only" disabled></label>`;
       return `
-        <div class="pv-head"><h1>Broadcast</h1><p>Send a notification to every active member, or just one district.</p></div>
+        <div class="pv-head"><h1>Broadcast</h1><p>${isState ? "Send a notification to every active member, or one district." : "Send a notification to every active member in your district."}</p></div>
         <div class="card" style="max-width:520px">
           <div class="pv-form" id="bcForm">
             <label>Title<input name="title"></label>
             <label>Message<textarea name="body"></textarea></label>
             <div class="form-row">
               <label>Category<select name="category"><option>ANNOUNCEMENT</option><option>EVENT</option><option>NEWS</option><option>PAYMENT</option></select></label>
-              <label>Audience<select name="districtId"><option value="">Every district</option>${ds.map((d) => `<option value="${d.id}">${esc(d.name)}</option>`).join("")}</select></label>
+              ${audience}
             </div>
             <button class="btn btn-primary" data-act="sendBc">Send broadcast</button><span class="pv-msg" id="bcMsg"></span>
           </div>
@@ -1212,7 +1578,7 @@
   R("/admin/store-admin", "Store Products", {
     role: "STATE_ADMIN",
     render: async () => {
-      const { products } = await api.get("/store/products");
+      const { products } = await api.get("/store/products?all=true");
       return `
         <div class="pv-head"><h1>Store Products</h1></div>
         <div class="card" style="max-width:560px"><h2>Add product</h2>
@@ -1228,26 +1594,180 @@
             <button class="btn btn-primary" data-act="addProd">Add</button><span class="pv-msg" id="prodMsg"></span>
           </div>
         </div>
-        <div class="card" style="margin-top:16px"><h2>Catalogue</h2>
-          <div class="table-wrap"><table class="pv-table"><thead><tr><th>Name</th><th>Price</th><th>Member</th><th>Stock</th></tr></thead>
-          <tbody>${products.map((p) => `<tr><td>${esc(p.name)}</td><td>${money(p.price)}</td><td>${money(p.memberPrice)}</td><td>${p.stock}</td></tr>`).join("")}</tbody></table></div>
+        <div class="card" style="margin-top:16px"><h2>Catalogue (${products.length})</h2>
+          <div class="stack" style="margin-top:10px">${products.map((p) => `
+            <div class="list-item" style="flex-wrap:wrap">
+              <div class="li-main"><strong>${esc(p.name)}</strong> ${p.isActive ? "" : '<span class="pill pill--bad">hidden</span>'}<br><small class="card-muted">${money(p.price)} · member ${money(p.memberPrice)} · stock ${p.stock}</small></div>
+              <div class="pv-form" id="pedit-${p.id}" hidden style="width:100%;margin-top:8px;border-top:1px solid var(--border);padding-top:8px">
+                <div class="form-row">
+                  <label>Price ₹<input type="number" name="price" value="${p.price}"></label>
+                  <label>Member ₹<input type="number" name="memberPrice" value="${p.memberPrice}"></label>
+                  <label>Stock<input type="number" name="stock" value="${p.stock}"></label>
+                </div>
+                <label class="row" style="flex-direction:row;align-items:center;gap:8px"><input type="checkbox" name="isActive" ${p.isActive ? "checked" : ""} style="width:auto"> Visible in the store</label>
+                <button class="btn btn-primary btn-small" data-act="saveProd" data-id="${p.id}">Save</button>
+              </div>
+              <button class="btn-ghost btn-small" data-act="editProd" data-id="${p.id}">Edit</button>
+            </div>`).join("") || '<p class="card-muted">No products.</p>'}</div>
         </div>`;
     },
     after: () => {
       view().addEventListener("click", async (e) => {
-        const t = e.target.closest('[data-act="addProd"]');
-        if (!t) return;
-        const d = readForm($("#prodForm"));
-        d.sizesAvailable = String(d.sizesAvailable || "").split(",").map((s) => s.trim()).filter(Boolean);
-        busy(t, true, "…");
-        try {
-          const f = $("#prodImg").files[0];
-          if (f) d.imageUrl = await api.upload(f);
-          await api.post("/store/products", d);
-          setMsg("prodMsg", "Product added.", true);
-          render();
-        } catch (err) { setMsg("prodMsg", err.message, false); busy(t, false); }
+        const add = e.target.closest('[data-act="addProd"]');
+        if (add) {
+          const d = readForm($("#prodForm"));
+          d.sizesAvailable = String(d.sizesAvailable || "").split(",").map((s) => s.trim()).filter(Boolean);
+          busy(add, true, "…");
+          try {
+            const f = $("#prodImg").files[0];
+            if (f) d.imageUrl = await api.upload(f);
+            await api.post("/store/products", d);
+            setMsg("prodMsg", "Product added.", true);
+            render();
+          } catch (err) { setMsg("prodMsg", err.message, false); busy(add, false); }
+          return;
+        }
+        const ed = e.target.closest('[data-act="editProd"]');
+        if (ed) {
+          const box = document.getElementById("pedit-" + ed.dataset.id);
+          if (box) box.hidden = !box.hidden;
+          return;
+        }
+        const sv = e.target.closest('[data-act="saveProd"]');
+        if (sv) {
+          busy(sv, true, "…");
+          try {
+            await api.patch(`/store/products/${sv.dataset.id}`, readForm(document.getElementById("pedit-" + sv.dataset.id)));
+            toast("Saved", "ok");
+            render();
+          } catch (err) { toast(err.message, "error"); busy(sv, false); }
+        }
       });
+    },
+  });
+
+  /* ---------- Feedback (member + committee) ---------- */
+  R("/feedback", "Feedback", {
+    render: async () => {
+      const { feedback } = await api.get("/feedback/me");
+      return `
+        <div class="pv-head"><h1>Feedback to your unit</h1><p>Reaches your unit and district committee directly. You'll get a notification when they reply.</p></div>
+        <div class="card" style="max-width:560px"><h2>New feedback</h2>
+          <div class="pv-form" id="fbForm" style="margin-top:10px">
+            <label>Subject<input name="subject"></label>
+            <label>Message<textarea name="message"></textarea></label>
+            <button class="btn btn-primary" data-act="sendFb">Send</button><span class="pv-msg" id="fbMsg"></span>
+          </div>
+        </div>
+        <div class="card" style="margin-top:16px"><h2>Your messages</h2>
+          <div class="list" style="margin-top:10px">${feedback.length ? feedback.map((f) => `
+            <div class="card"><div class="row-between"><strong>${esc(f.subject)}</strong><span class="pill ${f.status === "RESOLVED" ? "pill--ok" : f.status === "ACKNOWLEDGED" ? "pill--warn" : ""}">${titleCase(f.status)}</span></div>
+              <p style="white-space:pre-wrap;margin:8px 0">${esc(f.message)}</p>
+              ${f.response ? `<div style="border-left:3px solid var(--gold);padding-left:12px"><small class="card-muted">Reply from ${esc(f.handledBy?.fullName || "your unit")}</small><p style="white-space:pre-wrap;margin:4px 0 0">${esc(f.response)}</p></div>` : ""}
+              <small class="card-muted">${fmtDateTime(f.createdAt)}</small></div>`).join("") : '<p class="card-muted">Nothing sent yet.</p>'}</div>
+        </div>`;
+    },
+    after: () => {
+      view().addEventListener("click", async (e) => {
+        const t = e.target.closest('[data-act="sendFb"]');
+        if (!t) return;
+        const d = readForm($("#fbForm"));
+        if (!d.subject || !d.message) return setMsg("fbMsg", "Add a subject and message.", false);
+        busy(t, true, "Sending…");
+        try {
+          await api.post("/feedback", d);
+          setMsg("fbMsg", "Sent to your unit.", true);
+          render();
+        } catch (err) { setMsg("fbMsg", err.message, false); busy(t, false); }
+      });
+    },
+  });
+
+  R("/admin/feedback", "Feedback Inbox", {
+    role: "UNIT_ADMIN",
+    render: async () => {
+      const { feedback } = await api.get("/feedback");
+      return `
+        <div class="pv-head"><h1>Feedback Inbox</h1><p>${can("DISTRICT_ADMIN") ? "All feedback across your district." : "Feedback from your unit's members."}</p></div>
+        ${feedback.length ? `<div class="list">${feedback.map((f) => `
+          <div class="card" data-fb="${f.id}">
+            <div class="row-between"><div><strong>${esc(f.subject)}</strong><br><small class="card-muted">${esc(f.author?.fullName)} · ${esc(f.unit?.name)} · ${fmtDateTime(f.createdAt)}</small></div>
+              <select class="btn-ghost btn-small" data-act="fbStatus" data-id="${f.id}">${["OPEN", "ACKNOWLEDGED", "RESOLVED"].map((s) => `<option ${s === f.status ? "selected" : ""}>${s}</option>`).join("")}</select></div>
+            <p style="white-space:pre-wrap;margin:8px 0">${esc(f.message)}</p>
+            ${f.response ? `<p class="card-muted">Replied: ${esc(f.response)}</p>` : `
+            <div class="pv-form"><textarea id="resp-${f.id}" placeholder="Write a reply to the member…"></textarea>
+            <button class="btn btn-primary btn-small" data-act="fbReply" data-id="${f.id}">Send reply</button></div>`}
+          </div>`).join("")}</div>` : '<div class="empty">No feedback yet.</div>'}`;
+    },
+    after: () => {
+      view().addEventListener("click", async (e) => {
+        const rep = e.target.closest('[data-act="fbReply"]');
+        if (rep) {
+          const response = document.getElementById("resp-" + rep.dataset.id).value.trim();
+          if (!response) return toast("Write a reply first", "error");
+          busy(rep, true, "…");
+          try { await api.patch(`/feedback/${rep.dataset.id}`, { response, status: "RESOLVED" }); toast("Reply sent", "ok"); render(); }
+          catch (err) { toast(err.message, "error"); busy(rep, false); }
+        }
+      });
+      view().addEventListener("change", async (e) => {
+        const st = e.target.closest('[data-act="fbStatus"]');
+        if (!st) return;
+        try { await api.patch(`/feedback/${st.dataset.id}`, { status: st.value }); toast("Updated", "ok"); }
+        catch (err) { toast(err.message, "error"); render(); }
+      });
+    },
+  });
+
+  /* ---------- Store orders (committee) ---------- */
+  R("/admin/orders", "Store Orders", {
+    role: "DISTRICT_ADMIN",
+    render: async () => {
+      const status = currentQuery().status || "";
+      const { orders } = await api.get("/store/orders" + (status ? "?status=" + status : ""));
+      const STATUSES = ["", "PAID", "PROCESSING", "SHIPPED", "DELIVERED", "CANCELLED"];
+      return `
+        <div class="pv-head"><h1>Store Orders</h1><p>Track and fulfil member orders.</p></div>
+        <div class="pv-tabs">${STATUSES.map((s) => `<button class="${s === status ? "is-active" : ""}" data-act="ostatus" data-s="${s}">${s || "All"}</button>`).join("")}</div>
+        ${orders.length ? `<div class="list">${orders.map((o) => `
+          <div class="card"><div class="row-between">
+            <div><strong>${money(o.totalAmount)}</strong> · <span class="pill">${titleCase(o.status)}</span><br>
+            <small class="card-muted">${esc(o.member?.fullName)} (${esc(o.member?.memberNumber)}) · ${esc(o.member?.district?.name || "")} · ${fmtDate(o.createdAt)}</small></div>
+            <select class="btn-ghost btn-small" data-act="ofulfil" data-id="${o.id}">
+              <option value="">Set status…</option>${["PROCESSING", "SHIPPED", "DELIVERED", "CANCELLED"].map((s) => `<option>${s}</option>`).join("")}
+            </select>
+          </div>
+          <small class="card-muted">${o.items.map((i) => `${esc(i.product?.name)} ×${i.quantity}`).join(", ")}</small><br>
+          <small class="card-muted">Ship to: ${esc(o.shippingAddress || "—")}</small></div>`).join("")}</div>` : '<div class="empty">No orders.</div>'}`;
+    },
+    after: () => {
+      view().addEventListener("click", (e) => {
+        const t = e.target.closest('[data-act="ostatus"]');
+        if (t) location.hash = "#/admin/orders" + (t.dataset.s ? "?status=" + t.dataset.s : "");
+      });
+      view().addEventListener("change", async (e) => {
+        const t = e.target.closest('[data-act="ofulfil"]');
+        if (!t || !t.value) return;
+        try { await api.patch(`/store/orders/${t.dataset.id}/status`, { status: t.value }); toast("Order updated", "ok"); render(); }
+        catch (err) { toast(err.message, "error"); }
+      });
+    },
+  });
+
+  /* ---------- All district reports (state) ---------- */
+  R("/admin/all-reports", "District Reports", {
+    role: "STATE_ADMIN",
+    render: async () => {
+      const { reports } = await api.get("/reports");
+      if (!reports.length) return `<div class="pv-head"><h1>District Reports</h1></div><div class="empty">No districts have submitted a report yet.</div>`;
+      return `<div class="pv-head"><h1>District Monthly Reports</h1><p>Every district's submissions, newest first.</p></div>
+        <div class="table-wrap"><table class="pv-table"><thead><tr><th>Month</th><th>District</th><th>Events</th><th>Teams</th><th>Summary</th><th>By</th></tr></thead>
+        <tbody>${reports.map((r) => `<tr>
+          <td>${fmtDate(r.month, { month: "short", year: "numeric" })}</td>
+          <td>${esc(r.district?.name || "—")}</td>
+          <td>${r.eventsRun}</td><td>${r.teamsManaged}</td>
+          <td>${esc(r.summary || "")}</td>
+          <td>${esc(r.submittedBy?.fullName || "")}</td></tr>`).join("")}</tbody></table></div>`;
     },
   });
 

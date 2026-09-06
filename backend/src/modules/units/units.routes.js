@@ -73,4 +73,18 @@ router.post(
   })
 );
 
+router.post(
+  "/:id/reject",
+  requireAuth,
+  requireRole("DISTRICT_ADMIN"),
+  asyncHandler(async (req, res) => {
+    const unit = await prisma.unit.update({
+      where: { id: req.params.id },
+      data: { status: "REJECTED", approvedById: req.auth.id },
+    });
+    await logAudit(req.auth.id, "UNIT_REJECTED", "Unit", unit.id);
+    res.json({ unit });
+  })
+);
+
 module.exports = router;

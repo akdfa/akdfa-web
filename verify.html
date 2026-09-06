@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Verify Membership | AKDFA</title>
+  <meta name="robots" content="noindex">
+  <link rel="icon" type="image/png" href="assets/akdfa-circle-logo.png">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css?v=6">
+</head>
+<body>
+  <main id="main" style="max-width:440px;margin:0 auto;padding:60px 24px;text-align:center">
+    <img src="assets/akdfa-circle-logo.png" alt="AKDFA" style="width:56px;height:56px">
+    <h1 style="font-family:'Playfair Display',serif;margin:10px 0 20px">Membership check</h1>
+    <div class="glass-card is-visible" id="result"><p class="empty-state">Checking…</p></div>
+    <p style="margin-top:16px"><a href="index.html">akdfa.org</a></p>
+  </main>
+  <script src="js/api.js"></script>
+  <script>
+    (function () {
+      const api = window.AKDFA;
+      const q = new URLSearchParams(location.search);
+      const m = q.get("m") || (location.href.match(/[?&]m=([^&#]+)/) || [])[1];
+      const sig = q.get("sig") || (location.href.match(/[?&]sig=([^&#]+)/) || [])[1];
+      const box = document.getElementById("result");
+      const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+      if (!m || !sig) { box.innerHTML = '<p class="form-message is-visible form-message--error">Invalid link.</p>'; return; }
+      api.get("/public/members/verify?m=" + encodeURIComponent(m) + "&sig=" + encodeURIComponent(sig))
+        .then((r) => {
+          if (r.valid) {
+            box.innerHTML =
+              '<div style="font-size:3rem;color:var(--green)">&#10004;</div>' +
+              '<h2 style="margin:6px 0">Valid member</h2>' +
+              '<p style="font-size:1.15rem;font-weight:800">' + esc(r.member.fullName) + "</p>" +
+              '<p style="color:var(--muted)">' + esc(r.member.memberNumber) + " · " + esc(r.member.role) +
+              "<br>" + esc(r.member.district) + " · " + esc(r.member.unit) +
+              (r.member.expiresAt ? "<br>Valid until " + new Date(r.member.expiresAt).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" }) : "") +
+              "</p>";
+          } else {
+            box.innerHTML =
+              '<div style="font-size:3rem;color:#f27575">&#10007;</div>' +
+              '<h2 style="margin:6px 0">Not valid</h2>' +
+              '<p style="color:var(--muted)">' + esc(r.reason || "This card could not be verified.") + "</p>" +
+              (r.member ? '<p style="color:var(--muted-soft)">' + esc(r.member.fullName) + " · " + esc(r.member.memberNumber) + "</p>" : "");
+          }
+        })
+        .catch(() => { box.innerHTML = '<p class="form-message is-visible form-message--error">Could not reach the AKDFA server.</p>'; });
+    })();
+  </script>
+</body>
+</html>

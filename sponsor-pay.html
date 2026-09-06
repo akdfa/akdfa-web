@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sponsor Payment | AKDFA</title>
+  <meta name="robots" content="noindex">
+  <link rel="icon" type="image/png" href="assets/akdfa-circle-logo.png">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css?v=6">
+</head>
+<body>
+  <main id="main" style="max-width:520px;margin:0 auto;padding:60px 24px">
+    <div class="glass-card is-visible" style="text-align:center">
+      <img src="assets/akdfa-circle-logo.png" alt="AKDFA" style="width:64px;height:64px;margin-bottom:12px">
+      <h1 style="font-family:'Playfair Display',serif;margin:0 0 4px">Sponsor Payment</h1>
+      <p style="color:var(--muted)">All Kerala Dhoni Fans Association · Reg 949/17</p>
+      <div id="payBody" style="margin-top:24px">
+        <p class="empty-state">Loading payment details…</p>
+      </div>
+    </div>
+    <p style="text-align:center;margin-top:18px"><a href="index.html">Return to akdfa.org</a></p>
+  </main>
+
+  <script src="js/api.js"></script>
+  <script>
+    (function () {
+      const api = window.AKDFA;
+      const token =
+        new URLSearchParams(location.search).get("token") ||
+        new URLSearchParams(location.hash.replace(/^#\??/, "")).get("token") ||
+        (location.href.match(/[?&]token=([^&#]+)/) || [])[1];
+      const body = document.getElementById("payBody");
+      const inr = (n) => "₹" + Number(n || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 });
+
+      if (!token) {
+        body.innerHTML = '<p class="form-message is-visible form-message--error">Missing payment token. Use the exact link you were sent.</p>';
+        return;
+      }
+
+      function loadRazorpay() {
+        return new Promise((res) => {
+          if (window.Razorpay) return res(true);
+          const s = document.createElement("script");
+          s.src = "https://checkout.razorpay.com/v1/checkout.js";
+          s.onload = () => res(true);
+          s.onerror = () => res(false);
+          document.body.appendChild(s);
+        });
+      }
+
+      async function render() {
+        let p;
+        try {
+          ({ payment: p } = await api.get("/payments/sponsor-payments/by-token/" + encodeURIComponent(token)));
+        } catch (e) {
+          body.innerHTML = '<p class="form-message is-visible form-message--error">' + (e.message || "Payment link not found") + "</p>";
+          return;
+        }
+        if (p.status === "SUCCESS") {
+          body.innerHTML =
+            '<p class="form-message is-visible form-message--ok">This payment is complete. Thank you for supporting AKDFA.</p>' +
+            (p.invoiceUrl ? `<a class="btn btn-primary" href="${p.invoiceUrl}" target="_blank">Download invoice</a>` : "");
+          return;
+        }
+        body.innerHTML = `
+          <p style="font-size:1.1rem"><strong>${p.sponsorName}</strong></p>
+          ${p.note ? `<p style="color:var(--muted)">${p.note}</p>` : ""}
+          <p style="font-size:2rem;font-family:'Playfair Display',serif;margin:16px 0">${inr(p.amount)}</p>
+          <button class="btn btn-primary full" id="payBtn">Pay securely with Razorpay</button>
+          <p class="form-message full" id="payMsg" role="status"></p>`;
+        document.getElementById("payBtn").addEventListener("click", pay);
+      }
+
+      async function pay() {
+        const btn = document.getElementById("payBtn");
+        const msg = document.getElementById("payMsg");
+        btn.disabled = true;
+        btn.textContent = "Starting…";
+        let order;
+        try {
+          order = await api.post("/payments/sponsor-payments/by-token/" + encodeURIComponent(token) + "/checkout", {}, { auth: false });
+        } catch (e) {
+          msg.textContent = e.status === 503 ? "Online payments aren't switched on yet — contact AKDFA." : e.message;
+          msg.className = "form-message full is-visible form-message--error";
+          btn.disabled = false;
+          btn.textContent = "Pay securely with Razorpay";
+          return;
+        }
+        if (!(await loadRazorpay()) || !order.keyId) {
+          msg.textContent = "Could not open the payment window.";
+          msg.className = "form-message full is-visible form-message--error";
+          btn.disabled = false;
+          return;
+        }
+        const rz = new window.Razorpay({
+          key: order.keyId,
+          amount: order.amount,
+          currency: order.currency || "INR",
+          name: "AKDFA",
+          description: "Sponsorship contribution",
+          order_id: order.orderId,
+          theme: { color: "#d4af37" },
+          handler: async (resp) => {
+            try {
+              const r = await api.post(
+                "/payments/sponsor-payments/by-token/" + encodeURIComponent(token) + "/verify",
+                {
+                  razorpay_order_id: resp.razorpay_order_id,
+                  razorpay_payment_id: resp.razorpay_payment_id,
+                  razorpay_signature: resp.razorpay_signature,
+                },
+                { auth: false }
+              );
+              body.innerHTML =
+                '<p class="form-message is-visible form-message--ok">Payment successful — thank you!</p>' +
+                (r.invoiceUrl ? `<a class="btn btn-primary" href="${r.invoiceUrl}" target="_blank">Download invoice</a>` : "");
+            } catch (e) {
+              msg.textContent = "Payment captured but confirmation failed: " + e.message;
+              msg.className = "form-message full is-visible form-message--error";
+            }
+          },
+        });
+        rz.open();
+        btn.disabled = false;
+        btn.textContent = "Pay securely with Razorpay";
+      }
+
+      render();
+    })();
+  </script>
+</body>
+</html>

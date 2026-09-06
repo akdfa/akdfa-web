@@ -10,6 +10,11 @@ function errorHandler(err, req, res, next) { // eslint-disable-line no-unused-va
     return res.status(err.statusCode).json({ error: { message: err.message, details: err.details } });
   }
 
+  if (err.name === "MulterError") {
+    const msg = err.code === "LIMIT_FILE_SIZE" ? "File is too large" : `Upload error: ${err.message}`;
+    return res.status(400).json({ error: { message: msg } });
+  }
+
   if (err.code === "P2002") {
     // Prisma unique constraint violation
     const target = String(err.meta?.target || "");

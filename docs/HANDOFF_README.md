@@ -43,7 +43,30 @@ Every backend module exists and has a frontend consuming it (see the phase-to-mo
 
 ## Honest status: what's real vs. what's next
 
-- **Code-complete for Phases 0–5**: schema + migration (`prisma/migrations/`), every route with Prisma-backed logic, local file uploads, a seed that creates the 14 districts / 17 units / bootstrap State Committee account / starter badges + products + news + events, and a full frontend (public site + `app.html` portal).
-- **Not yet run against a live Postgres in this environment** — no working `DATABASE_URL` was available. First task on a real machine: set `DATABASE_URL` in `backend/.env`, `npm run setup`, `npm run dev`, then `npm run smoke`.
-- **Needs product decisions before launch**: the real unit names/contacts beyond one-per-district (`prisma/seed.js`), the approved annual membership fee (`MEMBERSHIP_FEE_INR`), an S3 bucket if uploads must survive redeploys, and an email/SMS/push provider for notification delivery (`Notification` rows are created; nothing sends them).
-- **Not done (out of scope / no hosting)**: deployment, CI, and any live infrastructure.
+- **Code-complete for Phases 0–5**, including the roadmap's smaller line items:
+  digital card, feed, cricket hub, polls, predictions, RSVP, badges, referrals, notification
+  prefs; member **feedback to unit leaders**; district tools (units, teams, matches + photos,
+  trials, brackets, charity reports, local sponsor ledger, district broadcasts); state tools
+  (roles, audit, all-district reports, **growth-trend charts**, broadcasts, documents);
+  Razorpay membership fees + **downloadable receipts**, the store + **order-tracking screen**
+  + order receipts, **sponsor pay-links + invoices**, and **renewal reminders**
+  (`npm run reminders`).
+- **Public site is data-driven**: `units.html` / `news.html` / `sponsors.html` render live API
+  data via `js/public-content.js`, with static fallbacks; `sponsor-pay.html` is a no-login
+  sponsor payment page.
+- **Not yet run against a live Postgres in this environment** — no working `DATABASE_URL`
+  was available. First task on a real machine: set `DATABASE_URL` in `backend/.env`,
+  `npm run setup`, `npm run dev`, then `npm run smoke`.
+- **Needs product decisions / integrations before launch**: real unit names/contacts beyond
+  one-per-district (`prisma/seed.js`), the approved annual fee (`MEMBERSHIP_FEE_INR`), an S3
+  bucket if uploads must survive redeploys, an email/SMS/push provider (notification +
+  reminder rows are created; nothing delivers them), and a scheduler entry for
+  `npm run reminders`.
+- **Integrations now have drivers** (default = the safe one): storage `local`/`s3`, mail
+  `log`/`smtp`, payments off/Razorpay. Selecting `s3` or `smtp` lazy-loads its SDK
+  (`optionalDependencies`). Nothing else to build — just set the env vars.
+- **CI**: `.github/workflows/ci.yml` — syntax checks, `npm test` (unit), and a full
+  migrate → seed → smoke run against a Postgres service on every push/PR.
+- **Not done (needs the user)**: running the migrate/seed/smoke locally against their own
+  Postgres (no credentials were available here), and choosing/provisioning the actual S3
+  bucket, SMTP account, and Razorpay account.

@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reset Password | AKDFA</title>
+  <meta name="robots" content="noindex">
+  <link rel="icon" type="image/png" href="assets/akdfa-circle-logo.png">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css?v=6">
+</head>
+<body>
+  <main id="main" style="max-width:460px;margin:0 auto;padding:60px 24px">
+    <div class="glass-card is-visible">
+      <img src="assets/akdfa-circle-logo.png" alt="AKDFA" style="width:56px;height:56px">
+      <h1 style="font-family:'Playfair Display',serif;margin:10px 0 4px">Choose a new password</h1>
+      <form class="demo-form" id="resetForm" novalidate style="margin-top:16px">
+        <label class="full">New password
+          <input type="password" name="password" placeholder="At least 8 characters" required minlength="8" autocomplete="new-password">
+        </label>
+        <label class="full">Confirm password
+          <input type="password" name="confirm" placeholder="Repeat it" required autocomplete="new-password">
+        </label>
+        <button class="btn btn-primary full" type="submit">Reset password</button>
+        <p class="form-message full" id="resetMsg" role="status"></p>
+      </form>
+    </div>
+    <p style="text-align:center;margin-top:16px"><a href="login.html">Back to sign in</a></p>
+  </main>
+  <script src="js/api.js"></script>
+  <script>
+    (function () {
+      const api = window.AKDFA;
+      const token = new URLSearchParams(location.search).get("token") || (location.href.match(/[?&]token=([^&#]+)/) || [])[1];
+      const form = document.getElementById("resetForm");
+      const msg = document.getElementById("resetMsg");
+      const show = (t, ok) => { msg.textContent = t; msg.className = "form-message full is-visible " + (ok ? "form-message--ok" : "form-message--error"); };
+      if (!token) { form.hidden = true; show("This link is missing its token. Request a new reset email.", false); return; }
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const f = Object.fromEntries(new FormData(form));
+        if (f.password.length < 8) return show("Use at least 8 characters.", false);
+        if (f.password !== f.confirm) return show("The two passwords don't match.", false);
+        const btn = form.querySelector("button");
+        btn.disabled = true;
+        try {
+          await api.publicPost("/auth/reset-password", { token, password: f.password });
+          show("Password changed. Redirecting to sign in…", true);
+          setTimeout(() => (location.href = "login.html"), 1800);
+        } catch (err) {
+          show(err.message || "Could not reset the password.", false);
+          btn.disabled = false;
+        }
+      });
+    })();
+  </script>
+</body>
+</html>

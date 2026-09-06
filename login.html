@@ -67,6 +67,14 @@
             </label>
             <button class="btn btn-primary full" type="submit">Sign In</button>
             <p class="form-message" id="loginMessage" role="status"></p>
+            <button type="button" class="link-button" id="forgotToggle" style="background:none;border:0;color:var(--gold-soft);cursor:pointer;font:inherit;padding:0;text-decoration:underline">Forgot your password?</button>
+          </form>
+          <form class="demo-form reveal" id="forgotForm" novalidate hidden style="margin-top:16px">
+            <label class="full">Your account email
+              <input type="email" name="email" placeholder="you@example.com" required autocomplete="email">
+            </label>
+            <button class="btn btn-outline full" type="submit">Email me a reset link</button>
+            <p class="form-message full" id="forgotMessage" role="status"></p>
           </form>
         </div>
         <div class="login-visual reveal" role="img" aria-label="AKDFA circle logo">

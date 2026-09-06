@@ -42,9 +42,10 @@ async function backfillModel(name, delegate, fields, blind) {
   await backfillModel("Unit", prisma.unit, ["address", "contactEmail", "contactPhone"]);
   await backfillModel("Sponsor", prisma.sponsor, ["contactName", "contactEmail", "contactPhone"]);
   await backfillModel("SponsorshipLog", prisma.sponsorshipLog, ["sponsorName", "notes"]);
-  await backfillModel("Document", prisma.document, ["fileUrl"]);
+  await backfillModel("Document", prisma.document, ["fileKey"]);
   await backfillModel("NewsletterSubscriber", prisma.newsletterSubscriber, ["email"], { email: "emailHash" });
   await backfillModel("ContactMessage", prisma.contactMessage, ["email", "phone", "message"]);
+  await backfillModel("Feedback", prisma.feedback, ["message", "response"]);
   console.log("Done.");
   await prisma.$disconnect();
 })().catch((e) => {

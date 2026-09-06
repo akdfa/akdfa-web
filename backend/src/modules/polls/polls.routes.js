@@ -59,12 +59,48 @@ router.post(
   })
 );
 
+// Close a poll early or edit its question.
+router.patch(
+  "/:id",
+  requireAuth,
+  requireRole("UNIT_ADMIN"),
+  validate({ body: z.object({ question: z.string().min(2).optional(), closesAt: z.coerce.date().nullable().optional() }) }),
+  asyncHandler(async (req, res) => {
+    const poll = await prisma.poll.update({ where: { id: req.params.id }, data: req.body });
+    res.json({ poll });
+  })
+);
+
+router.post(
+  "/:id/close",
+  requireAuth,
+  requireRole("UNIT_ADMIN"),
+  asyncHandler(async (req, res) => {
+    const poll = await prisma.poll.update({ where: { id: req.params.id }, data: { closesAt: new Date() } });
+    res.json({ poll });
+  })
+);
+
+router.delete(
+  "/:id",
+  requireAuth,
+  requireRole("UNIT_ADMIN"),
+  asyncHandler(async (req, res) => {
+    await prisma.poll.delete({ where: { id: req.params.id } });
+    res.status(204).send();
+  })
+);
+
 router.post(
   "/options/:optionId/vote",
   requireAuth,
   asyncHandler(async (req, res) => {
-    const option = await prisma.pollOption.findUnique({ where: { id: req.params.optionId } });
+    const option = await prisma.pollOption.findUnique({
+      where: { id: req.params.optionId },
+      include: { poll: { select: { closesAt: true } } },
+    });
     if (!option) throw ApiError.notFound("Poll option not found");
+    if (option.poll.closesAt && option.poll.closesAt < new Date()) throw ApiError.badRequest("This poll has closed");
 
     const vote = await prisma.$transaction(async (tx) => {
       // One vote per poll — clear any prior vote on a sibling option first.

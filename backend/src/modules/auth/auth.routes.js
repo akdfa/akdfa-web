@@ -5,8 +5,11 @@ const validate = require("../../middleware/validate");
 const { requireAuth } = require("../../middleware/auth");
 const asyncHandler = require("../../utils/asyncHandler");
 const ApiError = require("../../utils/ApiError");
+const crypto = require("crypto");
+const env = require("../../config/env");
 const { hashPassword, comparePassword } = require("../../utils/password");
 const { blindIndex } = require("../../utils/crypto");
+const { sendMail } = require("../../utils/mail");
 const {
   signAccessToken,
   signRefreshToken,
@@ -111,6 +114,9 @@ router.post(
     if (member.status === "SUSPENDED") {
       throw ApiError.forbidden("This account has been suspended");
     }
+    if (member.status === "REJECTED") {
+      throw ApiError.forbidden("This membership application was not approved");
+    }
 
     const tokens = await issueTokens(member);
     res.json({ member: publicMember(member), ...tokens });
@@ -174,6 +180,81 @@ router.get(
     });
     if (!member) throw ApiError.notFound("Member not found");
     res.json({ member: publicMember(member) });
+  })
+);
+
+/* ---- password reset ------------------------------------------------ */
+
+const RESET_TTL_MS = 60 * 60 * 1000; // 1 hour
+const sha256 = (v) => crypto.createHash("sha256").update(v).digest("hex");
+
+// Always responds 200 — never reveals whether an email is registered.
+router.post(
+  "/forgot-password",
+  validate({ body: z.object({ email: z.string().email() }) }),
+  asyncHandler(async (req, res) => {
+    const member = await prisma.member.findUnique({ where: { emailHash: blindIndex(req.body.email) } });
+    let devResetUrl;
+
+    if (member && member.status !== "REJECTED") {
+      await prisma.passwordReset.updateMany({
+        where: { memberId: member.id, usedAt: null },
+        data: { usedAt: new Date() }, // invalidate any earlier outstanding tokens
+      });
+      const rawToken = crypto.randomBytes(32).toString("hex");
+      await prisma.passwordReset.create({
+        data: { memberId: member.id, tokenHash: sha256(rawToken), expiresAt: new Date(Date.now() + RESET_TTL_MS) },
+      });
+      const url = `${env.siteBaseUrl.replace(/\/$/, "")}/reset.html?token=${rawToken}`;
+      await sendMail({
+        to: req.body.email,
+        subject: "Reset your AKDFA password",
+        text: `Someone asked to reset the password for your AKDFA account.\n\nOpen this link within 1 hour to choose a new password:\n${url}\n\nIf this wasn't you, ignore this email — your password stays unchanged.`,
+      });
+      if (!env.isProd) devResetUrl = url;
+    }
+
+    res.json({ ok: true, message: "If that email has an account, a reset link is on its way.", ...(devResetUrl ? { devResetUrl } : {}) });
+  })
+);
+
+router.post(
+  "/reset-password",
+  validate({ body: z.object({ token: z.string().min(10), password: z.string().min(8) }) }),
+  asyncHandler(async (req, res) => {
+    const record = await prisma.passwordReset.findUnique({ where: { tokenHash: sha256(req.body.token) } });
+    if (!record || record.usedAt || record.expiresAt < new Date()) {
+      throw ApiError.badRequest("This reset link is invalid or has expired. Request a new one.");
+    }
+    const passwordHash = await hashPassword(req.body.password);
+    await prisma.$transaction([
+      prisma.member.update({ where: { id: record.memberId }, data: { passwordHash } }),
+      prisma.passwordReset.update({ where: { id: record.id }, data: { usedAt: new Date() } }),
+      // Force re-login everywhere.
+      prisma.refreshToken.updateMany({ where: { memberId: record.memberId, revokedAt: null }, data: { revokedAt: new Date() } }),
+    ]);
+    res.json({ ok: true });
+  })
+);
+
+// Logged-in member changing their own password.
+router.post(
+  "/change-password",
+  requireAuth,
+  validate({ body: z.object({ currentPassword: z.string().min(1), newPassword: z.string().min(8) }) }),
+  asyncHandler(async (req, res) => {
+    const member = await prisma.member.findUnique({ where: { id: req.auth.id } });
+    if (!member || !(await comparePassword(req.body.currentPassword, member.passwordHash))) {
+      throw ApiError.badRequest("Current password is incorrect");
+    }
+    const passwordHash = await hashPassword(req.body.newPassword);
+    await prisma.$transaction([
+      prisma.member.update({ where: { id: member.id }, data: { passwordHash } }),
+      prisma.refreshToken.updateMany({ where: { memberId: member.id, revokedAt: null }, data: { revokedAt: new Date() } }),
+    ]);
+    // Issue a fresh pair so the current device stays signed in.
+    const tokens = await issueTokens(member);
+    res.json({ ok: true, ...tokens });
   })
 );
 

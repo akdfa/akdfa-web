@@ -70,7 +70,8 @@ router.delete(
   requireAuth,
   requireRole("UNIT_ADMIN"),
   asyncHandler(async (req, res) => {
-    await prisma.newsPost.delete({ where: { id: req.params.id } });
+    const post = await prisma.newsPost.delete({ where: { id: req.params.id } });
+    require("../../middleware/upload").deleteUploadByUrl(post.coverImageUrl);
     res.status(204).send();
   })
 );

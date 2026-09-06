@@ -8,6 +8,8 @@ const asyncHandler = require("../../utils/asyncHandler");
 const ApiError = require("../../utils/ApiError");
 const { getRazorpayClient } = require("../../config/razorpay");
 const env = require("../../config/env");
+const { RANK } = require("../../middleware/requireRole");
+const { orderReceiptHtml } = require("../../utils/receipts");
 
 const router = Router();
 
@@ -16,7 +18,11 @@ router.get(
   "/products",
   attachAuthIfPresent,
   asyncHandler(async (req, res) => {
-    const products = await prisma.product.findMany({ where: { isActive: true } });
+    const showAll = req.query.all === "true" && req.auth && RANK[req.auth.role] >= 3;
+    const products = await prisma.product.findMany({
+      where: showAll ? {} : { isActive: true },
+      orderBy: { createdAt: "desc" },
+    });
     const isMember = Boolean(req.auth);
     res.json({
       products: products.map((p) => ({
@@ -46,6 +52,29 @@ router.post(
   asyncHandler(async (req, res) => {
     const product = await prisma.product.create({ data: req.body });
     res.status(201).json({ product });
+  })
+);
+
+router.patch(
+  "/products/:id",
+  requireAuth,
+  requireRole("STATE_ADMIN"),
+  validate({
+    body: z.object({
+      name: z.string().min(2).optional(),
+      description: z.string().optional(),
+      category: z.string().optional(),
+      price: z.number().positive().optional(),
+      memberPrice: z.number().positive().optional(),
+      imageUrl: z.string().url().optional(),
+      sizesAvailable: z.array(z.string()).optional(),
+      stock: z.number().int().min(0).optional(),
+      isActive: z.boolean().optional(),
+    }),
+  }),
+  asyncHandler(async (req, res) => {
+    const product = await prisma.product.update({ where: { id: req.params.id }, data: req.body });
+    res.json({ product });
   })
 );
 
@@ -103,6 +132,21 @@ router.get(
       orderBy: { createdAt: "desc" },
     });
     res.json({ orders });
+  })
+);
+
+router.get(
+  "/orders/:id/receipt",
+  requireAuth,
+  asyncHandler(async (req, res) => {
+    const order = await prisma.order.findUnique({
+      where: { id: req.params.id },
+      include: { items: { include: { product: { select: { name: true } } } } },
+    });
+    if (!order) throw ApiError.notFound("Order not found");
+    if (order.memberId !== req.auth.id && RANK[req.auth.role] < 2) throw ApiError.forbidden();
+    const member = await prisma.member.findUnique({ where: { id: order.memberId } });
+    res.type("html").send(orderReceiptHtml(order, member));
   })
 );
 
