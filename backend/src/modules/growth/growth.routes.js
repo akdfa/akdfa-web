@@ -5,6 +5,8 @@ const validate = require("../../middleware/validate");
 const { requireAuth } = require("../../middleware/auth");
 const { requireRole } = require("../../middleware/requireRole");
 const asyncHandler = require("../../utils/asyncHandler");
+const ApiError = require("../../utils/ApiError");
+const { assertCanManage, scopeOfMember } = require("../../middleware/scope");
 
 const { requireActive } = require("../../middleware/requireActive");
 
@@ -36,6 +38,9 @@ router.post(
   requireAuth,
   requireRole("UNIT_ADMIN"),
   asyncHandler(async (req, res) => {
+    const target = await prisma.member.findUnique({ where: { id: req.params.memberId } });
+    if (!target) throw ApiError.notFound("Member not found");
+    assertCanManage(req.auth, scopeOfMember(target), "You can only award badges to members in your own unit or district");
     const memberBadge = await prisma.memberBadge.upsert({
       where: { memberId_badgeId: { memberId: req.params.memberId, badgeId: req.params.badgeId } },
       update: {},
@@ -65,6 +70,9 @@ router.post(
   requireActive,
   validate({ body: z.object({ referredId: z.string() }) }),
   asyncHandler(async (req, res) => {
+    if (req.body.referredId === req.auth.id) throw ApiError.badRequest("You cannot refer yourself");
+    const referred = await prisma.member.findUnique({ where: { id: req.body.referredId }, select: { id: true } });
+    if (!referred) throw ApiError.notFound("Member not found");
     const referral = await prisma.referral.create({
       data: { referrerId: req.auth.id, referredId: req.body.referredId },
     });
@@ -90,6 +98,9 @@ router.post(
   requireAuth,
   requireRole("UNIT_ADMIN"),
   asyncHandler(async (req, res) => {
+    const existing = await prisma.referral.findUnique({ where: { id: req.params.id }, include: { referrer: { select: { districtId: true, unitId: true } } } });
+    if (!existing) throw ApiError.notFound("Referral not found");
+    assertCanManage(req.auth, scopeOfMember(existing.referrer), "You can only reward referrals from your own unit or district");
     const referral = await prisma.referral.update({
       where: { id: req.params.id },
       data: { status: "REWARDED", rewardGrantedAt: new Date() },

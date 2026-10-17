@@ -8,8 +8,20 @@ const asyncHandler = require("../../utils/asyncHandler");
 const ApiError = require("../../utils/ApiError");
 
 const { requireActive } = require("../../middleware/requireActive");
+const { assertCanManage, scopeOfMember } = require("../../middleware/scope");
 
 const router = Router();
+
+// A poll has no district of its own: it belongs to whoever created it (and to the admins above them).
+async function loadManageablePoll(req) {
+  const poll = await prisma.poll.findUnique({
+    where: { id: req.params.id },
+    include: { createdBy: { select: { districtId: true, unitId: true } } },
+  });
+  if (!poll) throw ApiError.notFound("Poll not found");
+  assertCanManage(req.auth, { ...scopeOfMember(poll.createdBy), ownerId: poll.createdById });
+  return poll;
+}
 
 // Phase 2 — "Vote in polls, guess match results."
 router.get(
@@ -49,6 +61,8 @@ router.post(
   }),
   asyncHandler(async (req, res) => {
     const { options, ...pollData } = req.body;
+    if (pollData.scope === "STATE" && req.auth.role !== "STATE_ADMIN") throw ApiError.forbidden("Only the State Committee can create state-wide polls");
+    if (pollData.scope === "DISTRICT" && req.auth.role === "UNIT_ADMIN") throw ApiError.forbidden("District-wide polls need a district admin");
     const poll = await prisma.poll.create({
       data: {
         ...pollData,
@@ -68,6 +82,7 @@ router.patch(
   requireRole("UNIT_ADMIN"),
   validate({ body: z.object({ question: z.string().min(2).optional(), closesAt: z.coerce.date().nullable().optional() }) }),
   asyncHandler(async (req, res) => {
+    await loadManageablePoll(req);
     const poll = await prisma.poll.update({ where: { id: req.params.id }, data: req.body });
     res.json({ poll });
   })
@@ -78,6 +93,7 @@ router.post(
   requireAuth,
   requireRole("UNIT_ADMIN"),
   asyncHandler(async (req, res) => {
+    await loadManageablePoll(req);
     const poll = await prisma.poll.update({ where: { id: req.params.id }, data: { closesAt: new Date() } });
     res.json({ poll });
   })
@@ -88,6 +104,7 @@ router.delete(
   requireAuth,
   requireRole("UNIT_ADMIN"),
   asyncHandler(async (req, res) => {
+    await loadManageablePoll(req);
     await prisma.poll.delete({ where: { id: req.params.id } });
     res.status(204).send();
   })

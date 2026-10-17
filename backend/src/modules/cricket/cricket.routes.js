@@ -8,8 +8,23 @@ const asyncHandler = require("../../utils/asyncHandler");
 const ApiError = require("../../utils/ApiError");
 
 const { requireActive } = require("../../middleware/requireActive");
+const { assertCanManage, canManage, scopeOfUnit } = require("../../middleware/scope");
 
 const router = Router();
+
+
+// ---- scope: a team belongs to a unit, so that unit's admins (and the district/state above) manage it -----
+const teamScope = (team) => ({ districtId: team.unit.districtId, unitId: team.unitId });
+async function loadTeam(id) {
+  const team = await prisma.team.findUnique({ where: { id }, include: { unit: { select: { districtId: true } } } });
+  if (!team) throw ApiError.notFound("Team not found");
+  return team;
+}
+async function assertManagesTeam(auth, teamId) {
+  const team = await loadTeam(teamId);
+  assertCanManage(auth, teamScope(team), "You can only manage teams in your own unit or district");
+  return team;
+}
 
 // ---- Teams --------------------------------------------------------------
 // Phase 3 — "Manage cricket teams: register teams, build rosters, name captains."
@@ -44,6 +59,9 @@ router.post(
   requireRole("UNIT_ADMIN"),
   validate({ body: z.object({ unitId: z.string(), name: z.string().min(2), season: z.string(), captainId: z.string().optional() }) }),
   asyncHandler(async (req, res) => {
+    const unit = await prisma.unit.findUnique({ where: { id: req.body.unitId } });
+    if (!unit) throw ApiError.badRequest("Unknown unit");
+    assertCanManage(req.auth, scopeOfUnit(unit), "You can only create teams in your own unit or district");
     const team = await prisma.team.create({ data: req.body });
     res.status(201).json({ team });
   })
@@ -55,6 +73,7 @@ router.patch(
   requireRole("UNIT_ADMIN"),
   validate({ body: z.object({ name: z.string().min(2).optional(), captainId: z.string().optional() }) }),
   asyncHandler(async (req, res) => {
+    await assertManagesTeam(req.auth, req.params.id);
     const team = await prisma.team.update({ where: { id: req.params.id }, data: req.body });
     res.json({ team });
   })
@@ -77,6 +96,7 @@ router.post(
     }),
   }),
   asyncHandler(async (req, res) => {
+    await assertManagesTeam(req.auth, req.params.teamId);
     const player = await prisma.player.create({ data: { ...req.body, teamId: req.params.teamId } });
     res.status(201).json({ player });
   })
@@ -87,6 +107,9 @@ router.delete(
   requireAuth,
   requireRole("UNIT_ADMIN"),
   asyncHandler(async (req, res) => {
+    const player = await prisma.player.findUnique({ where: { id: req.params.id } });
+    if (!player) throw ApiError.notFound("Player not found");
+    await assertManagesTeam(req.auth, player.teamId);
     await prisma.player.delete({ where: { id: req.params.id } });
     res.status(204).send();
   })
@@ -142,6 +165,7 @@ router.post(
     }),
   }),
   asyncHandler(async (req, res) => {
+    await assertManagesTeam(req.auth, req.body.homeTeamId); // the host team schedules the match
     const match = await prisma.match.create({ data: req.body });
     res.status(201).json({ match });
   })
@@ -166,6 +190,14 @@ router.patch(
   }),
   asyncHandler(async (req, res) => {
     const { stats, ...matchData } = req.body;
+    const existing = await prisma.match.findUnique({
+      where: { id: req.params.id },
+      include: { homeTeam: { include: { unit: { select: { districtId: true } } } }, awayTeam: { include: { unit: { select: { districtId: true } } } } },
+    });
+    if (!existing) throw ApiError.notFound("Match not found");
+    if (!canManage(req.auth, teamScope(existing.homeTeam)) && !canManage(req.auth, teamScope(existing.awayTeam))) {
+      throw ApiError.forbidden("Only the host or visiting team's admins can submit a result");
+    }
     const match = await prisma.match.update({ where: { id: req.params.id }, data: matchData });
 
     if (stats?.length) {
@@ -218,6 +250,7 @@ router.post(
   requireRole("UNIT_ADMIN"),
   validate({ body: z.object({ teamId: z.string(), eventId: z.string().optional(), scheduledAt: z.coerce.date(), location: z.string().optional(), description: z.string().optional() }) }),
   asyncHandler(async (req, res) => {
+    await assertManagesTeam(req.auth, req.body.teamId);
     const trial = await prisma.trial.create({ data: req.body });
     res.status(201).json({ trial });
   })
@@ -228,6 +261,9 @@ router.get(
   requireAuth,
   requireRole("UNIT_ADMIN"),
   asyncHandler(async (req, res) => {
+    const trial = await prisma.trial.findUnique({ where: { id: req.params.id } });
+    if (!trial) throw ApiError.notFound("Trial not found");
+    await assertManagesTeam(req.auth, trial.teamId); // applicants' phone numbers stay inside the team's scope
     const applications = await prisma.trialApplication.findMany({
       where: { trialId: req.params.id },
       include: { member: { select: { fullName: true, memberNumber: true, phone: true } } },
@@ -257,6 +293,9 @@ router.patch(
   requireRole("UNIT_ADMIN"),
   validate({ body: z.object({ status: z.enum(["SHORTLISTED", "SELECTED", "REJECTED"]), notes: z.string().optional() }) }),
   asyncHandler(async (req, res) => {
+    const existing = await prisma.trialApplication.findUnique({ where: { id: req.params.id }, include: { trial: true } });
+    if (!existing) throw ApiError.notFound("Application not found");
+    await assertManagesTeam(req.auth, existing.trial.teamId);
     const application = await prisma.trialApplication.update({ where: { id: req.params.id }, data: req.body });
     res.json({ application });
   })

@@ -5,8 +5,18 @@ const validate = require("../../middleware/validate");
 const { requireAuth, attachAuthIfPresent } = require("../../middleware/auth");
 const { requireRole, RANK } = require("../../middleware/requireRole");
 const asyncHandler = require("../../utils/asyncHandler");
+const ApiError = require("../../utils/ApiError");
+const { assertCanManage } = require("../../middleware/scope");
 
 const router = Router();
+
+// A sponsor with no district is a state-level partner: only the State Committee manages those.
+async function loadManageableSponsor(req) {
+  const sponsor = await prisma.sponsor.findUnique({ where: { id: req.params.id } });
+  if (!sponsor) throw ApiError.notFound("Sponsor not found");
+  assertCanManage(req.auth, { districtId: sponsor.districtId }, "You can only manage sponsors in your own district");
+  return sponsor;
+}
 
 // Phase 1 — "showing our sponsors publicly." District/State admins can pass
 // ?scope=all to also see non-public sponsor records they manage.
@@ -64,7 +74,10 @@ router.post(
     }),
   }),
   asyncHandler(async (req, res) => {
-    const sponsor = await prisma.sponsor.create({ data: req.body });
+    // Omitting districtId means "state-level" for the State Committee; district admins always add to their own district.
+    const districtId = req.auth.role === "STATE_ADMIN" ? req.body.districtId : req.body.districtId || req.auth.districtId;
+    assertCanManage(req.auth, { districtId }, "You can only add sponsors in your own district");
+    const sponsor = await prisma.sponsor.create({ data: { ...req.body, districtId } });
     res.status(201).json({ sponsor });
   })
 );
@@ -87,6 +100,8 @@ router.patch(
     }),
   }),
   asyncHandler(async (req, res) => {
+    await loadManageableSponsor(req);
+    if ("districtId" in req.body) assertCanManage(req.auth, { districtId: req.body.districtId }, "You can only move sponsors within your own district");
     const sponsor = await prisma.sponsor.update({ where: { id: req.params.id }, data: req.body });
     res.json({ sponsor });
   })
@@ -97,6 +112,7 @@ router.delete(
   requireAuth,
   requireRole("DISTRICT_ADMIN"),
   asyncHandler(async (req, res) => {
+    await loadManageableSponsor(req);
     await prisma.sponsor.delete({ where: { id: req.params.id } });
     res.status(204).send();
   })
@@ -108,6 +124,7 @@ router.get(
   requireAuth,
   requireRole("DISTRICT_ADMIN"),
   asyncHandler(async (req, res) => {
+    assertCanManage(req.auth, { districtId: req.params.districtId }, "You can only see your own district's sponsorship log");
     const logs = await prisma.sponsorshipLog.findMany({
       where: { districtId: req.params.districtId },
       orderBy: { createdAt: "desc" },
@@ -129,6 +146,7 @@ router.post(
     }),
   }),
   asyncHandler(async (req, res) => {
+    assertCanManage(req.auth, { districtId: req.params.districtId }, "You can only log sponsorship in your own district");
     const log = await prisma.sponsorshipLog.create({
       data: { ...req.body, districtId: req.params.districtId, loggedById: req.auth.id },
     });

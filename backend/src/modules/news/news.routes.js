@@ -6,6 +6,7 @@ const { requireAuth } = require("../../middleware/auth");
 const { requireRole } = require("../../middleware/requireRole");
 const asyncHandler = require("../../utils/asyncHandler");
 const ApiError = require("../../utils/ApiError");
+const { assertCanManage } = require("../../middleware/scope");
 
 const router = Router();
 
@@ -58,6 +59,9 @@ router.post(
       throw ApiError.forbidden("Only the State Committee can post state-wide news");
     }
 
+    // Non-state authors may only post into their own district.
+    if (req.auth.role !== "STATE_ADMIN") assertCanManage(req.auth, { districtId: data.districtId }, "You can only post news for your own district");
+
     const post = await prisma.newsPost.create({
       data: { ...data, authorId: req.auth.id, publishedAt: publishNow ? new Date() : null },
     });
@@ -70,6 +74,9 @@ router.delete(
   requireAuth,
   requireRole("UNIT_ADMIN"),
   asyncHandler(async (req, res) => {
+    const existing = await prisma.newsPost.findUnique({ where: { id: req.params.id } });
+    if (!existing) throw ApiError.notFound("Post not found");
+    assertCanManage(req.auth, { districtId: existing.districtId, ownerId: existing.authorId }, "You can only delete news from your own district");
     const post = await prisma.newsPost.delete({ where: { id: req.params.id } });
     require("../../middleware/upload").deleteUploadByUrl(post.coverImageUrl);
     res.status(204).send();

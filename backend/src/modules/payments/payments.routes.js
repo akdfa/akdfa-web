@@ -11,6 +11,7 @@ const { getRazorpayClient } = require("../../config/razorpay");
 const env = require("../../config/env");
 const { membershipReceiptHtml, sponsorInvoiceHtml, invoiceNumber } = require("../../utils/receipts");
 const { notify } = require("../notifications/notify.service");
+const { assertCanManage } = require("../../middleware/scope");
 
 const router = Router();
 const MEMBERSHIP_FEE_INR = Number(process.env.MEMBERSHIP_FEE_INR || 500);
@@ -181,6 +182,7 @@ router.post(
   asyncHandler(async (req, res) => {
     const sponsor = await prisma.sponsor.findUnique({ where: { id: req.params.sponsorId } });
     if (!sponsor) throw ApiError.notFound("Sponsor not found");
+    assertCanManage(req.auth, { districtId: sponsor.districtId }, "You can only raise payments for your own district's sponsors");
     const payToken = crypto.randomBytes(20).toString("hex");
     const payment = await prisma.sponsorPayment.create({
       data: { sponsorId: sponsor.id, amount: req.body.amount, note: req.body.note, payToken },
@@ -199,6 +201,9 @@ router.post(
   requireRole("DISTRICT_ADMIN"),
   validate({ body: z.object({ amount: z.number().positive(), note: z.string().optional() }) }),
   asyncHandler(async (req, res) => {
+    const sponsorRow = await prisma.sponsor.findUnique({ where: { id: req.params.sponsorId } });
+    if (!sponsorRow) throw ApiError.notFound("Sponsor not found");
+    assertCanManage(req.auth, { districtId: sponsorRow.districtId }, "You can only raise payments for your own district's sponsors");
     const razorpay = getRazorpayClient();
     if (!razorpay) throw new ApiError(503, "Payments are not configured yet");
     const order = await razorpay.orders.create({
@@ -219,6 +224,7 @@ router.get(
   requireRole("DISTRICT_ADMIN"),
   asyncHandler(async (req, res) => {
     const payments = await prisma.sponsorPayment.findMany({
+      where: req.auth.role === "STATE_ADMIN" ? undefined : { sponsor: { districtId: req.auth.districtId } },
       orderBy: { createdAt: "desc" },
       include: { sponsor: { select: { name: true } } },
     });

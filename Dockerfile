@@ -15,6 +15,7 @@ RUN cd backend && npm ci --omit=dev && npx prisma generate
 COPY backend/src ./backend/src
 COPY backend/scripts ./backend/scripts
 COPY *.html style.css script.js ./
+COPY css ./css
 COPY js ./js
 COPY assets ./assets
 

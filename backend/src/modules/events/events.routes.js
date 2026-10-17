@@ -9,6 +9,7 @@ const ApiError = require("../../utils/ApiError");
 const { deleteUploadByUrl } = require("../../middleware/upload");
 
 const { requireActive } = require("../../middleware/requireActive");
+const { assertCanManage } = require("../../middleware/scope");
 
 const router = Router();
 
@@ -25,6 +26,32 @@ const upsertSchema = z.object({
   photos: z.array(z.string().url()).optional(),
   bracket: z.any().optional(),
 });
+
+
+// ---- scope ---------------------------------------------------------------
+// Events belong to a district and/or unit. Callers may only create/change events inside their own scope.
+async function resolveTarget(auth, body) {
+  if (body.scope === "STATE" && auth.role !== "STATE_ADMIN") throw ApiError.forbidden("Only the State Committee can create state-wide events");
+  let { districtId, unitId } = body;
+  if (auth.role !== "STATE_ADMIN") {
+    if (auth.role === "UNIT_ADMIN") unitId = unitId || auth.unitId;
+    districtId = districtId || (unitId ? undefined : auth.districtId); // with a unit, the district comes from that unit
+  }
+  if (unitId) {
+    const unit = await prisma.unit.findUnique({ where: { id: unitId } });
+    if (!unit) throw ApiError.badRequest("Unknown unit");
+    if (districtId && unit.districtId !== districtId) throw ApiError.badRequest("That unit is not in the chosen district");
+    districtId = unit.districtId;
+  }
+  return { districtId, unitId };
+}
+
+async function loadManageable(req) {
+  const event = await prisma.event.findUnique({ where: { id: req.params.id } });
+  if (!event) throw ApiError.notFound("Event not found");
+  assertCanManage(req.auth, { districtId: event.districtId, unitId: event.unitId, ownerId: event.createdById });
+  return event;
+}
 
 // Phase 1 — "a real calendar of tournaments, charity drives, and matches that people can filter by district."
 router.get(
@@ -71,8 +98,10 @@ router.post(
   requireRole("UNIT_ADMIN"),
   validate({ body: upsertSchema }),
   asyncHandler(async (req, res) => {
+    const target = await resolveTarget(req.auth, req.body);
+    if (req.auth.role !== "STATE_ADMIN") assertCanManage(req.auth, target);
     const event = await prisma.event.create({
-      data: { ...req.body, createdById: req.auth.id },
+      data: { ...req.body, ...target, createdById: req.auth.id },
     });
     res.status(201).json({ event });
   })
@@ -84,7 +113,15 @@ router.patch(
   requireRole("UNIT_ADMIN"),
   validate({ body: upsertSchema.partial() }),
   asyncHandler(async (req, res) => {
-    const event = await prisma.event.update({ where: { id: req.params.id }, data: req.body });
+    await loadManageable(req);
+    let data = req.body;
+    if (data.scope || data.districtId || data.unitId) {
+      // moving an event: the destination must be inside the caller's scope too
+      const target = await resolveTarget(req.auth, data);
+      if (req.auth.role !== "STATE_ADMIN") assertCanManage(req.auth, target);
+      data = { ...data, ...target };
+    }
+    const event = await prisma.event.update({ where: { id: req.params.id }, data });
     res.json({ event });
   })
 );
@@ -94,6 +131,7 @@ router.delete(
   requireAuth,
   requireRole("UNIT_ADMIN"),
   asyncHandler(async (req, res) => {
+    await loadManageable(req);
     const event = await prisma.event.delete({ where: { id: req.params.id } });
     (event.photos || []).forEach(deleteUploadByUrl);
     res.status(204).send();
@@ -107,6 +145,7 @@ router.patch(
   requireRole("UNIT_ADMIN"),
   validate({ body: z.object({ photos: z.array(z.string().url()) }) }),
   asyncHandler(async (req, res) => {
+    await loadManageable(req);
     const event = await prisma.event.update({
       where: { id: req.params.id },
       data: { photos: req.body.photos },
@@ -142,8 +181,7 @@ router.put(
     }),
   }),
   asyncHandler(async (req, res) => {
-    const event = await prisma.event.findUnique({ where: { id: req.params.id } });
-    if (!event) throw ApiError.notFound("Event not found");
+    await loadManageable(req);
 
     const report = await prisma.charityReport.upsert({
       where: { eventId: req.params.id },

@@ -13,6 +13,7 @@ const crypto = require("crypto");
 const env = require("../../config/env");
 const { hashPassword } = require("../../utils/password");
 const { sendMail } = require("../../utils/mail");
+const { assertCanManage, canViewMember, scopeOfMember } = require("../../middleware/scope");
 
 const router = Router();
 
@@ -157,15 +158,13 @@ router.get(
   "/:id",
   requireAuth,
   asyncHandler(async (req, res) => {
-    const isSelf = req.auth.id === req.params.id;
-    if (!isSelf && RANK[req.auth.role] < 1) {
-      throw ApiError.forbidden();
-    }
     const member = await prisma.member.findUnique({
       where: { id: req.params.id },
       include: { unit: true, district: true, badges: { include: { badge: true } } },
     });
     if (!member) throw ApiError.notFound("Member not found");
+    // Yourself, or an admin whose unit/district covers this member. Anyone else gets a 404-style refusal.
+    if (!canViewMember(req.auth, member)) throw ApiError.forbidden();
     res.json({ member: publicMember(member) });
   })
 );
@@ -175,14 +174,12 @@ router.get(
   "/:id/card",
   requireAuth,
   asyncHandler(async (req, res) => {
-    if (req.auth.id !== req.params.id && req.auth.role === "MEMBER") {
-      throw ApiError.forbidden();
-    }
     const member = await prisma.member.findUnique({
       where: { id: req.params.id },
       include: { unit: true, district: true },
     });
     if (!member) throw ApiError.notFound("Member not found");
+    if (!canViewMember(req.auth, member)) throw ApiError.forbidden(); // the card carries a valid verification signature
     if (member.status !== "ACTIVE") throw ApiError.badRequest("Card is only valid for active members");
 
     const sig = require("../../utils/crypto").cardVerifyToken(member.memberNumber);
@@ -269,7 +266,9 @@ router.patch(
   requireAuth,
   validate({ body: updateSchema }),
   asyncHandler(async (req, res) => {
-    if (req.auth.id !== req.params.id && req.auth.role === "MEMBER") throw ApiError.forbidden();
+    const target = await prisma.member.findUnique({ where: { id: req.params.id } });
+    if (!target) throw ApiError.notFound("Member not found");
+    if (!canViewMember(req.auth, target)) throw ApiError.forbidden();
     const member = await prisma.member.update({ where: { id: req.params.id }, data: req.body });
     res.json({ member: publicMember(member) });
   })
@@ -340,6 +339,11 @@ router.patch(
     if (["STATE_ADMIN", "DISTRICT_ADMIN"].includes(req.body.role) && req.auth.role !== "STATE_ADMIN") {
       throw ApiError.forbidden("Only the State Committee can grant this role");
     }
+    const target = await prisma.member.findUnique({ where: { id: req.params.id } });
+    if (!target) throw ApiError.notFound("Member not found");
+    assertCanManage(req.auth, scopeOfMember(target), "You can only change roles inside your own district");
+    // Nobody changes the role of someone at or above their own level (except the State Committee).
+    if (req.auth.role !== "STATE_ADMIN" && RANK[target.role] >= RANK[req.auth.role]) throw ApiError.forbidden("You cannot change this member's role");
     const member = await prisma.member.update({
       where: { id: req.params.id },
       data: { role: req.body.role },

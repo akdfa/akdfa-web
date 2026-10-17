@@ -7,6 +7,7 @@ const { requireRole } = require("../../middleware/requireRole");
 const asyncHandler = require("../../utils/asyncHandler");
 const ApiError = require("../../utils/ApiError");
 const { logAudit } = require("../admin/audit.service");
+const { assertCanManage, scopeOfUnit } = require("../../middleware/scope");
 
 const router = Router();
 
@@ -77,6 +78,9 @@ router.post(
   requireAuth,
   requireRole("DISTRICT_ADMIN"),
   asyncHandler(async (req, res) => {
+    const existing = await prisma.unit.findUnique({ where: { id: req.params.id } });
+    if (!existing) throw ApiError.notFound("Unit not found");
+    assertCanManage(req.auth, scopeOfUnit(existing), "You can only review units in your own district");
     const unit = await prisma.unit.update({
       where: { id: req.params.id },
       data: { status: "APPROVED", approvedById: req.auth.id },
@@ -91,6 +95,9 @@ router.post(
   requireAuth,
   requireRole("DISTRICT_ADMIN"),
   asyncHandler(async (req, res) => {
+    const existing = await prisma.unit.findUnique({ where: { id: req.params.id } });
+    if (!existing) throw ApiError.notFound("Unit not found");
+    assertCanManage(req.auth, scopeOfUnit(existing), "You can only review units in your own district");
     const unit = await prisma.unit.update({
       where: { id: req.params.id },
       data: { status: "REJECTED", approvedById: req.auth.id },

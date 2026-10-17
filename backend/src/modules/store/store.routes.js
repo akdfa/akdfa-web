@@ -10,6 +10,7 @@ const { getRazorpayClient } = require("../../config/razorpay");
 const env = require("../../config/env");
 const { RANK } = require("../../middleware/requireRole");
 const { orderReceiptHtml } = require("../../utils/receipts");
+const { assertCanManage } = require("../../middleware/scope");
 
 const { requireActive } = require("../../middleware/requireActive");
 
@@ -147,8 +148,8 @@ router.get(
       include: { items: { include: { product: { select: { name: true } } } } },
     });
     if (!order) throw ApiError.notFound("Order not found");
-    if (order.memberId !== req.auth.id && RANK[req.auth.role] < 2) throw ApiError.forbidden();
     const member = await prisma.member.findUnique({ where: { id: order.memberId } });
+    if (order.memberId !== req.auth.id) assertCanManage(req.auth, { districtId: member?.districtId }, "You can only open receipts for your own district's members");
     res.type("html").send(orderReceiptHtml(order, member));
   })
 );
@@ -160,7 +161,11 @@ router.get(
   requireRole("DISTRICT_ADMIN"),
   asyncHandler(async (req, res) => {
     const orders = await prisma.order.findMany({
-      where: { status: req.query.status || undefined },
+      where: {
+        status: req.query.status || undefined,
+        // district admins only see their own district's members' orders
+        ...(req.auth.role === "STATE_ADMIN" ? {} : { member: { districtId: req.auth.districtId } }),
+      },
       include: {
         items: { include: { product: { select: { name: true } } } },
         member: { select: { fullName: true, memberNumber: true, district: { select: { name: true } } } },
@@ -177,6 +182,9 @@ router.patch(
   requireRole("DISTRICT_ADMIN"),
   validate({ body: z.object({ status: z.enum(["PROCESSING", "SHIPPED", "DELIVERED", "CANCELLED"]) }) }),
   asyncHandler(async (req, res) => {
+    const existing = await prisma.order.findUnique({ where: { id: req.params.id }, include: { member: { select: { districtId: true } } } });
+    if (!existing) throw ApiError.notFound("Order not found");
+    assertCanManage(req.auth, { districtId: existing.member.districtId }, "You can only update orders from your own district");
     const order = await prisma.order.update({ where: { id: req.params.id }, data: req.body });
     res.json({ order });
   })

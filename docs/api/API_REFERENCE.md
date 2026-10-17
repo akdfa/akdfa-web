@@ -14,6 +14,10 @@ Full request/response shapes are defined by the route handlers in `backend/src/m
 | POST | `/auth/logout` | — | Revokes a refresh token |
 | GET | `/auth/me` | Member | Current member profile |
 
+## Authorization scope
+
+Role level alone never grants access to a record. State admins act anywhere; district admins only on records in their own district; unit admins only on records in their own unit; creators can always manage their own items. Out-of-scope requests return `403`. Lists (members, store orders, sponsor payments) are filtered the same way.
+
 ## Districts & units — `/districts`, `/units` (Phase 0/1/3/4)
 
 | Method | Path | Auth | Notes |
