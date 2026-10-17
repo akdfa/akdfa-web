@@ -15,20 +15,24 @@ One URL, no CORS, nothing to wire up. `SERVE_SITE=true` makes the API serve the 
 
 The database stays on Supabase (already set up). Nothing else to host.
 
-### Steps (Render example)
+### Steps (Render)
 
-1. Push the repo to GitHub.
-2. Render → **New → Blueprint** → select the repo → it reads `render.yaml`.
-3. Fill the blanks it asks for:
-   - `DATABASE_URL` — the Supabase string, ending `?schema=akdfa&sslmode=require`
-   - `ENCRYPTION_KEY` — **the same key you used locally** if you're reusing the same database
-     (a different key can't decrypt existing rows)
-   - `PUBLIC_BASE_URL`, `SITE_BASE_URL`, `CORS_ORIGIN` — all the same `https://<name>.onrender.com`
-   - `BOOTSTRAP_ADMIN_PASSWORD` — a strong one
-4. Deploy. On boot it runs `prisma migrate deploy` automatically.
-5. **First time only** — seed the districts/units/admin (Render → *Shell*):
-   `SEED_DEMO=off node prisma/seed.js` (use `SEED_DEMO=on` for demo members while testing).
-6. Open the URL → **Sign in**.
+**Already done for you:** a separate production schema (`akdfa_prod`) exists in the Supabase
+database, migrated and seeded (districts, units, State admin — no demo data), encrypted with a
+**fresh production key**. All the secrets are in `backend/.env.production.local` (git-ignored).
+Don't reuse the dev `ENCRYPTION_KEY` — it was committed to the public repo, so treat it as public.
+
+1. Render → **New → Blueprint** → connect `akdfa/akdfa-web` → choose branch **Dev** → it reads `render.yaml`.
+2. Open the new service → **Environment → Add from .env** → paste the contents of
+   `backend/.env.production.local` (DATABASE_URL, ENCRYPTION_KEY, JWT secrets, admin password).
+3. Also set these three to the service's own URL (shown at the top of the page, e.g.
+   `https://akdfa.onrender.com`): `PUBLIC_BASE_URL`, `SITE_BASE_URL`, `CORS_ORIGIN`.
+4. Save → Render redeploys. On boot it runs `prisma migrate deploy` (no-op, already applied).
+5. Open the URL → **Sign in** as `admin@akdfa.org` with `BOOTSTRAP_ADMIN_PASSWORD` from that file,
+   then change the password under *Profile → Change password*.
+
+Seeding is not needed on Render (the free plan has no shell) — it was done from the dev machine:
+`NODE_ENV=production SEED_DEMO=off node prisma/seed.js` with the production env loaded.
 
 The server refuses to start in production if `DATABASE_URL`, `ENCRYPTION_KEY` or the JWT
 secrets are missing, so a mis-set config fails loudly instead of running insecurely.
