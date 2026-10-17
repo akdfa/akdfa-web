@@ -5,7 +5,7 @@
   background:
     radial-gradient(circle at 12% -8%, rgba(212, 175, 55, 0.14), transparent 30%),
     radial-gradient(circle at 92% 4%, rgba(47, 155, 97, 0.1), transparent 26%),
-    linear-gradient(180deg, #050505, #080808 46%, #030303);
+    linear-gradient(180deg, var(--deep), var(--deep) 46%, var(--deep));
 }
 .portal-body::before { display: none; }
 
@@ -14,7 +14,7 @@
   inset: 0;
   display: grid;
   place-items: center;
-  background: #050505;
+  background: var(--deep);
   z-index: 60;
 }
 .portal-boot .loader-orbit img { width: 74px; height: 74px; }
@@ -35,7 +35,7 @@
   flex-direction: column;
   gap: 10px;
   padding: 22px 16px;
-  background: rgba(10, 10, 10, 0.92);
+  background: rgba(var(--deep-rgb), 0.92);
   border-right: 1px solid var(--border);
   backdrop-filter: blur(8px);
 }
@@ -97,7 +97,7 @@
   align-items: center;
   gap: 14px;
   padding: 14px clamp(16px, 3vw, 34px);
-  background: rgba(8, 8, 8, 0.86);
+  background: rgba(var(--deep-rgb), 0.86);
   border-bottom: 1px solid var(--border);
   backdrop-filter: blur(8px);
 }
@@ -142,7 +142,7 @@
 
 .portal-scrim {
   position: fixed; inset: 0;
-  background: rgba(0, 0, 0, 0.55);
+  background: rgba(var(--deep-rgb), 0.55);
   z-index: 15;
 }
 
@@ -225,7 +225,7 @@ table.pv-table { width: 100%; border-collapse: collapse; font-size: 0.88rem; min
 .pv-form { display: grid; gap: 14px; }
 .pv-form label { display: grid; gap: 6px; font-weight: 700; font-size: 0.82rem; color: var(--muted); }
 .pv-form input, .pv-form select, .pv-form textarea {
-  background: #0c0c0c;
+  background: var(--deep);
   border: 1px solid var(--border);
   border-radius: 10px;
   padding: 10px 12px;
@@ -260,7 +260,7 @@ table.pv-table { width: 100%; border-collapse: collapse; font-size: 0.88rem; min
   padding: 26px;
   color: #0b0b0b;
   background: linear-gradient(135deg, #f2d675, #d4af37 55%, #b8912b);
-  box-shadow: 0 30px 70px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 30px 70px rgba(var(--deep-rgb), 0.5);
   overflow: hidden;
   max-width: 460px;
 }
@@ -268,7 +268,7 @@ table.pv-table { width: 100%; border-collapse: collapse; font-size: 0.88rem; min
   content: "";
   position: absolute; right: -40px; bottom: -60px;
   width: 220px; height: 220px; border-radius: 50%;
-  background: rgba(255, 255, 255, 0.16);
+  background: rgba(var(--fg), 0.16);
 }
 .mcard-top { display: flex; justify-content: space-between; align-items: flex-start; position: relative; z-index: 1; }
 .mcard-top img { width: 46px; height: 46px; }
@@ -278,7 +278,7 @@ table.pv-table { width: 100%; border-collapse: collapse; font-size: 0.88rem; min
 .mcard-grid { margin-top: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px 18px; position: relative; z-index: 1; }
 .mcard-grid span { display: block; font-size: 0.64rem; text-transform: uppercase; letter-spacing: 0.12em; opacity: 0.7; }
 .mcard-grid strong { font-size: 0.95rem; }
-.mcard--inactive { background: linear-gradient(135deg, #3a3a3a, #1e1e1e); color: #cfcfcf; }
+.mcard--inactive { background: linear-gradient(135deg, #3a3a3a, var(--deep)); color: #cfcfcf; }
 
 .badge-chip {
   display: flex; gap: 10px; align-items: center;
@@ -292,7 +292,7 @@ table.pv-table { width: 100%; border-collapse: collapse; font-size: 0.88rem; min
 .notif { border-left: 3px solid transparent; }
 .notif.is-unread { border-left-color: var(--gold); background: rgba(212, 175, 55, 0.06); }
 
-.poll-bar { position: relative; background: #0c0c0c; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; height: 34px; }
+.poll-bar { position: relative; background: var(--deep); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; height: 34px; }
 .poll-bar-fill { position: absolute; inset: 0 auto 0 0; background: rgba(212, 175, 55, 0.22); }
 .poll-bar-label { position: relative; z-index: 1; display: flex; justify-content: space-between; padding: 7px 12px; font-size: 0.85rem; font-weight: 700; }
 .poll-option { cursor: pointer; }

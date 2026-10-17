@@ -4,13 +4,31 @@
     {
       "name": "site",
       "runtimeExecutable": "npx",
-      "runtimeArgs": ["--yes", "serve", "-l", "5500", "."],
+      "runtimeArgs": [
+        "--yes",
+        "serve",
+        "-l",
+        "5500",
+        "."
+      ],
+      "port": 5500
+    },
+    {
+      "name": "site-py",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "5500"
+      ],
       "port": 5500
     },
     {
       "name": "api",
-      "runtimeExecutable": "npm",
-      "runtimeArgs": ["--prefix", "backend", "run", "dev"],
+      "runtimeExecutable": "/Users/vishnu/.local/node/bin/node",
+      "runtimeArgs": [
+        "backend/src/server.js"
+      ],
       "port": 4000
     }
   ]

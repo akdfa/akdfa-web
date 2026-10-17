@@ -1,8 +1,8 @@
 node_modules/
 dist/
 *.log
-uploads/
-!uploads/.gitkeep
+/uploads/
+!/uploads/.gitkeep
 private/
 
 # Secrets & machine-specific overrides — .env.development and .env.production

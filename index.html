@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>AKDFA Official | All Kerala Dhoni Fans Association</title>
   <meta name="description" content="Official website for All Kerala Dhoni Fans Association, the registered Dhoni fan community connecting 17 AKDFA units through cricket, service, and community action.">
-  <meta name="theme-color" content="#050505">
+  <meta name="theme-color" content="#2b4a9a">
   <meta property="og:title" content="AKDFA Official | All Kerala Dhoni Fans Association">
   <meta property="og:description" content="Kerala's registered Dhoni fan community, united by cricket, loyalty, and service.">
   <meta property="og:type" content="website">
@@ -13,18 +13,19 @@
   <link rel="icon" type="image/png" href="assets/akdfa-circle-logo.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,500;0,600;0,700;0,800;1,700&family=Inter:wght@400;500;600;700;800;900&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-  <link rel="stylesheet" href="style.css?v=6">
+  <script src="js/theme.js"></script>
+  <link rel="stylesheet" href="style.css?v=8">
+  <link rel="stylesheet" href="css/portal.css?v=3">
 </head>
-<body>
+<body class="portal">
   <a class="skip-link" href="#main">Skip to content</a>
 
   <div class="page-loader" aria-hidden="true">
-    <div class="loader-orbit">
-      <img src="assets/akdfa-circle-logo.png" alt="">
-    </div>
+    <div class="loader-orbit"><img src="assets/akdfa-circle-logo.png" alt=""></div>
   </div>
+
   <header class="site-header" id="top">
     <nav class="navbar" aria-label="Primary navigation">
       <a class="brand" href="index.html" aria-label="AKDFA Official home">
@@ -48,62 +49,112 @@
   </header>
 
   <main id="main">
-    <section class="hero" id="home">
-      <div class="stadium-beams"></div>
-      <div class="hero-particles" aria-hidden="true"></div>
-      <div class="section-inner hero-grid">
-        <div class="hero-copy reveal">
-          <p class="eyebrow">Independent registered fan association</p>
-          <h1 class="hero-title" aria-label="All Kerala Dhoni Fans Association">
-            <span>ALL</span>
-            <span>KERALA</span>
-            <span>DHONI</span>
-            <span>FANS</span>
-            <span class="hero-title-association">ASSOCIATION</span>
-          </h1>
-          <p class="hero-subtitle">Official registered fan community of Dhoni fans across Kerala</p>
-          <p class="hero-text">The world's first registered fan association dedicated to a sportsperson - united by admiration for MS Dhoni and driven
-          by service to society</p>
-          <ul class="hero-proof" aria-label="AKDFA highlights">
-            <li><strong>17</strong><span>Units</span></li>
-            <li><strong>14</strong><span>Districts</span></li>
-            <li><strong>949/17</strong><span>Reg No</span></li>
-          </ul>
-          <div class="hero-actions">
-            <a class="btn btn-primary" href="join.html">Join the Association</a>
-            <a class="btn btn-outline" href="units.html">Explore Units</a>
-            <a class="btn btn-ghost" href="https://chat.whatsapp.com/JaQgHEOscBy6waDpQOWEqQ?s=sw&amp;p=a&amp;mlu=0" target="_blank" rel="noopener">Join WhatsApp</a>
+    <div class="wrap quick-links" aria-label="Quick links">
+      <a href="units.html">Our Units <i class="fa-solid fa-arrow-right"></i></a>
+      <a href="news.html">Updates <i class="fa-solid fa-arrow-right"></i></a>
+      <a href="gallery.html">Gallery <i class="fa-solid fa-arrow-right"></i></a>
+      <a href="sponsors.html">Sponsors <i class="fa-solid fa-arrow-right"></i></a>
+      <a href="join.html">Join Us <i class="fa-solid fa-arrow-right"></i></a>
+    </div>
+
+    <!-- Featured carousel -->
+    <section class="wrap hero-carousel" aria-roledescription="carousel" aria-label="Featured">
+      <div class="slides" data-slides>
+        <article class="slide" data-title="Join the Association">
+          <img src="assets/dhoni-helmet-hero.png" alt="" class="slide-contain">
+          <div class="slide-copy">
+            <span class="tag">AKDFA Official</span>
+            <h1>All Kerala Dhoni Fans Association</h1>
+            <p>Kerala's registered Dhoni fan community. Cricket on the field, service off it.</p>
+            <div class="slide-actions"><a class="pill pill-light" href="join.html">Join the Association</a><a class="pill" href="units.html">Explore Units</a></div>
           </div>
-        </div>
-        <div class="hero-visual reveal" role="img" aria-label="Gold number seven with green Dhoni line artwork">
-          <div class="number-seven">7</div>
-          <img class="hero-line-art" src="assets/dhoni-green-line-transparent.png" alt="Green line illustration of Dhoni lifting a cricket helmet">
-          <div class="reg-badge">Reg No: 949/17</div>
+        </article>
+        <article class="slide" data-title="5s Tournament">
+          <img src="assets/5s%20tournament.jpg" alt="AKDFA 5s tournament" loading="lazy">
+          <div class="slide-copy"><span class="tag">Tournaments</span><h2>AKDFA 5s Tournament</h2><a class="pill pill-light" href="gallery.html">See the gallery</a></div>
+        </article>
+        <article class="slide" data-title="Football Tournament">
+          <img src="assets/football-tournament.jpg" alt="AKDFA football tournament" loading="lazy">
+          <div class="slide-copy"><span class="tag">Community</span><h2>AKDFA Football Tournament</h2><a class="pill pill-light" href="news.html">Latest updates</a></div>
+        </article>
+        <article class="slide" data-title="Committee, Kannur">
+          <img src="assets/committee-kannur.jpg" alt="AKDFA Kannur committee" loading="lazy">
+          <div class="slide-copy"><span class="tag">Units</span><h2>Meet the units across Kerala</h2><a class="pill pill-light" href="units.html">Find your district</a></div>
+        </article>
+      </div>
+      <div class="carousel-ui">
+        <button type="button" class="arrow" data-prev aria-label="Previous slide"><i class="fa-solid fa-chevron-left"></i></button>
+        <div class="dots" data-dots></div>
+        <button type="button" class="arrow" data-next aria-label="Next slide"><i class="fa-solid fa-chevron-right"></i></button>
+      </div>
+    </section>
+
+    <!-- At a glance -->
+    <section class="wrap glance" aria-label="AKDFA at a glance">
+      <div><strong>17</strong><span>Units</span></div>
+      <div><strong>14</strong><span>Districts</span></div>
+      <div><strong>949/17</strong><span>Registration No</span></div>
+      <div><strong>1st</strong><span>Registered fan association for a sportsperson</span></div>
+    </section>
+
+    <!-- News -->
+    <section class="wrap block" aria-labelledby="newsHead">
+      <div class="block-head"><h2 id="newsHead">Latest News</h2><a href="news.html">More <i class="fa-solid fa-arrow-right"></i></a></div>
+      <div class="cards" id="homeNews">
+        <a class="card" href="news.html"><span class="tag">Updates</span><h3>Follow AKDFA news and events across Kerala</h3><small>akdfa.org</small></a>
+        <a class="card" href="units.html"><span class="tag">Units</span><h3>17 units, 14 districts: find your local unit</h3><small>Our Units</small></a>
+        <a class="card" href="join.html"><span class="tag">Membership</span><h3>Become a member and join your district's events</h3><small>Join Us</small></a>
+      </div>
+    </section>
+
+    <!-- Videos -->
+    <section class="wrap block" aria-labelledby="vidHead">
+      <div class="block-head"><h2 id="vidHead">Featured Video</h2></div>
+      <div class="video-feature">
+        <button class="video-thumb" type="button" data-video="R0alThHNb0Y" aria-label="Play: Dhoni finishes off in style, 2011 World Cup final">
+          <img src="https://img.youtube.com/vi/R0alThHNb0Y/hqdefault.jpg" alt="" loading="lazy">
+          <span class="play"><i class="fa-solid fa-play"></i></span>
+        </button>
+        <div class="video-copy">
+          <span class="tag">ICC Men's Cricket World Cup 2011</span>
+          <h3>Dhoni finishes off in style</h3>
+          <p>The winning six at Wankhede, 2 April 2011. The moment that started it all for Dhoni fans.</p>
         </div>
       </div>
     </section>
 
-    <section class="trust-strip" aria-label="AKDFA trust indicators">
-      <div class="section-inner trust-grid">
-        <article class="trust-item reveal"><span>Registered</span><strong>Reg No: 949/17</strong></article>
-        <article class="trust-item reveal"><span>Network</span><strong>17 equal units</strong></article>
-        <article class="trust-item reveal"><span>Presence</span><strong>14 Kerala districts</strong></article>
-        <article class="trust-item reveal"><span>Purpose</span><strong>Fandom with service</strong></article>
+    <!-- Gallery rail -->
+    <section class="wrap block" aria-labelledby="galHead">
+      <div class="block-head"><h2 id="galHead">From the Units</h2><a href="gallery.html">Gallery <i class="fa-solid fa-arrow-right"></i></a></div>
+      <div class="rail">
+        <img src="assets/5s%20tournament.jpg" alt="5s tournament" loading="lazy">
+        <img src="assets/football-tournament.jpg" alt="Football tournament" loading="lazy">
+        <img src="assets/committee-kannur.jpg" alt="Kannur committee" loading="lazy">
+        <img src="assets/done%20recive%20award.jpg" alt="Receiving an award" loading="lazy">
+        <img src="assets/khel-ratna-post.jpg" alt="Khel Ratna post" loading="lazy">
       </div>
     </section>
 
-    <section class="section cta-section" aria-label="Join AKDFA">
-      <div class="section-inner">
-        <div class="cta-card reveal">
-          <div>
-            <p class="eyebrow">Become a Member</p>
-            <h2>Join the association today.</h2>
-            <p>Become part of a growing family of 17 units across 14 districts. Membership connects you to your local unit, district events, and the wider AKDFA community.</p>
-          </div>
-          <div class="cta-actions">
-            <a class="btn btn-primary" href="join.html">Join the Association</a>
-            <a class="btn btn-outline" href="units.html">Find Your District</a>
-          </div>
+    <!-- Honours -->
+    <section class="wrap block" aria-labelledby="honHead">
+      <div class="block-head"><h2 id="honHead">MS Dhoni's Captaincy Honours</h2></div>
+      <ul class="honours">
+        <li><b>2007</b> ICC Men's T20 World Cup</li>
+        <li><b>2011</b> ICC Men's Cricket World Cup</li>
+        <li><b>2013</b> ICC Men's Champions Trophy</li>
+      </ul>
+    </section>
+
+    <!-- CTA band -->
+    <section class="wrap">
+      <div class="cta-band">
+        <div>
+          <h2>1 association. 17 units.</h2>
+          <p>Become part of a growing family across 14 districts. Membership connects you to your local unit, district events, and the wider AKDFA community.</p>
+        </div>
+        <div class="slide-actions">
+          <a class="pill pill-light" href="join.html">Join Now</a>
+          <a class="pill" href="https://chat.whatsapp.com/JaQgHEOscBy6waDpQOWEqQ?s=sw&amp;p=a&amp;mlu=0" target="_blank" rel="noopener">Join WhatsApp</a>
         </div>
       </div>
     </section>
@@ -135,5 +186,6 @@
   <script src="js/api.js"></script>
   <script src="script.js"></script>
   <script src="js/public.js"></script>
+  <script src="js/portal.js"></script>
 </body>
 </html>
