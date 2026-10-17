@@ -7,6 +7,8 @@ const { requireRole } = require("../../middleware/requireRole");
 const asyncHandler = require("../../utils/asyncHandler");
 const ApiError = require("../../utils/ApiError");
 
+const { requireActive } = require("../../middleware/requireActive");
+
 const router = Router();
 
 // Phase 2 — "Vote in polls, guess match results."
@@ -94,6 +96,7 @@ router.delete(
 router.post(
   "/options/:optionId/vote",
   requireAuth,
+  requireActive,
   asyncHandler(async (req, res) => {
     const option = await prisma.pollOption.findUnique({
       where: { id: req.params.optionId },

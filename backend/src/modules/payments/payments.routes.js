@@ -37,8 +37,10 @@ async function settleGatewayOrder(orderId) {
           receiptUrl: `${env.publicBaseUrl}/api/v1/payments/membership-fees/${fee.id}/receipt`,
         },
       }),
-      prisma.member.update({
-        where: { id: fee.memberId },
+      // Paying never activates someone who hasn't been approved (or was rejected /
+      // suspended) — only an existing ACTIVE or LAPSED member is (re)activated.
+      prisma.member.updateMany({
+        where: { id: fee.memberId, status: { in: ["ACTIVE", "LAPSED"] } },
         data: {
           status: "ACTIVE",
           membershipExpiresAt: new Date(fee.period + 1, 2, 31),

@@ -11,6 +11,8 @@ const env = require("../../config/env");
 const { RANK } = require("../../middleware/requireRole");
 const { orderReceiptHtml } = require("../../utils/receipts");
 
+const { requireActive } = require("../../middleware/requireActive");
+
 const router = Router();
 
 // Phase 5 — "The AKDFA Store: official jerseys, caps, and scarves ... with a special member price."
@@ -83,6 +85,7 @@ const orderItemSchema = z.object({ productId: z.string(), size: z.string().optio
 router.post(
   "/orders",
   requireAuth,
+  requireActive,
   validate({ body: z.object({ items: z.array(orderItemSchema).min(1), shippingAddress: z.string().min(5) }) }),
   asyncHandler(async (req, res) => {
     const products = await prisma.product.findMany({

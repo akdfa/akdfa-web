@@ -8,6 +8,8 @@ const asyncHandler = require("../../utils/asyncHandler");
 const ApiError = require("../../utils/ApiError");
 const { deleteUploadByUrl } = require("../../middleware/upload");
 
+const { requireActive } = require("../../middleware/requireActive");
+
 const router = Router();
 
 const upsertSchema = z.object({
@@ -156,6 +158,7 @@ router.put(
 router.post(
   "/:id/rsvp",
   requireAuth,
+  requireActive,
   validate({ body: z.object({ status: z.enum(["GOING", "INTERESTED", "NOT_GOING"]).default("GOING") }) }),
   asyncHandler(async (req, res) => {
     const rsvp = await prisma.eventRsvp.upsert({

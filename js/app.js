@@ -209,6 +209,14 @@
         m.status === "ACTIVE" ? '<span class="pill pill--ok">Active</span>'
         : m.status === "PENDING" ? '<span class="pill pill--warn">Awaiting approval</span>'
         : `<span class="pill pill--bad">${titleCase(m.status)}</span>`;
+      const statusNote =
+        m.status === "PENDING"
+          ? `<div class="card" style="border-color:var(--border-strong)"><h2>Thanks for joining AKDFA 🎉</h2>
+              <p class="card-muted">Your request has been sent to <strong>${esc(m.unit?.name || "your unit")}</strong>. A unit admin will review it and you'll get a notification as soon as you're approved — then your digital card activates and you can RSVP to events, vote, apply for trials and shop.</p>
+              <p class="card-muted">Until then you can read the news feed and see events and fixtures.</p></div>`
+          : m.status === "LAPSED"
+            ? `<div class="card" style="border-color:rgba(242,117,117,.5)"><h2>Your membership has lapsed</h2><p class="card-muted">Renew to get your digital card and member features back.</p><a class="btn btn-primary btn-small" href="#/membership">Renew now</a></div>`
+            : "";
       const expiryNote =
         m.membershipExpiresAt && daysUntil(m.membershipExpiresAt) < 45
           ? `<div class="card"><strong>Your membership expires ${fmtDate(m.membershipExpiresAt)}</strong><p class="card-muted">Renew from the Membership Fee page to keep your digital card active.</p><a class="btn btn-primary btn-small" href="#/membership">Renew now</a></div>`
@@ -221,7 +229,7 @@
           <div class="stat"><span>Referrals</span><strong>${d.referrals.length}</strong></div>
           <div class="stat"><span>Unread</span><strong>${d.unreadNotifications}</strong></div>
         </div>
-        ${expiryNote}
+        ${statusNote}${expiryNote}
         <div class="grid grid-2" style="margin-top:16px">
           <div class="card">
             <div class="row-between"><h2>Upcoming events you're attending</h2><a class="btn-ghost btn-small" href="#/events">All events</a></div>

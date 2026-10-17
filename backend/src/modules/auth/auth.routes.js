@@ -10,6 +10,7 @@ const env = require("../../config/env");
 const { hashPassword, comparePassword } = require("../../utils/password");
 const { blindIndex } = require("../../utils/crypto");
 const { sendMail } = require("../../utils/mail");
+const { notify } = require("../notifications/notify.service");
 const {
   signAccessToken,
   signRefreshToken,
@@ -96,6 +97,29 @@ router.post(
         await prisma.referral.create({ data: { referrerId, referredId: member.id } }).catch(() => {});
       }
     }
+
+    // Tell the people who can approve this person (their unit's admins + the
+    // district's admins) that someone is waiting. Never let this fail the signup.
+    prisma.member
+      .findMany({
+        where: {
+          status: "ACTIVE",
+          OR: [
+            { unitId: unit.id, role: { in: ["UNIT_ADMIN", "DISTRICT_ADMIN", "STATE_ADMIN"] } },
+            { districtId: unit.districtId, role: "DISTRICT_ADMIN" },
+          ],
+        },
+        select: { id: true },
+      })
+      .then((admins) =>
+        notify(admins.map((x) => x.id), {
+          title: "New membership request",
+          body: `${fullName} has asked to join ${unit.name}. Review it under Members → Pending.`,
+          category: "MEMBERSHIP",
+          force: true,
+        })
+      )
+      .catch(() => {});
 
     res.status(201).json({ member: publicMember(member) });
   })

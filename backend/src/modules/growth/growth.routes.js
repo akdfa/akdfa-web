@@ -6,6 +6,8 @@ const { requireAuth } = require("../../middleware/auth");
 const { requireRole } = require("../../middleware/requireRole");
 const asyncHandler = require("../../utils/asyncHandler");
 
+const { requireActive } = require("../../middleware/requireActive");
+
 const router = Router();
 
 // ---- Badges (Phase 2) -----------------------------------------------------
@@ -60,6 +62,7 @@ router.get(
 router.post(
   "/referrals",
   requireAuth,
+  requireActive,
   validate({ body: z.object({ referredId: z.string() }) }),
   asyncHandler(async (req, res) => {
     const referral = await prisma.referral.create({

@@ -7,6 +7,8 @@ const { requireRole } = require("../../middleware/requireRole");
 const asyncHandler = require("../../utils/asyncHandler");
 const ApiError = require("../../utils/ApiError");
 
+const { requireActive } = require("../../middleware/requireActive");
+
 const router = Router();
 
 // ---- Teams --------------------------------------------------------------
@@ -186,6 +188,7 @@ router.patch(
 router.post(
   "/matches/:id/predict",
   requireAuth,
+  requireActive,
   validate({ body: z.object({ predictedWinnerTeamId: z.string() }) }),
   asyncHandler(async (req, res) => {
     const prediction = await prisma.matchPrediction.upsert({
@@ -237,6 +240,7 @@ router.get(
 router.post(
   "/trials/:id/apply",
   requireAuth,
+  requireActive,
   asyncHandler(async (req, res) => {
     const application = await prisma.trialApplication.upsert({
       where: { trialId_memberId: { trialId: req.params.id, memberId: req.auth.id } },

@@ -68,6 +68,40 @@ async function login(u) { const r = await expect("/auth/login", 200, { method: "
   await t("unit admin's unitId is ignored (can't add elsewhere); member role can't add", async () => { const other = (await expect("/units", 200)).units.find((u) => u.id !== U.member.unitId); const r = await expect("/members", 201, { method: "POST", token: U.token, body: { unitId: other.id, fullName: "Stay Home", email: `stay${rnd}@example.com`, phone: `+9194${String(rnd).slice(-8)}` } }); eq(r.member.unitId, U.member.unitId); await expect("/members", 403, { method: "POST", token: M.token, body: { fullName: "No Way", email: `no${rnd}@example.com`, phone: "+919333333333" } }); });
   await t("district admin: own-district unit ok, other district 403; duplicate email 409", async () => { const units = (await expect("/units", 200)).units; const own = units.find((u) => u.districtId === D.member.districtId), foreign = units.find((u) => u.districtId !== D.member.districtId); await expect("/members", 201, { method: "POST", token: D.token, body: { unitId: own.id, fullName: "District Add", email: `dadd${rnd}@example.com`, phone: `+9193${String(rnd).slice(-8)}` } }); await expect("/members", 403, { method: "POST", token: D.token, body: { unitId: foreign.id, fullName: "Foreign", email: `fx${rnd}@example.com`, phone: `+9192${String(rnd).slice(-8)}` } }); await expect("/members", 409, { method: "POST", token: D.token, body: { unitId: own.id, fullName: "Dup", email: `dadd${rnd}@example.com`, phone: "+919444444444" } }); });
 
+  console.log("── New-member signup journey");
+  await t("signup → pending can browse but NOT take part → admins notified → approved → can", async () => {
+    const email = `journey${rnd}@example.com`;
+    const r = await expect("/auth/register", 201, { method: "POST", body: { unitId: U.member.unitId, fullName: "Journey Person", email, phone: `+9187${String(rnd).slice(-8)}`, password: "journey-pass-1" } });
+    eq(r.member.status, "PENDING");
+    const s = await login({ email, password: "journey-pass-1" });
+    const ev = (await expect("/events", 200)).events[0], poll = (await expect("/polls", 200, { token: s.token })).polls[0], prod = (await expect("/store/products", 200)).products[0], trial = (await expect("/cricket/trials", 200)).trials[0], match = (await expect("/cricket/matches", 200)).matches[0];
+    await expect("/news", 200); await expect("/events", 200); // public content still readable
+    await expect(`/members/${s.member.id}`, 200, { method: "PATCH", token: s.token, body: { fullName: "Journey Person" } }); // own profile ok
+    const blocked = [
+      [`/events/${ev.id}/rsvp`, { status: "GOING" }], [`/polls/options/${poll.options[0].id}/vote`, {}],
+      ["/store/orders", { items: [{ productId: prod.id, quantity: 1 }], shippingAddress: "1 Test Street, Kochi" }],
+      ["/feedback", { subject: "Hello", message: "Just joined" }], [`/cricket/trials/${trial.id}/apply`, {}],
+      [`/cricket/matches/${match.id}/predict`, { predictedWinnerTeamId: match.homeTeamId }],
+    ];
+    for (const [p, body] of blocked) { const x = await expect(p, 403, { method: "POST", token: s.token, body }); ok(/waiting for approval/.test(x.error.message), `unhelpful message for ${p}: ${x.error?.message}`); }
+    const hasNote = async (tok) => (await expect("/notifications/me", 200, { token: tok })).notifications.some((n) => n.title === "New membership request" && n.body.includes("Journey Person"));
+    await new Promise((res) => setTimeout(res, 1500));
+    ok(await hasNote(U.token), "unit admin not notified");
+    ok(!(await hasNote(M.token)), "ordinary members must not get signup alerts");
+    await expect(`/members/${s.member.id}/approve`, 200, { method: "POST", token: U.token });
+    await expect(`/events/${ev.id}/rsvp`, 201, { method: "POST", token: s.token, body: { status: "GOING" } });
+    await expect("/feedback", 201, { method: "POST", token: s.token, body: { subject: "Hello", message: "Now approved" } });
+  });
+  await t("rejected & suspended people stay locked out of member actions", async () => {
+    const email = `susp${rnd}@example.com`; const r = await expect("/auth/register", 201, { method: "POST", body: { unitId: U.member.unitId, fullName: "Susp", email, phone: `+9186${String(rnd).slice(-8)}`, password: "susp-pass-123" } });
+    await expect(`/members/${r.member.id}/approve`, 200, { method: "POST", token: U.token });
+    const s = await login({ email, password: "susp-pass-123" });
+    const ev = (await expect("/events", 200)).events[0];
+    await expect(`/events/${ev.id}/rsvp`, 201, { method: "POST", token: s.token, body: { status: "GOING" } });
+    const { PrismaClient } = require("@prisma/client"); const raw = new PrismaClient(); await raw.member.update({ where: { id: r.member.id }, data: { status: "LAPSED" } }); await raw.$disconnect();
+    const x = await expect(`/events/${ev.id}/rsvp`, 403, { method: "POST", token: s.token, body: { status: "GOING" } }); ok(/lapsed/i.test(x.error.message), "lapsed message");
+  });
+
   console.log("── Districts / units");
   let dist;
   await t("districts + showcase public", async () => { const r = await expect("/districts", 200); dist = r.districts.find((d) => d.code === "EKM"); ok(r.districts.length >= 17); const s = await expect(`/districts/${dist.id}/showcase`, 200); ok(s.charity.length >= 1, "seeded charity report missing"); ok(s.recentMatches.length >= 1, "seeded match missing"); });

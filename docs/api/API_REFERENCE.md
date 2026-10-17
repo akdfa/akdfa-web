@@ -8,7 +8,7 @@ Full request/response shapes are defined by the route handlers in `backend/src/m
 
 | Method | Path | Auth | Notes |
 |---|---|---|---|
-| POST | `/auth/register` | — | Creates a `PENDING` member under a given `unitId` |
+| POST | `/auth/register` | — | Creates a `PENDING` member under a given `unitId`; notifies that unit's and district's admins. Pending (and lapsed/suspended/rejected) members can browse public content but get `403` on member actions (RSVP, vote, order, feedback, trial apply, predict, referral) until `ACTIVE` — enforced by `requireActive` |
 | POST | `/auth/login` | — | Returns `accessToken` + `refreshToken` |
 | POST | `/auth/refresh` | — | Rotates the refresh token, issues a new pair |
 | POST | `/auth/logout` | — | Revokes a refresh token |

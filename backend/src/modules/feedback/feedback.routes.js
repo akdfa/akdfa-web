@@ -8,6 +8,8 @@ const asyncHandler = require("../../utils/asyncHandler");
 const ApiError = require("../../utils/ApiError");
 const { notify } = require("../notifications/notify.service");
 
+const { requireActive } = require("../../middleware/requireActive");
+
 const router = Router();
 
 // Phase 2 — "send feedback straight to your unit leaders."
@@ -16,6 +18,7 @@ const router = Router();
 router.post(
   "/",
   requireAuth,
+  requireActive,
   validate({ body: z.object({ subject: z.string().min(2), message: z.string().min(2) }) }),
   asyncHandler(async (req, res) => {
     const feedback = await prisma.feedback.create({
