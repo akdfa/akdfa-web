@@ -8,13 +8,14 @@
   "scripts": {
     "dev": "nodemon src/server.js",
     "start": "node src/server.js",
-    "setup": "prisma migrate deploy && prisma generate && node prisma/seed.js",
+    "setup": "node scripts/with-env.js prisma migrate deploy && node scripts/with-env.js prisma generate && node prisma/seed.js",
     "prisma:generate": "prisma generate",
-    "prisma:migrate": "prisma migrate dev",
-    "prisma:deploy": "prisma migrate deploy",
-    "prisma:studio": "prisma studio",
+    "prisma:migrate": "node scripts/with-env.js prisma migrate dev",
+    "prisma:deploy": "node scripts/with-env.js prisma migrate deploy",
+    "prisma:studio": "node scripts/with-env.js prisma studio",
     "prisma:seed": "node prisma/seed.js",
     "smoke": "node scripts/smoke.js",
+    "e2e": "node scripts/e2e.js",
     "reminders": "node scripts/send-reminders.js",
     "test": "node --test test/*.test.js"
   },

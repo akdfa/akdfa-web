@@ -51,10 +51,34 @@ app.use(
 app.use(rateLimit({ windowMs: 15 * 60 * 1000, max: 1200 }));
 app.use(
   "/api/v1/auth",
-  rateLimit({ windowMs: 15 * 60 * 1000, max: 40, message: { error: { message: "Too many attempts, try again later" } } })
+  rateLimit({ windowMs: 15 * 60 * 1000, max: Number(process.env.AUTH_RATE_LIMIT_MAX || 40), message: { error: { message: "Too many attempts, try again later" } } })
 );
 
 app.get("/health", (req, res) => res.json({ status: "ok", uptime: process.uptime() }));
+
+// Landing page for anyone who opens the API address in a browser.
+app.get("/", (req, res) => {
+  const site = env.siteBaseUrl.replace(/\/$/, "");
+  res.type("html").send(`<!doctype html><meta charset="utf-8"><title>AKDFA API</title>
+<body style="font-family:system-ui,sans-serif;max-width:560px;margin:12vh auto;padding:0 20px;line-height:1.6;color:#222">
+<h1 style="margin-bottom:4px">AKDFA API</h1>
+<p style="margin-top:0;color:#666">Backend for the AKDFA website and member portal. This address serves data, not pages.</p>
+<ul>
+  <li><a href="${site}">Open the website</a> &nbsp;·&nbsp; <a href="${site}/login.html">Member / committee sign-in</a></li>
+  <li><a href="/health">/health</a> — service status</li>
+  <li><a href="/api/v1">/api/v1</a> — API index</li>
+</ul></body>`);
+});
+
+app.get("/api/v1", (req, res) =>
+  res.json({
+    name: "AKDFA API",
+    version: "1",
+    status: "ok",
+    docs: "docs/api/API_REFERENCE.md",
+    modules: ["auth", "districts", "units", "members", "news", "events", "polls", "cricket", "sponsors", "growth", "notifications", "reports", "admin", "payments", "store", "feedback", "uploads", "public"],
+  })
+);
 
 app.use("/api/v1", apiRoutes);
 
