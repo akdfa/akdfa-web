@@ -18,7 +18,11 @@
     if (global.AKDFA_API_BASE) return String(global.AKDFA_API_BASE).replace(/\/$/, "");
     const loc = global.location;
     if (loc && /^https?:$/.test(loc.protocol)) {
-      return `${loc.protocol}//${loc.hostname}:4000`;
+      // Local dev: site on :5500/:3000/…, API on :4000.
+      if (/^(localhost|127\.0\.0\.1|\[::1\])$/.test(loc.hostname)) return `${loc.protocol}//${loc.hostname}:4000`;
+      // Hosted: assume the API serves the site (same origin). If the site is on a
+      // different host than the API, set window.AKDFA_API_BASE in js/config.js.
+      return loc.origin;
     }
     return "http://localhost:4000";
   }

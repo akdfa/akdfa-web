@@ -1,0 +1,46 @@
+# Render Blueprint — one web service that serves BOTH the API and the website.
+# New → Blueprint → pick this repo. Fill the `sync: false` values in the dashboard.
+services:
+  - type: web
+    name: akdfa
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    plan: free            # sleeps when idle (fine for testing); use "starter" for always-on
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: SERVE_SITE
+        value: "true"
+      - key: TRUST_PROXY
+        value: "1"
+      - key: DATABASE_URL          # your Supabase string, ending ?schema=akdfa&sslmode=require
+        sync: false
+      - key: ENCRYPTION_KEY        # reuse the SAME key as local if you reuse the same database
+        sync: false
+      - key: JWT_ACCESS_SECRET
+        generateValue: true
+      - key: JWT_REFRESH_SECRET
+        generateValue: true
+      - key: PUBLIC_BASE_URL       # https://<your-service>.onrender.com
+        sync: false
+      - key: SITE_BASE_URL         # same URL (site and API share one origin)
+        sync: false
+      - key: CORS_ORIGIN           # same URL
+        sync: false
+      - key: BOOTSTRAP_ADMIN_EMAIL
+        value: committee@akdfa.org
+      - key: BOOTSTRAP_ADMIN_PASSWORD
+        sync: false
+      - key: MEMBERSHIP_FEE_INR
+        value: "500"
+      # Optional integrations — leave blank until you have them:
+      - key: RAZORPAY_KEY_ID
+        sync: false
+      - key: RAZORPAY_KEY_SECRET
+        sync: false
+      - key: RAZORPAY_WEBHOOK_SECRET
+        sync: false
+      - key: MAIL_DRIVER
+        value: log

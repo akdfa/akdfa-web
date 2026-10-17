@@ -76,6 +76,12 @@ const corsOrigin =
 module.exports = {
   nodeEnv: NODE_ENV,
   isProd,
+  // One-service hosting: the API also serves the website (same origin → no CORS,
+  // login "just works"). Off by default; turn on for a single Render/Railway/Fly app.
+  serveSite: process.env.SERVE_SITE === "true",
+  // Behind a host's proxy/load-balancer (Render, Railway, Fly, nginx…) so rate
+  // limiting + req.ip see the real client. Number of proxy hops to trust.
+  trustProxy: Number(process.env.TRUST_PROXY || (isProd ? 1 : 0)),
   port: Number(process.env.PORT || 4000),
   encryptionKey: process.env.ENCRYPTION_KEY || DEV_ENC_KEY,
   corsOrigin,
@@ -98,7 +104,8 @@ module.exports = {
     dir: process.env.UPLOAD_DIR || "uploads",
   },
   s3: {
-    bucket: process.env.S3_BUCKET || "",
+    bucket: process.env.S3_BUCKET || "", // PUBLIC files (photos, logos)
+    privateBucket: process.env.S3_PRIVATE_BUCKET || process.env.S3_BUCKET || "", // PRIVATE documents — must NOT be public
     region: process.env.S3_REGION || "ap-south-1",
     accessKeyId: process.env.S3_ACCESS_KEY_ID || "",
     secretAccessKey: process.env.S3_SECRET_ACCESS_KEY || "",

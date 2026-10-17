@@ -10,10 +10,31 @@ const { notFoundHandler, errorHandler } = require("./middleware/errorHandler");
 
 const app = express();
 
+if (env.trustProxy) app.set("trust proxy", env.trustProxy);
+
+// When this server also serves the website, allow exactly what the pages load:
+// inline page scripts, cdnjs (Font Awesome, QR), Google Fonts, Razorpay checkout.
+const siteCsp = {
+  useDefaults: true,
+  directives: {
+    "default-src": ["'self'"],
+    "script-src": ["'self'", "'unsafe-inline'", "https://cdnjs.cloudflare.com", "https://checkout.razorpay.com"],
+    "style-src": ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com", "https://cdnjs.cloudflare.com"],
+    "font-src": ["'self'", "https://fonts.gstatic.com", "https://cdnjs.cloudflare.com", "data:"],
+    "img-src": ["'self'", "data:", "blob:", "https:"],
+    "connect-src": ["'self'", "https://*.razorpay.com"],
+    "frame-src": ["https://api.razorpay.com", "https://checkout.razorpay.com"],
+    "object-src": ["'none'"],
+    "upgrade-insecure-requests": env.publicBaseUrl.startsWith("https:") ? [] : null,
+  },
+};
+
 app.use(
   helmet({
     // Allow the uploaded images/PDFs to be embedded by the frontend on another origin.
     crossOriginResourcePolicy: { policy: "cross-origin" },
+    // Pure JSON API → helmet's strict default CSP; site-serving mode → the tailored one.
+    contentSecurityPolicy: env.serveSite ? siteCsp : undefined,
   })
 );
 
@@ -56,10 +77,12 @@ app.use(
 
 app.get("/health", (req, res) => res.json({ status: "ok", uptime: process.uptime() }));
 
-// Landing page for anyone who opens the API address in a browser.
-app.get("/", (req, res) => {
-  const site = env.siteBaseUrl.replace(/\/$/, "");
-  res.type("html").send(`<!doctype html><meta charset="utf-8"><title>AKDFA API</title>
+// Landing page for anyone who opens the API address in a browser
+// (skipped when this server serves the website itself).
+if (!env.serveSite) {
+  app.get("/", (req, res) => {
+    const site = env.siteBaseUrl.replace(/\/$/, "");
+    res.type("html").send(`<!doctype html><meta charset="utf-8"><title>AKDFA API</title>
 <body style="font-family:system-ui,sans-serif;max-width:560px;margin:12vh auto;padding:0 20px;line-height:1.6;color:#222">
 <h1 style="margin-bottom:4px">AKDFA API</h1>
 <p style="margin-top:0;color:#666">Backend for the AKDFA website and member portal. This address serves data, not pages.</p>
@@ -68,7 +91,8 @@ app.get("/", (req, res) => {
   <li><a href="/health">/health</a> — service status</li>
   <li><a href="/api/v1">/api/v1</a> — API index</li>
 </ul></body>`);
-});
+  });
+}
 
 app.get("/api/v1", (req, res) =>
   res.json({
@@ -81,6 +105,21 @@ app.get("/api/v1", (req, res) =>
 );
 
 app.use("/api/v1", apiRoutes);
+
+// One-service hosting: serve the website from the repo root — but ONLY an explicit
+// allowlist (top-level pages/assets, js/, css/, assets/). Never backend/, .env,
+// docs/, or anything else in the repo.
+if (env.serveSite) {
+  const siteRoot = path.resolve(__dirname, "..", "..");
+  const FILE = /^\/(?:(?:assets|js|css)\/[\w./ %()-]+|[\w-]+\.(?:html|css|js|png|jpe?g|svg|ico|webp|webmanifest))$/i;
+  app.use((req, res, next) => {
+    if (req.method !== "GET" && req.method !== "HEAD") return next();
+    let p = req.path === "/" ? "/index.html" : req.path;
+    if (/^\/[\w-]+$/.test(p)) p += ".html"; // /login → /login.html
+    if (p.includes("..") || !FILE.test(p)) return next();
+    res.sendFile(p.slice(1), { root: siteRoot, dotfiles: "deny", maxAge: p.endsWith(".html") ? 0 : "1h" }, (err) => err && next());
+  });
+}
 
 app.use(notFoundHandler);
 app.use(errorHandler);

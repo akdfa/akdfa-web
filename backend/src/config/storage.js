@@ -43,18 +43,18 @@ function s3() {
   }
   return _s3;
 }
-async function s3Put(key, body, contentType) {
+async function s3Put(key, body, contentType, bucket = env.s3.bucket) {
   const { PutObjectCommand } = require("@aws-sdk/client-s3");
-  await s3().send(new PutObjectCommand({ Bucket: env.s3.bucket, Key: key, Body: body, ContentType: contentType }));
+  await s3().send(new PutObjectCommand({ Bucket: bucket, Key: key, Body: body, ContentType: contentType }));
 }
-async function s3GetStream(key) {
+async function s3GetStream(key, bucket = env.s3.privateBucket) {
   const { GetObjectCommand } = require("@aws-sdk/client-s3");
-  const r = await s3().send(new GetObjectCommand({ Bucket: env.s3.bucket, Key: key }));
+  const r = await s3().send(new GetObjectCommand({ Bucket: bucket, Key: key }));
   return r.Body; // Node Readable
 }
-async function s3Delete(key) {
+async function s3Delete(key, bucket = env.s3.bucket) {
   const { DeleteObjectCommand } = require("@aws-sdk/client-s3");
-  await s3().send(new DeleteObjectCommand({ Bucket: env.s3.bucket, Key: key })).catch(() => {});
+  await s3().send(new DeleteObjectCommand({ Bucket: bucket, Key: key })).catch(() => {});
 }
 function s3PublicUrl(key) {
   if (env.s3.publicBaseUrl) return `${env.s3.publicBaseUrl.replace(/\/$/, "")}/${key}`;
@@ -80,7 +80,7 @@ async function putPublic(buffer, { ext, mimeType }) {
 async function putPrivate(buffer, { ext, mimeType }) {
   const name = randomName(ext);
   if (DRIVER === "s3") {
-    await s3Put(`documents/${name}`, buffer, mimeType);
+    await s3Put(`documents/${name}`, buffer, mimeType, env.s3.privateBucket);
   } else {
     await fs.promises.writeFile(path.join(privateRoot, name), buffer);
   }
@@ -97,7 +97,7 @@ async function privateExists(fileKey) {
   if (DRIVER === "s3") {
     try {
       const { HeadObjectCommand } = require("@aws-sdk/client-s3");
-      await s3().send(new HeadObjectCommand({ Bucket: env.s3.bucket, Key: `documents/${fileKey}` }));
+      await s3().send(new HeadObjectCommand({ Bucket: env.s3.privateBucket, Key: `documents/${fileKey}` }));
       return true;
     } catch (_) {
       return false;
@@ -107,7 +107,7 @@ async function privateExists(fileKey) {
 }
 
 async function deletePrivate(fileKey) {
-  if (DRIVER === "s3") return s3Delete(`documents/${fileKey}`);
+  if (DRIVER === "s3") return s3Delete(`documents/${fileKey}`, env.s3.privateBucket);
   fs.promises.unlink(safeLocal(privateRoot, fileKey)).catch(() => {});
 }
 

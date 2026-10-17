@@ -1,0 +1,16 @@
+.git
+.github
+.idea
+.vscode
+.claude
+.playwright-mcp
+.agents
+docs
+**/node_modules
+backend/.env
+backend/.env.local
+backend/.env.*.local
+backend/uploads
+backend/private
+backend/test
+*.md
