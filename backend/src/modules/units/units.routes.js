@@ -54,7 +54,20 @@ router.post(
   requireAuth,
   validate({ body: createSchema }),
   asyncHandler(async (req, res) => {
-    const unit = await prisma.unit.create({ data: req.body });
+    // Admins add units directly: a district admin inside their own district, the state committee anywhere.
+    // Anyone else's proposal lands PENDING for approval.
+    const isAdmin = req.auth.role === "DISTRICT_ADMIN" || req.auth.role === "STATE_ADMIN";
+    if (req.auth.role === "DISTRICT_ADMIN" && req.body.districtId !== req.auth.districtId) {
+      throw ApiError.forbidden("You can only add units in your own district");
+    }
+    if (isAdmin) {
+      const district = await prisma.district.findUnique({ where: { id: req.body.districtId } });
+      if (!district) throw ApiError.badRequest("Unknown district");
+    }
+    const unit = await prisma.unit.create({
+      data: isAdmin ? { ...req.body, status: "APPROVED", approvedById: req.auth.id } : req.body,
+    });
+    if (isAdmin) await logAudit(req.auth.id, "UNIT_CREATED", "Unit", unit.id, { districtId: unit.districtId });
     res.status(201).json({ unit });
   })
 );

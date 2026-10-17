@@ -32,7 +32,9 @@
     });
     var nav = document.querySelector(".navbar");
     var toggle = nav && nav.querySelector(".menu-toggle");
-    if (nav) nav.insertBefore(b, toggle || null);
+    var bar = document.querySelector(".portal-topbar");
+    if (bar) bar.insertBefore(b, bar.querySelector(".portal-bell"));
+    else if (nav) nav.insertBefore(b, toggle || null);
     else { b.classList.add("theme-toggle-float"); document.body.appendChild(b); }
     apply();
   });

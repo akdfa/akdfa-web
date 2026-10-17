@@ -39,14 +39,14 @@
   --deep: #ffffff;
   --deep-rgb: 255, 255, 255;
   --fg: 20, 20, 24;
-  --gold: #9a7410;
-  --gold-soft: #c79a1c;
+  --gold: #8a6508;
+  --gold-soft: #b58a14;
   --green: #1f7a47;
   --text: #17171a;
   --muted: #45454c;
   --muted-soft: #6a6a72;
-  --border: rgba(154, 116, 16, 0.3);
-  --border-strong: rgba(154, 116, 16, 0.55);
+  --border: rgba(138, 101, 8, 0.32);
+  --border-strong: rgba(138, 101, 8, 0.58);
   --header-bg: rgba(255, 255, 255, 0.92);
   --shadow: 0 24px 60px rgba(30, 28, 20, 0.14);
   --shadow-soft: 0 12px 30px rgba(30, 28, 20, 0.1);
@@ -2420,3 +2420,7 @@ body #units .unit-browser-header h3 {
 :root[data-theme="light"] .btn-primary { color: #fff; }
 .theme-toggle-float { position: fixed; right: 14px; bottom: 14px; z-index: 90; width: 44px; height: 44px; background: var(--card-elevated); box-shadow: var(--shadow-soft); }
 .navbar .theme-toggle { margin-left: auto; margin-right: 8px; }
+
+/* ---- tap targets & wrapping (phones) ---- */
+.footer-links a { display: inline-block; padding: 9px 0; }
+.filter-bar { flex-wrap: wrap; overflow: visible; }

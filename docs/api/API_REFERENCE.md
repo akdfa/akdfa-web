@@ -24,7 +24,7 @@ Full request/response shapes are defined by the route handlers in `backend/src/m
 | PATCH | `/districts/:id` | State admin | Edit district (bio, banner, etc.) |
 | GET | `/units` | — | Filter by `districtId`, `status` (default `APPROVED`) |
 | GET | `/units/:id` | — | Unit detail + teams |
-| POST | `/units` | Member | Propose a new unit → lands `PENDING` |
+| POST | `/units` | Member | Propose a new unit → lands `PENDING`. A district admin (own district) or the State admin creates it `APPROVED` straight away |
 | POST | `/units/:id/approve` | District admin | Approves a pending unit |
 
 ## Members — `/members` (Phase 2/3/4)
@@ -37,6 +37,7 @@ Full request/response shapes are defined by the route handlers in `backend/src/m
 | GET | `/members/:id/card` | Member (self or admin) | Digital membership card data (ACTIVE only) |
 | POST | `/members/:id/approve` | Unit admin | `PENDING → ACTIVE`, 1-year expiry, marks referral JOINED, sends welcome notification |
 | PATCH | `/members/:id` | Member (self) | Update own profile (`fullName`, `phone`, `profilePhotoUrl`) |
+| POST | `/members/:id/reset-password` | State admin | Resets an **admin** account's password (regular members are refused; they use `/auth/forgot-password`). No body → one-time reset link (emailed, returned as `resetUrl`, valid 24 h); `{ password }` → temporary password. Signs the account out everywhere; audit-logged |
 | PATCH | `/members/:id/role` | District admin | Change role; granting `DISTRICT_ADMIN`/`STATE_ADMIN` requires State admin |
 
 ## Uploads — `/uploads`

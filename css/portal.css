@@ -117,3 +117,18 @@ body.portal .footer { background: var(--section); }
 .card, .glance div, .honours li, .video-feature { border: 1px solid rgba(var(--fg), 0.08); }
 :root[data-theme="light"] .card, :root[data-theme="light"] .glance div, :root[data-theme="light"] .honours li, :root[data-theme="light"] .video-feature { box-shadow: var(--shadow-soft); }
 .card .tag { align-self: flex-start; }
+
+/* light theme: gold is dark enough for white label text */
+:root[data-theme="light"] body.portal { --on-accent: #ffffff; }
+.cta-band .pill-light { background: #17130a; color: #fff; }
+.cta-band .pill { color: var(--on-accent); }
+.cta-band p { color: var(--on-accent); opacity: 0.88; }
+:root[data-theme="light"] .cta-band .pill { background: rgba(255, 255, 255, 0.16); }
+:root[data-theme="light"] .cta-band .pill-light { background: #fff; color: #5c4306; }
+.quick-links a { display: inline-flex; align-items: center; min-height: 40px; }
+
+.cta-band .pill.pill-light { background: #17130a; color: #fff; }
+:root[data-theme="light"] .cta-band .pill.pill-light { background: #fff; color: #5c4306; }
+/* carousel dots: visible 9px dot, 28px touch area */
+.dots button { position: relative; }
+.dots button::after { content: ""; position: absolute; inset: -10px -6px; }

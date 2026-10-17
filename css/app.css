@@ -82,7 +82,7 @@
 }
 .portal-nav a i { width: 18px; text-align: center; color: var(--gold-soft); }
 .portal-nav a:hover { background: rgba(212, 175, 55, 0.08); color: var(--text); }
-.portal-nav a.is-active { background: rgba(212, 175, 55, 0.16); color: #fff; }
+.portal-nav a.is-active { background: rgba(212, 175, 55, 0.16); color: var(--text); }
 
 .portal-sidebar-foot { padding-top: 10px; border-top: 1px solid var(--border); }
 .btn-block { width: 100%; }
@@ -158,6 +158,8 @@
   padding: clamp(16px, 2.4vw, 24px);
 }
 .card + .card { margin-top: 16px; }
+.grid > .card + .card { margin-top: 0; }   /* siblings in a grid are already spaced by the gap */
+.grid-2, .grid-3 { align-items: start; }
 .card h2 { margin: 0 0 4px; font-size: 1.1rem; }
 .card h3 { margin: 0 0 10px; font-size: 0.98rem; }
 .card-muted { color: var(--muted); font-size: 0.9rem; }
@@ -174,7 +176,7 @@
   padding: 18px;
 }
 .stat span { display: block; color: var(--muted-soft); font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.1em; }
-.stat strong { display: block; margin-top: 6px; font-size: 1.7rem; font-family: "Playfair Display", serif; }
+.stat strong { display: block; margin-top: 6px; font-size: 1.7rem; font-family: Inter, system-ui, sans-serif; font-weight: 800; letter-spacing: -0.02em; }
 
 .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
 .row-between { display: flex; gap: 12px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
@@ -251,7 +253,7 @@ table.pv-table { width: 100%; border-collapse: collapse; font-size: 0.88rem; min
   background: none; border: 1px solid var(--border); color: var(--muted);
   padding: 7px 14px; border-radius: 999px; cursor: pointer; font-weight: 700; font-size: 0.82rem;
 }
-.pv-tabs button.is-active { background: rgba(212, 175, 55, 0.16); color: #fff; border-color: var(--border-strong); }
+.pv-tabs button.is-active { background: rgba(212, 175, 55, 0.16); color: var(--text); border-color: var(--border-strong); }
 
 /* ---- digital membership card ------------------------------------- */
 .mcard {
@@ -268,12 +270,12 @@ table.pv-table { width: 100%; border-collapse: collapse; font-size: 0.88rem; min
   content: "";
   position: absolute; right: -40px; bottom: -60px;
   width: 220px; height: 220px; border-radius: 50%;
-  background: rgba(var(--fg), 0.16);
+  background: rgba(255, 255, 255, 0.16);
 }
 .mcard-top { display: flex; justify-content: space-between; align-items: flex-start; position: relative; z-index: 1; }
 .mcard-top img { width: 46px; height: 46px; }
 .mcard-org { font-weight: 900; letter-spacing: 0.08em; text-transform: uppercase; font-size: 0.8rem; }
-.mcard-name { margin: 22px 0 2px; font-size: 1.5rem; font-family: "Playfair Display", serif; position: relative; z-index: 1; }
+.mcard-name { margin: 22px 0 2px; font-size: 1.5rem; font-family: Inter, system-ui, sans-serif; font-weight: 800; letter-spacing: -0.02em; position: relative; z-index: 1; }
 .mcard-role { text-transform: uppercase; letter-spacing: 0.14em; font-size: 0.72rem; font-weight: 800; position: relative; z-index: 1; }
 .mcard-grid { margin-top: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px 18px; position: relative; z-index: 1; }
 .mcard-grid span { display: block; font-size: 0.64rem; text-transform: uppercase; letter-spacing: 0.12em; opacity: 0.7; }
@@ -313,3 +315,69 @@ table.pv-table { width: 100%; border-collapse: collapse; font-size: 0.88rem; min
   .portal-menu-toggle { display: grid; place-items: center; }
   .portal-whoami { display: none; }
 }
+
+.portal-topbar .theme-toggle { margin: 0 10px 0 0; }
+
+/* ================= Member app polish (matches the Figma redesign; both themes) ================= */
+.portal-view h1, .portal-view h2, .portal-view h3, .portal-topbar-title { font-family: Inter, system-ui, sans-serif; letter-spacing: -0.02em; }
+.pv-head h1 { font-weight: 800; }
+.card, .list-item, .stat, .table-wrap { border-radius: 16px; }
+:root[data-theme="light"] .card, :root[data-theme="light"] .stat, :root[data-theme="light"] .list-item { box-shadow: var(--shadow-soft); }
+
+/* form fields: lighter than the card so they read as inputs */
+.pv-form input, .pv-form select, .pv-form textarea, .portal-view select, .portal-view input[type="text"], .portal-view input[type="search"] {
+  background: var(--card-elevated);
+  border: 1px solid var(--border);
+  min-height: 44px;
+}
+.pv-form input:focus, .pv-form select:focus, .pv-form textarea:focus, .portal-view select:focus { outline: 2px solid var(--gold); outline-offset: 1px; border-color: transparent; }
+.pv-form input::placeholder, .pv-form textarea::placeholder { color: var(--muted-soft); }
+.pv-form input[type="file"] { padding: 6px; }
+.portal-view input[type="file"]::file-selector-button {
+  margin-right: 12px; padding: 7px 16px; border: 1px solid var(--border); border-radius: 999px;
+  background: var(--card); color: var(--text); font: 700 0.82rem Inter, sans-serif; cursor: pointer;
+}
+.portal-view input[type="file"]::file-selector-button:hover { border-color: var(--border-strong); }
+
+/* buttons: pill shape like the rest of the site */
+.portal-view .btn, .portal-view .btn-ghost, .portal-view .btn-small { border-radius: 999px; }
+.portal-view .btn-primary { background: var(--gold); color: #17130a; box-shadow: none; }
+.portal-view .btn-primary:hover { background: var(--gold-soft); }
+:root[data-theme="light"] .portal-view .btn-primary { color: #fff; }
+.btn-ghost { background: var(--card-elevated); }
+
+/* status pills / tabs / polls */
+.pv-tabs button { background: var(--card); }
+.pv-tabs button.is-active { background: var(--gold); color: #17130a; border-color: var(--gold); }
+:root[data-theme="light"] .pv-tabs button.is-active { color: #fff; }
+.poll-bar { background: var(--card-elevated); border-radius: 10px; }
+.poll-bar-fill { background: rgba(212, 175, 55, 0.28); }
+.pill { background: var(--card-elevated); }
+
+/* tables */
+.table-wrap { background: var(--card); }
+.pv-table th { background: var(--card-elevated); }
+.pv-table tbody tr:hover td { background: rgba(var(--fg), 0.03); }
+
+/* grids: even card heights for catalog-style pages (store, teams), top-aligned for mixed content */
+.grid-3 { align-items: stretch; }
+.card[style*="max-width"] { max-width: none !important; }
+
+/* loading placeholder */
+.portal-view .loading, .empty-state { border-radius: 16px; }
+
+/* form controls never exceed their card */
+.pv-form input, .pv-form select, .pv-form textarea { box-sizing: border-box; width: 100%; max-width: 100%; }
+
+/* light theme: semantic colours need darker shades to stay readable */
+:root[data-theme="light"] .pill--warn { color: var(--gold); }
+:root[data-theme="light"] .pill--bad { color: #b3261e; border-color: rgba(179, 38, 30, 0.45); }
+:root[data-theme="light"] .btn-danger { color: #b3261e; background: rgba(179, 38, 30, 0.08); border-color: rgba(179, 38, 30, 0.45); }
+:root[data-theme="light"] .pv-msg--error { color: #b3261e; }
+:root[data-theme="light"] .pill--ok, :root[data-theme="light"] .pv-msg--ok { color: #1b6b3d; }
+
+/* long unbroken text (URLs, test strings) must wrap inside cards instead of stretching the layout */
+.list { grid-template-columns: minmax(0, 1fr); }
+.grid > *, .list > *, .portal-view .card { min-width: 0; }
+.portal-view .card p, .portal-view .card small, .portal-view .card strong, .list-item .li-main { overflow-wrap: anywhere; }
+.portal-view .card-muted a, .portal-view .empty a { display: inline-block; padding: 10px 0; }

@@ -275,6 +275,60 @@ router.patch(
   })
 );
 
+// The State Committee resets an ADMIN account's password (unit/district/state admins only; regular members
+// always use "Forgot password"). Without a body it creates a one-time reset link (emailed and returned so it can
+// be shared on WhatsApp); with { password } it sets a temporary password. Every existing session is signed out.
+router.post(
+  "/:id/reset-password",
+  requireAuth,
+  requireRole("STATE_ADMIN"),
+  validate({ body: z.object({ password: z.string().min(8).max(128).optional() }).optional() }),
+  asyncHandler(async (req, res) => {
+    const target = await prisma.member.findUnique({ where: { id: req.params.id } });
+    if (!target) throw ApiError.notFound("Member not found");
+    if (req.auth.role === "UNIT_ADMIN" && target.unitId !== req.auth.unitId) throw ApiError.forbidden();
+    if (req.auth.role === "DISTRICT_ADMIN" && target.districtId !== req.auth.districtId) throw ApiError.forbidden();
+    // Regular members are never reset by the committee; they use "Forgot password" themselves.
+    if (target.role === "MEMBER") {
+      throw ApiError.forbidden("Members reset their own password with 'Forgot password'. The committee cannot reset it for them.");
+    }
+    if (req.auth.role !== "STATE_ADMIN") throw ApiError.forbidden("Only the State Committee can reset an admin's password");
+
+    const revoke = prisma.refreshToken.updateMany({ where: { memberId: target.id, revokedAt: null }, data: { revokedAt: new Date() } });
+    const password = req.body?.password;
+    if (password) {
+      await prisma.$transaction([
+        prisma.member.update({ where: { id: target.id }, data: { passwordHash: await hashPassword(password) } }),
+        prisma.passwordReset.updateMany({ where: { memberId: target.id, usedAt: null }, data: { usedAt: new Date() } }),
+        revoke,
+      ]);
+      await logAudit(req.auth.id, "PASSWORD_RESET_BY_ADMIN", "Member", target.id, { mode: "temporary-password" });
+      return res.json({ ok: true, mode: "password" });
+    }
+
+    const rawToken = crypto.randomBytes(32).toString("hex");
+    await prisma.$transaction([
+      prisma.passwordReset.updateMany({ where: { memberId: target.id, usedAt: null }, data: { usedAt: new Date() } }),
+      prisma.passwordReset.create({
+        data: {
+          memberId: target.id,
+          tokenHash: crypto.createHash("sha256").update(rawToken).digest("hex"),
+          expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
+        },
+      }),
+      revoke,
+    ]);
+    const resetUrl = `${env.siteBaseUrl.replace(/\/$/, "")}/reset.html?token=${rawToken}`;
+    sendMail({
+      to: target.email,
+      subject: "Reset your AKDFA password",
+      text: `Hi ${target.fullName},\n\nAn AKDFA administrator started a password reset for your account.\nChoose a new password here (link valid for 24 hours):\n${resetUrl}`,
+    }).catch(() => {});
+    await logAudit(req.auth.id, "PASSWORD_RESET_BY_ADMIN", "Member", target.id, { mode: "reset-link" });
+    res.json({ ok: true, mode: "link", resetUrl });
+  })
+);
+
 // Phase 4 — "decide who is allowed to approve what": promote/demote a member's role.
 router.patch(
   "/:id/role",

@@ -355,6 +355,7 @@
         if (dId) q.set("districtId", dId);
         if (t) q.set("type", t);
         const { events } = await api.get("/events?" + q.toString());
+        if (!$("#evtList")) return; // page was left while loading
         $("#evtList").innerHTML = events.length
           ? events.map(eventRow).join("")
           : '<div class="empty">No events match.</div>';
@@ -806,7 +807,7 @@
             <td>${esc(m.unit?.name || m.unitId)}</td>
             <td><span class="pill ${m.status === "ACTIVE" ? "pill--ok" : m.status === "PENDING" ? "pill--warn" : "pill--bad"}">${titleCase(m.status)}</span></td>
             <td>${canRole ? `<select class="btn-ghost btn-small" data-act="setRole" data-id="${m.id}">${["MEMBER", "UNIT_ADMIN", "DISTRICT_ADMIN", "STATE_ADMIN"].map((r) => `<option ${r === m.role ? "selected" : ""}>${r}</option>`).join("")}</select>` : titleCase(m.role)}</td>
-            <td>${m.status === "PENDING" ? `<button class="btn-ghost btn-small" data-act="approveM" data-id="${m.id}">Approve</button> <button class="btn-ghost btn-small btn-danger" data-act="rejectM" data-id="${m.id}">Reject</button>` : ""}</td>
+            <td>${m.status === "PENDING" ? `<button class="btn-ghost btn-small" data-act="approveM" data-id="${m.id}">Approve</button> <button class="btn-ghost btn-small btn-danger" data-act="rejectM" data-id="${m.id}">Reject</button>` : (can("STATE_ADMIN") && m.role !== "MEMBER" ? `<button class="btn-ghost btn-small" data-act="resetPw" data-id="${m.id}" data-name="${esc(m.fullName)}">Reset password</button>` : "")}</td>
           </tr>`).join("")}</tbody></table></div>`
           : '<div class="empty">No members in this view.</div>'}`;
     },
@@ -835,6 +836,52 @@
             setMsg("addMemberMsg", err.status === 409 ? "That email or phone is already registered." : err.message, false);
             busy(add, false);
           }
+          return;
+        }
+        const rp = e.target.closest('[data-act="resetPw"]');
+        if (rp) {
+          const id = rp.dataset.id;
+          openModal(
+            "Reset password",
+            `<p>Reset the password for the admin account <strong>${esc(rp.dataset.name)}</strong>. They will be signed out everywhere.</p>
+             <div class="pv-form">
+               <button class="btn btn-primary" data-act="pwLink">Create a reset link</button>
+               <p class="card-muted" style="margin:0">We email the member a link (valid 24 hours). You also get it here to share on WhatsApp.</p>
+               <hr style="border:0;border-top:1px solid var(--border);width:100%">
+               <label>Or set a temporary password<input type="text" id="tmpPw" minlength="8" placeholder="At least 8 characters" autocomplete="off"></label>
+               <button class="btn btn-ghost" data-act="pwSet">Set temporary password</button>
+               <div id="pwOut"></div>
+             </div>`,
+            (wrap) => {
+              const out = wrap.querySelector("#pwOut");
+              const show = (html, ok = true) => { out.innerHTML = `<p class="pv-msg ${ok ? "pv-msg--ok" : "pv-msg--error"}">${html}</p>`; };
+              wrap.addEventListener("click", async (ev) => {
+                const link = ev.target.closest('[data-act="pwLink"]');
+                const set = ev.target.closest('[data-act="pwSet"]');
+                if (!link && !set) return;
+                const btn = link || set;
+                let body = {};
+                if (set) {
+                  const v = wrap.querySelector("#tmpPw").value;
+                  if (v.length < 8) return show("Password must be at least 8 characters.", false);
+                  body = { password: v };
+                }
+                busy(btn, true, "…");
+                try {
+                  const r = await api.post(`/members/${id}/reset-password`, body);
+                  if (r.mode === "link") {
+                    out.innerHTML = `<p class="pv-msg pv-msg--ok">Reset link created and emailed.</p><input class="btn-ghost" style="width:100%" readonly value="${esc(r.resetUrl)}" onclick="this.select()">`;
+                  } else {
+                    show("Temporary password set. Tell the member to change it after signing in.");
+                  }
+                  toast("Password reset", "ok");
+                } catch (err) {
+                  show(esc(err.message), false);
+                }
+                busy(btn, false);
+              });
+            }
+          );
           return;
         }
         const ap = e.target.closest('[data-act="approveM"]');
@@ -882,18 +929,18 @@
       const { units } = await api.get("/units?status=ALL");
       const pending = units.filter((u) => u.status === "PENDING");
       return `
-        <div class="pv-head"><h1>Units</h1><p>Approve local clubs and register new ones.</p></div>
+        <div class="pv-head"><h1>Units</h1><p>Add local units and approve proposals from members.</p></div>
         <div class="grid grid-2">
           <div class="card"><h2>Pending approval (${pending.length})</h2>
             <div class="list" style="margin-top:10px">${pending.length ? pending.map((u) => `<div class="list-item"><div class="li-main"><strong>${esc(u.name)}</strong><small>${esc(u.address || "")}</small></div><div class="row"><button class="btn-ghost btn-small" data-act="approveU" data-id="${u.id}">Approve</button><button class="btn-ghost btn-small btn-danger" data-act="rejectU" data-id="${u.id}">Reject</button></div></div>`).join("") : '<p class="card-muted">Nothing pending.</p>'}</div>
           </div>
-          <div class="card"><h2>Register a unit</h2>
+          <div class="card"><h2>Add a unit</h2><p class="card-muted">Units you add are approved straight away.</p>
             <div class="pv-form" id="unitForm" style="margin-top:10px">
-              <label>District<select name="districtId">${ds.map((d) => `<option value="${d.id}" ${d.id === me.districtId ? "selected" : ""}>${esc(d.name)}</option>`).join("")}</select></label>
+              <label>District<select name="districtId">${(can("STATE_ADMIN") ? ds : ds.filter((d) => d.id === me.districtId)).map((d) => `<option value="${d.id}" ${d.id === me.districtId ? "selected" : ""}>${esc(d.name)}</option>`).join("")}</select></label>
               <label>Name<input name="name" placeholder="e.g. Fort Kochi Club"></label>
               <label>Address<input name="address"></label>
               <div class="form-row"><label>Contact email<input name="contactEmail" type="email"></label><label>Contact phone<input name="contactPhone"></label></div>
-              <button class="btn btn-primary" data-act="createUnit">Create (pending)</button><span class="pv-msg" id="unitMsg"></span>
+              <button class="btn btn-primary" data-act="createUnit">Add unit</button><span class="pv-msg" id="unitMsg"></span>
             </div>
           </div>
         </div>
@@ -923,7 +970,7 @@
           busy(c, true, "…");
           try {
             await api.post("/units", readForm($("#unitForm")));
-            msg.textContent = "Created — pending approval.";
+            msg.textContent = "Unit added and approved.";
             msg.className = "pv-msg pv-msg--ok";
             render();
           } catch (err) { msg.textContent = err.message; msg.className = "pv-msg pv-msg--error"; busy(c, false); }
@@ -1022,13 +1069,16 @@
       tabWiring();
       const refreshNews = async () => {
         const { posts } = await api.get("/news?districtId=" + encodeURIComponent(me.districtId || ""));
-        $("#newsList").innerHTML = posts.slice(0, 10).map((p) => `<div class="list-item"><div class="li-main"><strong>${esc(p.title)}</strong><small>${titleCase(p.scope)} · ${fmtDate(p.publishedAt || p.createdAt)}</small></div><button class="btn-ghost btn-small btn-danger" data-act="delNews" data-id="${p.id}">Delete</button></div>`).join("") || '<p class="card-muted">None.</p>';
+        const newsBox = $("#newsList");
+        if (!newsBox) return; // the admin navigated away while the request was in flight
+        newsBox.innerHTML = posts.slice(0, 10).map((p) => `<div class="list-item"><div class="li-main"><strong>${esc(p.title)}</strong><small>${titleCase(p.scope)} · ${fmtDate(p.publishedAt || p.createdAt)}</small></div><button class="btn-ghost btn-small btn-danger" data-act="delNews" data-id="${p.id}">Delete</button></div>`).join("") || '<p class="card-muted">None.</p>';
       };
       refreshNews();
 
       // ---- event photos / brackets / charity reports ----
       let currentEvent = null;
       const drawPhotos = () => {
+        if (!$("#evtPhotoStrip")) return; // page was left while loading
         $("#evtPhotoStrip").innerHTML = (currentEvent?.photos || [])
           .map((u) => `<a href="${esc(u)}" target="_blank"><img src="${esc(u)}" style="height:52px;border-radius:6px;object-fit:cover"></a>`)
           .join("");
@@ -1037,6 +1087,7 @@
         const box = $("#pollList");
         if (!box) return;
         const { polls } = await api.get("/polls");
+        if (!box.isConnected) return;
         box.innerHTML = polls.length
           ? polls.map((p) => {
               const closed = p.closesAt && new Date(p.closesAt) < Date.now();
@@ -1068,6 +1119,7 @@
       };
       try {
         const { events } = await api.get("/events?from=" + new Date(Date.now() - 180 * 86400000).toISOString());
+        if (!$("#evtPick")) return; // page was left while loading
         $("#evtPick").innerHTML =
           '<option value="">Select an event…</option>' +
           events.map((e) => `<option value="${e.id}">${esc(e.title)} — ${fmtDate(e.startsAt)}</option>`).join("");
@@ -1225,6 +1277,7 @@
         const box = $("#trialList");
         if (!box) return;
         const { trials } = await api.get("/cricket/trials");
+        if (!box.isConnected) return;
         const upcoming = trials.filter((t) => new Date(t.scheduledAt) >= Date.now() - 30 * 86400000);
         if (!upcoming.length) { box.innerHTML = '<p class="card-muted">No trials.</p>'; return; }
         const withApps = await Promise.all(
