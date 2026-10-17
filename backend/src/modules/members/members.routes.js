@@ -9,12 +9,83 @@ const ApiError = require("../../utils/ApiError");
 const { logAudit } = require("../admin/audit.service");
 const { notify } = require("../notifications/notify.service");
 
+const crypto = require("crypto");
+const env = require("../../config/env");
+const { hashPassword } = require("../../utils/password");
+const { sendMail } = require("../../utils/mail");
+
 const router = Router();
 
 function publicMember(member) {
   const { passwordHash, emailHash, phoneHash, ...rest } = member;
   return rest;
 }
+
+// An admin enters a member directly (joined at a meeting, no web access, etc.).
+// The member is ACTIVE immediately, with no password set: they get a one-time
+// "set your password" link (also returned to the admin so it can be shared on
+// WhatsApp). Scope: unit admin → own unit; district admin → units in their
+// district; state admin → any unit.
+router.post(
+  "/",
+  requireAuth,
+  requireRole("UNIT_ADMIN"),
+  validate({
+    body: z.object({
+      unitId: z.string().optional(),
+      fullName: z.string().min(2),
+      email: z.string().email(),
+      phone: z.string().min(8),
+      dateOfBirth: z.coerce.date().optional(),
+    }),
+  }),
+  asyncHandler(async (req, res) => {
+    const unitId = req.auth.role === "UNIT_ADMIN" ? req.auth.unitId : req.body.unitId || req.auth.unitId;
+    const unit = await prisma.unit.findUnique({ where: { id: unitId } });
+    if (!unit || unit.status !== "APPROVED") throw ApiError.badRequest("Choose an approved unit");
+    if (req.auth.role === "DISTRICT_ADMIN" && unit.districtId !== req.auth.districtId) throw ApiError.forbidden("That unit is outside your district");
+
+    const { fullName, email, phone, dateOfBirth } = req.body;
+    const passwordHash = await hashPassword(crypto.randomBytes(24).toString("hex")); // unknowable until they reset
+    let member;
+    for (let attempt = 0; attempt < 5 && !member; attempt++) {
+      const memberNumber = `AKDFA-${String((await prisma.member.count()) + 1 + attempt).padStart(5, "0")}`;
+      try {
+        member = await prisma.member.create({
+          data: {
+            memberNumber, unitId: unit.id, districtId: unit.districtId, fullName, email, phone, passwordHash,
+            dateOfBirth: dateOfBirth ? dateOfBirth.toISOString().slice(0, 10) : undefined,
+            status: "ACTIVE",
+            approvedById: req.auth.id,
+            membershipExpiresAt: new Date(new Date().getFullYear() + 1, 2, 31),
+          },
+        });
+      } catch (err) {
+        if (err.code === "P2002" && String(err.meta?.target).includes("memberNumber")) continue; // number race — retry
+        throw err;
+      }
+    }
+    if (!member) throw ApiError.conflict("Could not allocate a member number, try again");
+
+    const rawToken = crypto.randomBytes(32).toString("hex");
+    await prisma.passwordReset.create({
+      data: {
+        memberId: member.id,
+        tokenHash: crypto.createHash("sha256").update(rawToken).digest("hex"),
+        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+      },
+    });
+    const setupUrl = `${env.siteBaseUrl.replace(/\/$/, "")}/reset.html?token=${rawToken}`;
+    sendMail({
+      to: email,
+      subject: "Welcome to AKDFA — set your password",
+      text: `Hi ${fullName},\n\nYou've been added to ${unit.name} as an AKDFA member (${member.memberNumber}).\nSet your password to sign in (link valid for 7 days):\n${setupUrl}`,
+    }).catch(() => {});
+
+    await logAudit(req.auth.id, "MEMBER_CREATED", "Member", member.id, { unitId: unit.id });
+    res.status(201).json({ member: publicMember(member), setupUrl });
+  })
+);
 
 // Phase 4 — "see every member across the state in one directory."
 // A district admin implicitly sees only their district by passing districtId;

@@ -763,8 +763,31 @@
       if (status !== "ALL") params.set("status", status);
       const { members } = await api.get("/members?" + params.toString());
       const canRole = can("DISTRICT_ADMIN");
+      // Unit admins always add to their own unit; district/state pick a unit.
+      let unitPicker = "";
+      if (can("DISTRICT_ADMIN")) {
+        const { units } = await api.get("/units");
+        const mine = can("STATE_ADMIN") ? units : units.filter((u) => u.districtId === me.districtId);
+        unitPicker = `<label>Unit<select name="unitId">${mine.map((u) => `<option value="${u.id}" ${u.id === me.unitId ? "selected" : ""}>${esc(u.name)}</option>`).join("")}</select></label>`;
+      }
+      const joinLink = `${location.origin}${location.pathname.replace(/app(\.html)?$/, "")}join.html`;
       return `
         <div class="pv-head"><h1>Members</h1><p>${can("STATE_ADMIN") ? "Every member across the state." : can("DISTRICT_ADMIN") ? "Members in your district." : "Members in your unit."}</p></div>
+        <div class="grid grid-2" style="margin-bottom:18px">
+          <div class="card"><h2>Add a member</h2>
+            <p class="card-muted">For people who joined in person. They're active straight away and get a link to set their own password.</p>
+            <div class="pv-form" id="addMemberForm" style="margin-top:10px">
+              <label>Full name<input name="fullName" autocomplete="off"></label>
+              <div class="form-row"><label>Email<input name="email" type="email" autocomplete="off"></label><label>Phone<input name="phone" placeholder="+91…" autocomplete="off"></label></div>
+              ${unitPicker}
+              <button class="btn btn-primary" data-act="addMember">Add member</button><span class="pv-msg" id="addMemberMsg"></span>
+            </div>
+          </div>
+          <div class="card"><h2>Let them join themselves</h2>
+            <p class="card-muted">Share this link. New sign-ups appear under <strong>Pending</strong> for you to approve.</p>
+            <input class="btn-ghost" style="width:100%" readonly value="${esc(joinLink)}" onclick="this.select()">
+          </div>
+        </div>
         <div class="pv-tabs">
           ${["PENDING", "ACTIVE", "LAPSED", "ALL"].map((s) => `<button class="${s === status ? "is-active" : ""}" data-act="mstatus" data-s="${s}">${titleCase(s)}</button>`).join("")}
         </div>
@@ -784,6 +807,26 @@
         const st = e.target.closest('[data-act="mstatus"]');
         if (st) {
           location.hash = "#/admin/members?status=" + st.dataset.s;
+          return;
+        }
+        const add = e.target.closest('[data-act="addMember"]');
+        if (add) {
+          const d = readForm($("#addMemberForm"));
+          if (!d.fullName || !d.email || !d.phone) return setMsg("addMemberMsg", "Name, email and phone are required.", false);
+          busy(add, true, "Adding…");
+          try {
+            const { member, setupUrl } = await api.post("/members", d);
+            openModal(
+              "Member added",
+              `<p><strong>${esc(member.fullName)}</strong> is now active as <strong>${esc(member.memberNumber)}</strong>.</p>
+               <p class="card-muted">We've emailed them a link to set a password. You can also send it yourself (e.g. on WhatsApp) — valid for 7 days:</p>
+               <input class="btn-ghost" style="width:100%" readonly value="${esc(setupUrl)}" onclick="this.select()">`
+            );
+            render();
+          } catch (err) {
+            setMsg("addMemberMsg", err.status === 409 ? "That email or phone is already registered." : err.message, false);
+            busy(add, false);
+          }
           return;
         }
         const ap = e.target.closest('[data-act="approveM"]');
