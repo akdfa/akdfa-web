@@ -11,7 +11,7 @@ Companion to the "Growing AKDFA: Our Digital Future" roadmap presented to the St
 | ORM | Prisma | Schema file doubles as documentation and the ERD source; generates type-safe queries and migrations from one file |
 | Auth | JWT access token + rotating refresh token | Stateless access checks, no server-side session store to run; refresh tokens are stored **hashed** and rotated so a leaked token is single-use |
 | Payments | Razorpay | Already trusted by associations across India (UPI, cards, net banking) — matches Phase 5's requirement directly |
-| Hosting target | Any Node host (Render, Railway, Fly.io) + managed Postgres | AKDFA is a volunteer-run association, not a company with dedicated infra staff — pick platforms with generous free/cheap tiers and no ops burden |
+| Hosting target | Any Node host (Railway, Fly.io, a VPS or any Docker host) + managed Postgres | AKDFA is a volunteer-run association, not a company with dedicated infra staff — pick platforms with generous free/cheap tiers and no ops burden |
 
 This is intentionally a monolith, not microservices. At AKDFA's scale (17 units, thousands of members at most), one deployable API is easier for a small or volunteer dev team to run, debug, and reason about than a distributed system.
 

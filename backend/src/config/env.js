@@ -80,9 +80,9 @@ module.exports = {
   nodeEnv: NODE_ENV,
   isProd,
   // One-service hosting: the API also serves the website (same origin → no CORS,
-  // login "just works"). Off by default; turn on for a single Render/Railway/Fly app.
+  // login "just works"). Off by default; turn on for a single-service deployment.
   serveSite: process.env.SERVE_SITE === "true",
-  // Behind a host's proxy/load-balancer (Render, Railway, Fly, nginx…) so rate
+  // Behind a host's proxy/load-balancer (nginx, Fly, Railway, a cloud load balancer…) so rate
   // limiting + req.ip see the real client. Number of proxy hops to trust.
   trustProxy: Number(process.env.TRUST_PROXY || (isProd ? 1 : 0)),
   port: Number(process.env.PORT || 4000),

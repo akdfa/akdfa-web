@@ -89,7 +89,7 @@ Membership status: Pending, Active, Lapsed, Suspended, Rejected. Admin actions a
 
 - In-app notifications for approvals, announcements, signup alerts, events and payments.
 - Per-member notification preferences by category and channel (in-app, email, SMS settings are stored; email sends only when SMTP is configured, otherwise it is logged; there is no SMS provider yet).
-- Daily reminder job (`backend/scripts/send-reminders.js`) for memberships expiring within 30 days (needs a scheduler such as a Render cron job).
+- Daily reminder job (`backend/scripts/send-reminders.js`) for memberships expiring within 30 days (needs a scheduler such as a cron job).
 
 ## 8. Files and data
 
@@ -99,4 +99,4 @@ Membership status: Pending, Active, Lapsed, Suspended, Rejected. Admin actions a
 
 ## 9. Hosting
 
-- One Docker service serves both the website and the API (Render blueprint included). CI runs syntax checks and tests on every push.
+- One Docker service serves both the website and the API (runs on any Docker or Node host). CI runs syntax checks and tests on every push.
