@@ -154,7 +154,7 @@
       ["#/admin/cricket", "Manage Cricket", "fa-clipboard-list", "UNIT_ADMIN"],
       ["#/admin/content", "News / Events / Polls", "fa-pen-nib", "UNIT_ADMIN"],
       ["#/admin/broadcast", "Broadcast", "fa-tower-broadcast", "DISTRICT_ADMIN"],
-      ["#/admin/units", "Units", "fa-sitemap", "DISTRICT_ADMIN"],
+      ["#/admin/units", "Units", "fa-sitemap", "STATE_ADMIN"],
       ["#/admin/sponsors", "Sponsors & Logs", "fa-handshake", "DISTRICT_ADMIN"],
       ["#/admin/orders", "Store Orders", "fa-box-open", "DISTRICT_ADMIN"],
       ["#/admin/reports", "District Report", "fa-file-lines", "DISTRICT_ADMIN"],
@@ -165,6 +165,7 @@
       ["#/admin/all-reports", "District Reports", "fa-folder-tree", "STATE_ADMIN"],
       ["#/admin/roles", "Roles & Audit", "fa-user-shield", "STATE_ADMIN"],
       ["#/admin/store-admin", "Store Products", "fa-tags", "STATE_ADMIN"],
+      ["#/admin/social", "Social Media", "fa-share-nodes", "STATE_ADMIN"],
     ]},
   ];
 
@@ -282,6 +283,7 @@
         <div class="pv-head"><h1>Digital Membership Card</h1><p>Show this at events like a boarding pass.</p></div>
         <div class="mcard">
           <div class="mcard-top"><img src="assets/akdfa-circle-logo.png" alt=""><div class="mcard-org">AKDFA<br><span style="font-weight:600;opacity:.8">Reg 949/17</span></div></div>
+          ${card.photoUrl ? `<img class="mcard-photo" src="${esc(card.photoUrl)}" alt="Photo of ${esc(card.fullName)}">` : ""}
           <div class="mcard-name">${esc(card.fullName)}</div>
           <div class="mcard-role">${titleCase(card.role)}</div>
           <div class="mcard-grid">
@@ -764,6 +766,17 @@
    * ============================================================== */
 
   /* ---------- Members ---------- */
+  // Suspend / reinstate buttons. The server enforces scope and rank; this just avoids showing buttons that would be refused.
+  const RANK_OF = { MEMBER: 0, UNIT_ADMIN: 1, DISTRICT_ADMIN: 2, STATE_ADMIN: 3 };
+  const statusButtons = (m) => {
+    if (m.id === me.id) return "";
+    if (!can("STATE_ADMIN") && RANK_OF[m.role] >= RANK_OF[me.role]) return "";
+    const b = (act, label, cls = "") => ` <button class="btn-ghost btn-small ${cls}" data-act="${act}" data-id="${m.id}" data-name="${esc(m.fullName)}">${label}</button>`;
+    if (m.status === "ACTIVE" || m.status === "LAPSED") return b("suspendM", "Suspend", "btn-danger");
+    if (m.status === "SUSPENDED") return b("reinstateM", "Reinstate");
+    return "";
+  };
+
   R("/admin/members", "Members", {
     role: "UNIT_ADMIN",
     render: async () => {
@@ -798,7 +811,7 @@
           </div>
         </div>
         <div class="pv-tabs">
-          ${["PENDING", "ACTIVE", "LAPSED", "ALL"].map((s) => `<button class="${s === status ? "is-active" : ""}" data-act="mstatus" data-s="${s}">${titleCase(s)}</button>`).join("")}
+          ${["PENDING", "ACTIVE", "LAPSED", "SUSPENDED", "ALL"].map((s) => `<button class="${s === status ? "is-active" : ""}" data-act="mstatus" data-s="${s}">${titleCase(s)}</button>`).join("")}
         </div>
         ${members.length ? `<div class="table-wrap"><table class="pv-table"><thead><tr><th>Name</th><th>No.</th><th>Unit</th><th>Status</th><th>Role</th><th></th></tr></thead>
           <tbody>${members.map((m) => `<tr>
@@ -807,7 +820,7 @@
             <td>${esc(m.unit?.name || m.unitId)}</td>
             <td><span class="pill ${m.status === "ACTIVE" ? "pill--ok" : m.status === "PENDING" ? "pill--warn" : "pill--bad"}">${titleCase(m.status)}</span></td>
             <td>${canRole ? `<select class="btn-ghost btn-small" data-act="setRole" data-id="${m.id}">${["MEMBER", "UNIT_ADMIN", "DISTRICT_ADMIN", "STATE_ADMIN"].map((r) => `<option ${r === m.role ? "selected" : ""}>${r}</option>`).join("")}</select>` : titleCase(m.role)}</td>
-            <td>${m.status === "PENDING" ? `<button class="btn-ghost btn-small" data-act="approveM" data-id="${m.id}">Approve</button> <button class="btn-ghost btn-small btn-danger" data-act="rejectM" data-id="${m.id}">Reject</button>` : (can("STATE_ADMIN") && m.role !== "MEMBER" ? `<button class="btn-ghost btn-small" data-act="resetPw" data-id="${m.id}" data-name="${esc(m.fullName)}">Reset password</button>` : "")}</td>
+            <td>${m.status === "PENDING" ? `<button class="btn-ghost btn-small" data-act="approveM" data-id="${m.id}">Approve</button> <button class="btn-ghost btn-small btn-danger" data-act="rejectM" data-id="${m.id}">Reject</button>` : (can("STATE_ADMIN") && m.role !== "MEMBER" ? `<button class="btn-ghost btn-small" data-act="resetPw" data-id="${m.id}" data-name="${esc(m.fullName)}">Reset password</button>` : "") + statusButtons(m)}</td>
           </tr>`).join("")}</tbody></table></div>`
           : '<div class="empty">No members in this view.</div>'}`;
     },
@@ -884,6 +897,23 @@
           );
           return;
         }
+        const sus = e.target.closest('[data-act="suspendM"]');
+        if (sus) {
+          const reason = prompt(`Suspend ${sus.dataset.name}? They will be signed out and blocked until reinstated.\n\nOptional reason (sent to the member):`, "");
+          if (reason === null) return;
+          busy(sus, true, "…");
+          try { await api.post(`/members/${sus.dataset.id}/suspend`, reason ? { reason } : {}); toast("Member suspended", "ok"); render(); }
+          catch (err) { toast(err.message, "error"); busy(sus, false); }
+          return;
+        }
+        const rei = e.target.closest('[data-act="reinstateM"]');
+        if (rei) {
+          if (!confirm(`Reinstate ${rei.dataset.name}?`)) return;
+          busy(rei, true, "…");
+          try { await api.post(`/members/${rei.dataset.id}/reinstate`, {}); toast("Member reinstated", "ok"); render(); }
+          catch (err) { toast(err.message, "error"); busy(rei, false); }
+          return;
+        }
         const ap = e.target.closest('[data-act="approveM"]');
         if (ap) {
           busy(ap, true, "…");
@@ -921,57 +951,54 @@
     },
   });
 
-  /* ---------- Units ---------- */
+  /* ---------- Units (State Committee only) ---------- */
   R("/admin/units", "Units", {
-    role: "DISTRICT_ADMIN",
+    role: "STATE_ADMIN",
     render: async () => {
       const ds = await districts();
-      const { units } = await api.get("/units?status=ALL");
-      const pending = units.filter((u) => u.status === "PENDING");
+      const { units } = await api.get("/units"); // approved units only: the same list as the public Units page
+      const dName = (id) => (ds.find((d) => d.id === id) || {}).name || "";
       return `
-        <div class="pv-head"><h1>Units</h1><p>Add local units and approve proposals from members.</p></div>
+        <div class="pv-head"><h1>Units</h1><p>The units shown on the website. Only the State Committee adds or removes them.</p></div>
         <div class="grid grid-2">
-          <div class="card"><h2>Pending approval (${pending.length})</h2>
-            <div class="list" style="margin-top:10px">${pending.length ? pending.map((u) => `<div class="list-item"><div class="li-main"><strong>${esc(u.name)}</strong><small>${esc(u.address || "")}</small></div><div class="row"><button class="btn-ghost btn-small" data-act="approveU" data-id="${u.id}">Approve</button><button class="btn-ghost btn-small btn-danger" data-act="rejectU" data-id="${u.id}">Reject</button></div></div>`).join("") : '<p class="card-muted">Nothing pending.</p>'}</div>
-          </div>
-          <div class="card"><h2>Add a unit</h2><p class="card-muted">Units you add are approved straight away.</p>
+          <div class="card"><h2>Add a unit</h2>
             <div class="pv-form" id="unitForm" style="margin-top:10px">
-              <label>District<select name="districtId">${(can("STATE_ADMIN") ? ds : ds.filter((d) => d.id === me.districtId)).map((d) => `<option value="${d.id}" ${d.id === me.districtId ? "selected" : ""}>${esc(d.name)}</option>`).join("")}</select></label>
-              <label>Name<input name="name" placeholder="e.g. Fort Kochi Club"></label>
+              <label>District<select name="districtId">${ds.map((d) => `<option value="${d.id}">${esc(d.name)}</option>`).join("")}</select></label>
+              <label>Name<input name="name" placeholder="e.g. Fort Kochi Unit"></label>
               <label>Address<input name="address"></label>
               <div class="form-row"><label>Contact email<input name="contactEmail" type="email"></label><label>Contact phone<input name="contactPhone"></label></div>
               <button class="btn btn-primary" data-act="createUnit">Add unit</button><span class="pv-msg" id="unitMsg"></span>
             </div>
           </div>
+          <div class="card"><h2>At a glance</h2>
+            <p class="card-muted" style="margin-top:8px">${units.length} unit${units.length === 1 ? "" : "s"} across ${new Set(units.map((u) => u.districtId)).size} districts.</p>
+            <p class="card-muted">A unit that still has members cannot be deleted. Move or remove its members first.</p>
+          </div>
         </div>
         <div class="card" style="margin-top:16px"><h2>All units (${units.length})</h2>
-          <div class="table-wrap"><table class="pv-table"><thead><tr><th>Name</th><th>District</th><th>Status</th><th>Contact</th></tr></thead>
-          <tbody>${units.map((u) => `<tr><td>${esc(u.name)}</td><td>${esc((ds.find((d) => d.id === u.districtId) || {}).name || "")}</td><td>${titleCase(u.status)}</td><td>${esc(u.contactPhone || u.contactEmail || "—")}</td></tr>`).join("")}</tbody></table></div>
+          <div class="table-wrap"><table class="pv-table"><thead><tr><th>Name</th><th>District</th><th>Contact</th><th></th></tr></thead>
+          <tbody>${units.map((u) => `<tr><td>${esc(u.name)}</td><td>${esc(dName(u.districtId))}</td><td>${esc(u.contactPhone || u.contactEmail || "—")}</td><td><button class="btn-ghost btn-small btn-danger" data-act="delUnit" data-id="${u.id}" data-name="${esc(u.name)}">Delete</button></td></tr>`).join("")}</tbody></table></div>
         </div>`;
     },
     after: () => {
       view().addEventListener("click", async (e) => {
-        const a = e.target.closest('[data-act="approveU"]');
-        if (a) {
-          busy(a, true, "…");
-          try { await api.post(`/units/${a.dataset.id}/approve`, {}); toast("Unit approved", "ok"); render(); }
-          catch (err) { toast(err.message, "error"); busy(a, false); }
-        }
-        const ru = e.target.closest('[data-act="rejectU"]');
-        if (ru) {
-          if (!confirm("Reject this unit?")) return;
-          busy(ru, true, "…");
-          try { await api.post(`/units/${ru.dataset.id}/reject`, {}); toast("Unit rejected", "ok"); render(); }
-          catch (err) { toast(err.message, "error"); busy(ru, false); }
+        const del = e.target.closest('[data-act="delUnit"]');
+        if (del) {
+          if (!confirm(`Delete "${del.dataset.name}"? This removes the unit and its teams.`)) return;
+          busy(del, true, "…");
+          try { await api.del(`/units/${del.dataset.id}`); toast("Unit deleted", "ok"); render(); }
+          catch (err) { toast(err.message, "error"); busy(del, false); }
+          return;
         }
         const c = e.target.closest('[data-act="createUnit"]');
         if (c) {
           const msg = $("#unitMsg");
+          const d = readForm($("#unitForm"));
+          if (!d.name || d.name.trim().length < 2) { msg.textContent = "Give the unit a name."; msg.className = "pv-msg pv-msg--error"; return; }
           busy(c, true, "…");
           try {
-            await api.post("/units", readForm($("#unitForm")));
-            msg.textContent = "Unit added and approved.";
-            msg.className = "pv-msg pv-msg--ok";
+            await api.post("/units", d);
+            toast("Unit added", "ok");
             render();
           } catch (err) { msg.textContent = err.message; msg.className = "pv-msg pv-msg--error"; busy(c, false); }
         }
@@ -986,11 +1013,12 @@
       const ds = await districts();
       const dOpts = ds.map((d) => `<option value="${d.id}" ${d.id === me.districtId ? "selected" : ""}>${esc(d.name)}</option>`).join("");
       const scopeOpts = can("STATE_ADMIN") ? ["DISTRICT", "STATE", "UNIT"] : ["DISTRICT", "UNIT"];
+      const canNews = can("STATE_ADMIN");
       return `
-        <div class="pv-head"><h1>News / Events / Polls</h1><p>Publish to your ${can("STATE_ADMIN") ? "state or district" : "district"} feed.</p></div>
-        <div class="pv-tabs"><button class="is-active" data-tab="news">News</button><button data-tab="event">Event</button><button data-tab="poll">Poll</button></div>
+        <div class="pv-head"><h1>${canNews ? "News / Events / Polls" : "Polls"}</h1><p>${canNews ? "News and events are published by the State Committee (they appear on the website). Polls go to your feed." : "Create polls for your members. News and events are published by the State Committee."}</p></div>
+        <div class="pv-tabs">${canNews ? '<button class="is-active" data-tab="news">News</button>' : ""}${canNews ? '<button data-tab="event">Event</button>' : ""}<button data-tab="poll"${canNews ? "" : ' class="is-active"'}>Poll</button></div>
 
-        <div data-panel="news"><div class="card"><h2>New post</h2>
+        ${canNews ? `<div data-panel="news"><div class="card"><h2>New post</h2>
           <div class="pv-form" id="newsForm" style="margin-top:10px">
             <label>Title<input name="title"></label>
             <label>Body<textarea name="body"></textarea></label>
@@ -1003,9 +1031,9 @@
             <button class="btn btn-primary" data-act="createNews">Publish</button><span class="pv-msg" id="newsMsg"></span>
           </div></div>
           <div class="card" style="margin-top:14px"><h2>Recent posts</h2><div id="newsList" class="list"></div></div>
-        </div>
+        </div>` : ""}
 
-        <div data-panel="event" hidden><div class="card"><h2>New event</h2>
+        ${canNews ? `        <div data-panel="event" hidden><div class="card"><h2>New event</h2>
           <div class="pv-form" id="evtForm" style="margin-top:10px">
             <label>Title<input name="title"></label>
             <div class="form-row">
@@ -1050,9 +1078,9 @@
               </div>
             </div>
           </div>
-        </div>
+        </div>` : ""}
 
-        <div data-panel="poll" hidden><div class="card"><h2>New poll</h2>
+        <div data-panel="poll"${canNews ? " hidden" : ""}><div class="card"><h2>New poll</h2>
           <div class="pv-form" id="pollForm" style="margin-top:10px">
             <label>Question<input name="question"></label>
             <label>Options (one per line)<textarea name="options" placeholder="Yes&#10;No&#10;Maybe"></textarea></label>
@@ -1119,11 +1147,13 @@
       };
       try {
         const { events } = await api.get("/events?from=" + new Date(Date.now() - 180 * 86400000).toISOString());
-        if (!$("#evtPick")) return; // page was left while loading
-        $("#evtPick").innerHTML =
-          '<option value="">Select an event…</option>' +
-          events.map((e) => `<option value="${e.id}">${esc(e.title)} — ${fmtDate(e.startsAt)}</option>`).join("");
-        $("#evtPick").onchange = (ev) => selectEvent(ev.target.value).catch((err) => toast(err.message, "error"));
+        const pick = $("#evtPick"); // only on screens that have the Event panel (State Committee)
+        if (pick) {
+          pick.innerHTML =
+            '<option value="">Select an event…</option>' +
+            events.map((e) => `<option value="${e.id}">${esc(e.title)} — ${fmtDate(e.startsAt)}</option>`).join("");
+          pick.onchange = (ev) => selectEvent(ev.target.value).catch((err) => toast(err.message, "error"));
+        }
       } catch (_) {}
 
       view().addEventListener("click", async (e) => {
@@ -1351,9 +1381,9 @@
       ]);
       const logs = logsRes.logs || [];
       return `
-        <div class="pv-head"><h1>Sponsors &amp; Local Logs</h1></div>
+        <div class="pv-head"><h1>Sponsors &amp; Local Logs</h1><p>${can("STATE_ADMIN") ? "Sponsors you add appear on the public Sponsors page." : "The State Committee adds sponsors. You can keep your district's sponsorship log."}</p></div>
         <div class="grid grid-2">
-          <div class="card"><h2>Add sponsor</h2>
+          ${can("STATE_ADMIN") ? `          <div class="card"><h2>Add sponsor</h2>
             <div class="pv-form" id="spForm" style="margin-top:10px">
               <label>Name<input name="name"></label>
               <label>Logo<input type="file" id="spLogo" accept="image/*"></label>
@@ -1362,7 +1392,7 @@
               <div class="form-row"><label>Contact email<input name="contactEmail" type="email"></label><label>Website<input name="website"></label></div>
               <button class="btn btn-primary" data-act="addSponsor">Add</button><span class="pv-msg" id="spMsg"></span>
             </div>
-          </div>
+          </div>` : ""}
           <div class="card"><h2>Log local sponsorship / expense</h2>
             <div class="pv-form" id="logForm" style="margin-top:10px">
               <label>Sponsor / payee<input name="sponsorName"></label>
@@ -1380,8 +1410,8 @@
                 <br><small class="card-muted">${s.districtId ? esc((ds.find((d) => d.id === s.districtId) || {}).name || "District") : "State-level"} · ${s._count?.payments || 0} payment(s)</small></div>
               <div class="row">
                 <button class="btn-ghost btn-small" data-act="reqPay" data-id="${s.id}" data-name="${esc(s.name)}">Request payment</button>
-                <button class="btn-ghost btn-small" data-act="editSp" data-id="${s.id}">Edit</button>
-                <button class="btn-ghost btn-small btn-danger" data-act="delSp" data-id="${s.id}">Delete</button>
+                ${can("STATE_ADMIN") ? `<button class="btn-ghost btn-small" data-act="editSp" data-id="${s.id}">Edit</button>
+                <button class="btn-ghost btn-small btn-danger" data-act="delSp" data-id="${s.id}">Delete</button>` : ""}
               </div>
               <div class="pv-form" id="spedit-${s.id}" hidden style="width:100%;margin-top:8px;border-top:1px solid var(--border);padding-top:8px">
                 <label>Name<input name="name" value="${esc(s.name)}"></label>
@@ -1679,6 +1709,56 @@
   });
 
   /* ---------- Store products (state) ---------- */
+  /* ---------- Social media (shown on the home page) ---------- */
+  R("/admin/social", "Social Media", {
+    role: "STATE_ADMIN",
+    render: async () => {
+      const { links } = await api.get("/social");
+      const platforms = [["facebook", "Facebook"], ["instagram", "Instagram"], ["x", "X"], ["youtube", "YouTube"], ["whatsapp", "WhatsApp"], ["telegram", "Telegram"], ["linkedin", "LinkedIn"], ["website", "Website"]];
+      return `
+        <div class="pv-head"><h1>Social Media</h1><p>Profiles you add here appear in "Follow AKDFA" on the home page.</p></div>
+        <div class="grid grid-2">
+          <div class="card"><h2>Add a profile</h2>
+            <div class="pv-form" id="socialForm" style="margin-top:10px">
+              <label>Platform<select name="platform">${platforms.map(([v, n]) => `<option value="${v}">${n}</option>`).join("")}</select></label>
+              <label>Link<input name="url" type="url" placeholder="https://www.instagram.com/akdfa"></label>
+              <label>Label (optional)<input name="label" maxlength="60"></label>
+              <button class="btn btn-primary" data-act="addSocial">Add</button><span class="pv-msg" id="socialMsg"></span>
+            </div>
+          </div>
+          <div class="card"><h2>On the home page (${links.length})</h2>
+            <div class="stack" style="margin-top:10px">${links.map((l) => `<div class="row" style="display:flex;justify-content:space-between;gap:10px;align-items:center">
+              <span><b>${esc((platforms.find((p) => p[0] === l.platform) || [0, l.platform])[1])}</b> <a href="${esc(l.url)}" target="_blank" rel="noopener noreferrer" class="card-muted">${esc(l.url)}</a></span>
+              <button class="btn-ghost btn-small btn-danger" data-act="delSocial" data-id="${l.id}">Remove</button></div>`).join("") || '<p class="card-muted">None yet.</p>'}</div>
+          </div>
+        </div>`;
+    },
+    after: () => {
+      view().addEventListener("click", async (e) => {
+        const t = e.target.closest("[data-act]");
+        if (!t || !["addSocial", "delSocial"].includes(t.dataset.act)) return;
+        try {
+          busy(t, true, "…");
+          if (t.dataset.act === "addSocial") {
+            const d = readForm($("#socialForm"));
+            if (!d.label) delete d.label;
+            await api.post("/social", d);
+            toast("Added", "ok");
+          } else {
+            if (!confirm("Remove this profile from the home page?")) return busy(t, false);
+            await api.del(`/social/${t.dataset.id}`);
+            toast("Removed", "ok");
+          }
+          render();
+        } catch (err) {
+          if (t.dataset.act === "addSocial") setMsg("socialMsg", err.message, false);
+          else toast(err.message, "error");
+          busy(t, false);
+        }
+      });
+    },
+  });
+
   R("/admin/store-admin", "Store Products", {
     role: "STATE_ADMIN",
     render: async () => {

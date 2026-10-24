@@ -11,6 +11,7 @@ router.use("/events", require("../modules/events/events.routes"));
 router.use("/polls", require("../modules/polls/polls.routes"));
 router.use("/cricket", require("../modules/cricket/cricket.routes"));
 router.use("/sponsors", require("../modules/sponsors/sponsors.routes"));
+router.use("/social", require("../modules/social/social.routes"));
 router.use("/growth", require("../modules/growth/growth.routes"));
 router.use("/notifications", require("../modules/notifications/notifications.routes"));
 router.use("/reports", require("../modules/reports/reports.routes"));

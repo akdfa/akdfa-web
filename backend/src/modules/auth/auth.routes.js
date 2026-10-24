@@ -226,15 +226,22 @@ router.post(
         data: { usedAt: new Date() }, // invalidate any earlier outstanding tokens
       });
       const rawToken = crypto.randomBytes(32).toString("hex");
-      await prisma.passwordReset.create({
+      const reset = await prisma.passwordReset.create({
         data: { memberId: member.id, tokenHash: sha256(rawToken), expiresAt: new Date(Date.now() + RESET_TTL_MS) },
       });
       const url = `${env.siteBaseUrl.replace(/\/$/, "")}/reset.html?token=${rawToken}`;
-      await sendMail({
-        to: req.body.email,
-        subject: "Reset your AKDFA password",
-        text: `Someone asked to reset the password for your AKDFA account.\n\nOpen this link within 1 hour to choose a new password:\n${url}\n\nIf this wasn't you, ignore this email — your password stays unchanged.`,
-      });
+      try {
+        await sendMail({
+          to: req.body.email,
+          idempotencyKey: `password-reset/${reset.id}`,
+          subject: "Reset your AKDFA password",
+          text: `Someone asked to reset the password for your AKDFA account.\n\nOpen this link within 1 hour to choose a new password:\n${url}\n\nIf this wasn't you, ignore this email — your password stays unchanged.`,
+          html: `<p>Someone asked to reset the password for your AKDFA account.</p><p><a href="${url}">Choose a new password</a> (link valid for 1 hour).</p><p>If this wasn't you, ignore this email — your password stays unchanged.</p>`,
+        });
+      } catch (err) {
+        // Same response either way, so a mail failure can't reveal whether the email is registered.
+        console.error("[auth] password reset email failed:", err.message); // eslint-disable-line no-console
+      }
       if (!env.isProd) devResetUrl = url;
     }
 

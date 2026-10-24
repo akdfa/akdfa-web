@@ -61,6 +61,7 @@ router.get(
     const events = await prisma.event.findMany({
       where: {
         status: "APPROVED",
+        createdBy: { role: "STATE_ADMIN" }, // the site shows events added by the State Committee
         districtId: districtId || undefined,
         type: type || undefined,
         startsAt: { gte: from ? new Date(from) : undefined, lte: to ? new Date(to) : undefined },
@@ -78,8 +79,8 @@ router.get(
 router.get(
   "/:id",
   asyncHandler(async (req, res) => {
-    const event = await prisma.event.findUnique({
-      where: { id: req.params.id },
+    const event = await prisma.event.findFirst({
+      where: { id: req.params.id, createdBy: { role: "STATE_ADMIN" } },
       include: {
         rsvps: true,
         matches: { include: { homeTeam: true, awayTeam: true } },
@@ -95,7 +96,7 @@ router.get(
 router.post(
   "/",
   requireAuth,
-  requireRole("UNIT_ADMIN"),
+  requireRole("STATE_ADMIN"),
   validate({ body: upsertSchema }),
   asyncHandler(async (req, res) => {
     const target = await resolveTarget(req.auth, req.body);
@@ -110,7 +111,7 @@ router.post(
 router.patch(
   "/:id",
   requireAuth,
-  requireRole("UNIT_ADMIN"),
+  requireRole("STATE_ADMIN"),
   validate({ body: upsertSchema.partial() }),
   asyncHandler(async (req, res) => {
     await loadManageable(req);
@@ -129,7 +130,7 @@ router.patch(
 router.delete(
   "/:id",
   requireAuth,
-  requireRole("UNIT_ADMIN"),
+  requireRole("STATE_ADMIN"),
   asyncHandler(async (req, res) => {
     await loadManageable(req);
     const event = await prisma.event.delete({ where: { id: req.params.id } });
@@ -142,7 +143,7 @@ router.delete(
 router.patch(
   "/:id/photos",
   requireAuth,
-  requireRole("UNIT_ADMIN"),
+  requireRole("STATE_ADMIN"),
   validate({ body: z.object({ photos: z.array(z.string().url()) }) }),
   asyncHandler(async (req, res) => {
     await loadManageable(req);
@@ -169,7 +170,7 @@ router.get(
 router.put(
   "/:id/charity-report",
   requireAuth,
-  requireRole("UNIT_ADMIN"),
+  requireRole("STATE_ADMIN"),
   validate({
     body: z.object({
       peopleHelped: z.number().int().min(0).optional(),

@@ -17,7 +17,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
   <script src="js/theme.js?v=2"></script>
   <link rel="stylesheet" href="style.css?v=9">
-  <link rel="stylesheet" href="css/pages.css?v=3">
+  <link rel="stylesheet" href="css/pages.css?v=7">
 </head>
 <body class="inner">
   <a class="skip-link" href="#main">Skip to content</a>
@@ -56,7 +56,7 @@
           <div>
             <p class="eyebrow">Become a Member</p>
             <h2>Join the association today.</h2>
-            <p>Membership connects you to your local unit, district events, and the wider AKDFA community of 17 units across 14 districts.</p>
+            <p>Membership connects you to your local unit and the wider AKDFA community of 17 units across 14 districts.</p>
           </div>
           <div class="cta-actions">
             <a class="btn btn-outline" href="units.html">Find Your District First</a>
@@ -102,6 +102,7 @@
               Create a Password
               <input type="password" name="password" placeholder="At least 8 characters" required minlength="8" autocomplete="new-password">
             </label>
+            <p class="form-hint full fee-preview" id="feePreview" hidden></p>
             <button class="btn btn-primary full" type="submit">Request Membership</button>
             <p class="form-message full" id="joinMessage" role="status"></p>
             <p class="form-hint full">Your local unit admin reviews new members. Once approved, sign in at the member portal to get your digital card.</p>
@@ -146,7 +147,19 @@
 
   <script src="js/config.js"></script>
   <script src="js/api.js"></script>
-  <script src="script.js"></script>
+  <script src="script.js?v=2"></script>
   <script src="js/public.js"></script>
+  <script>
+    // Fee preview: show what membership costs before they apply (paid online after approval).
+    (function () {
+      const el = document.getElementById("feePreview");
+      if (!el || !window.AKDFA) return;
+      window.AKDFA.get("/public/config").then((c) => {
+        if (!c || !c.membershipFeeInr) return;
+        el.textContent = "Annual membership fee: ₹" + Number(c.membershipFeeInr).toLocaleString("en-IN") + ". You pay online after your unit approves you; applying is free.";
+        el.hidden = false;
+      }).catch(() => {});
+    })();
+  </script>
 </body>
 </html>

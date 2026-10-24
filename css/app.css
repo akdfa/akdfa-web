@@ -381,3 +381,7 @@ table.pv-table { width: 100%; border-collapse: collapse; font-size: 0.88rem; min
 .grid > *, .list > *, .portal-view .card { min-width: 0; }
 .portal-view .card p, .portal-view .card small, .portal-view .card strong, .list-item .li-main { overflow-wrap: anywhere; }
 .portal-view .card-muted a, .portal-view .empty a { display: inline-block; padding: 10px 0; }
+
+/* member photo on the digital card */
+.mcard-photo { position: relative; z-index: 1; display: block; width: 72px; height: 72px; margin-top: 18px; border-radius: 50%; object-fit: cover; border: 3px solid rgba(23, 19, 10, 0.55); background: #fff; }
+.mcard-photo + .mcard-name { margin-top: 10px; }

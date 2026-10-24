@@ -27,6 +27,7 @@ router.get(
     const posts = await prisma.newsPost.findMany({
       where: {
         publishedAt: { not: null },
+        author: { role: "STATE_ADMIN" }, // the site only shows news posted by the State Committee
         scope: scope || undefined,
         OR: districtId ? [{ scope: "STATE" }, { districtId }] : undefined,
       },
@@ -40,28 +41,20 @@ router.get(
 router.get(
   "/:id",
   asyncHandler(async (req, res) => {
-    const post = await prisma.newsPost.findUnique({ where: { id: req.params.id } });
+    const post = await prisma.newsPost.findFirst({ where: { id: req.params.id, publishedAt: { not: null }, author: { role: "STATE_ADMIN" } } });
     if (!post) throw ApiError.notFound("Post not found");
     res.json({ post });
   })
 );
 
-// Unit admins post to their unit/district feed; state admins post state-wide (Phase 4 broadcasts).
+// Only the State Committee posts news (shown on the home page, Updates and the member feed).
 router.post(
   "/",
   requireAuth,
-  requireRole("UNIT_ADMIN"),
+  requireRole("STATE_ADMIN"),
   validate({ body: upsertSchema }),
   asyncHandler(async (req, res) => {
     const { publishNow, ...data } = req.body;
-    if (data.scope !== "STATE" && !data.districtId) data.districtId = req.auth.districtId;
-    if (data.scope === "STATE" && req.auth.role !== "STATE_ADMIN") {
-      throw ApiError.forbidden("Only the State Committee can post state-wide news");
-    }
-
-    // Non-state authors may only post into their own district.
-    if (req.auth.role !== "STATE_ADMIN") assertCanManage(req.auth, { districtId: data.districtId }, "You can only post news for your own district");
-
     const post = await prisma.newsPost.create({
       data: { ...data, authorId: req.auth.id, publishedAt: publishNow ? new Date() : null },
     });
@@ -72,7 +65,7 @@ router.post(
 router.delete(
   "/:id",
   requireAuth,
-  requireRole("UNIT_ADMIN"),
+  requireRole("STATE_ADMIN"),
   asyncHandler(async (req, res) => {
     const existing = await prisma.newsPost.findUnique({ where: { id: req.params.id } });
     if (!existing) throw ApiError.notFound("Post not found");

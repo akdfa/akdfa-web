@@ -2,7 +2,7 @@
  * Makes the public marketing pages data-driven off the AKDFA API:
  *   - news.html    : live news feed + events calendar (filterable by district)
  *   - sponsors.html : live sponsor list
- *   - units.html    : districts "brought to life" — story, events, results, charity
+ *   - units.html    : districts "brought to life" — story, events, results
  * Each block only runs if its container exists and the API responds; otherwise
  * the page keeps whatever static content it shipped with.
  */
@@ -27,7 +27,8 @@
     let districtMap = {};
     let activeDistrict = "";
 
-    const renderEvents = (events) => {
+    const renderEvents = (all) => {
+      const events = all.filter((e) => e.type !== "CHARITY"); // the public calendar does not show a Charity category
       if (!events.length) {
         eventsList.innerHTML = '<p class="empty-state">No events scheduled yet — check back soon.</p>';
         return;
@@ -192,14 +193,6 @@
           ? `<div class="district-profile-block"><h4><i class="fa-solid fa-people-group"></i> Units</h4>
              <ul class="district-profile-list">${data.district.units.map((u) => `<li>${esc(u.name)}</li>`).join("")}</ul></div>`
           : "";
-      const upcoming =
-        data.upcomingEvents && data.upcomingEvents.length
-          ? `<div class="district-profile-block"><h4><i class="fa-solid fa-calendar-days"></i> Upcoming</h4>
-             <ul class="district-profile-list">${data.upcomingEvents.map((e) => `<li>${esc(e.title)} — ${esc(D(e.startsAt))}${e.location ? " · " + esc(e.location) : ""}</li>`).join("")}</ul></div>`
-          : s && s.tournaments && s.tournaments.length
-            ? `<div class="district-profile-block"><h4><i class="fa-solid fa-trophy"></i> Tournaments</h4>
-               <ul class="district-profile-list">${s.tournaments.map((t) => `<li>${esc(t)}</li>`).join("")}</ul></div>`
-            : "";
       const results =
         data.recentMatches && data.recentMatches.length
           ? `<div class="district-profile-block"><h4><i class="fa-solid fa-baseball"></i> Recent results</h4>
@@ -207,15 +200,9 @@
           : s && s.standout
             ? `<div class="district-profile-block"><h4><i class="fa-solid fa-star"></i> Standout match</h4><p>${esc(s.standout)}</p></div>`
             : "";
-      const charity =
-        data.charity && data.charity.length
-          ? `<div class="district-profile-block"><h4><i class="fa-solid fa-hand-holding-heart"></i> Community impact</h4>
-             <ul class="district-profile-list">${data.charity.map((c) => `<li>${esc(c.event && c.event.title)}${c.peopleHelped ? " — " + c.peopleHelped + " people helped" : ""}${c.beneficiary ? " (" + esc(c.beneficiary) + ")" : ""}</li>`).join("")}</ul></div>`
-          : "";
-
       modalContent.innerHTML =
         (story ? `<p>${esc(story)}</p>` : "") +
-        `<div class="district-profile">${units}${upcoming}${results}${charity}${contacts}</div>` ||
+        `<div class="district-profile">${units}${results}${contacts}</div>` ||
         '<p class="empty-state">District details coming soon.</p>';
     }
   }

@@ -47,8 +47,6 @@ body.inner .principle-icon { background: rgba(var(--fg), 0.06); color: var(--gol
 /* sponsor slots: dashed like the design */
 body.inner .sponsor-slot { background: transparent; border: 1.5px dashed var(--border-strong); border-radius: 16px; color: var(--muted-soft); }
 
-/* gallery tiles */
-body.inner .gallery-tile { border-radius: 16px; border: 1px solid var(--card-border); background: var(--card-elevated); overflow: hidden; }
 
 /* ---------- buttons & pills ---------- */
 body.inner .btn, body.inner .call-btn { border-radius: var(--pill); padding: 12px 24px; font-weight: 700; letter-spacing: 0.01em; }
@@ -89,12 +87,27 @@ body.inner .badge { background: rgba(var(--fg), 0.07); color: var(--gold); borde
 
 body.inner .footer { background: var(--header-bg); border-top: 1px solid var(--card-border); }
 
-/* gallery: even 3-up grid as in the design */
-body.inner .masonry-grid { columns: auto; display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
-body.inner .masonry-grid .gallery-tile, body.inner .masonry-grid .gallery-tile.tall, body.inner .masonry-grid .gallery-tile.wide { display: block; margin: 0; min-height: 0; aspect-ratio: 4 / 3; }
-body.inner .masonry-grid .gallery-tile img { height: 100%; object-fit: cover; }
 
 /* tap targets & wrapping on phones */
 body.inner .filter-bar { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; overflow: visible; }
 body.inner .sponsor-slot a { display: inline-flex; align-items: center; min-height: 36px; padding: 0 6px; }
 body.inner .footer a { min-height: 36px; }
+
+
+/* Updates: cards without a photo use the full width */
+body.inner .feature-card:not(:has(.image-frame)) { grid-template-columns: 1fr; }
+
+/* gallery: even photo grid + viewer */
+body.inner .masonry-grid { columns: auto; display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
+body.inner .gallery-tile { position: relative; display: block; margin: 0; min-height: 0; aspect-ratio: 4 / 3; border-radius: 16px; border: 1px solid var(--card-border); background: var(--card-elevated); overflow: hidden; cursor: zoom-in; }
+body.inner .gallery-tile img { width: 100%; height: 100%; object-fit: cover; }
+body.inner #galleryFilters { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin: 8px 0 28px; }
+.lightbox { position: fixed; inset: 0; z-index: 200; display: grid; grid-template-columns: 56px 1fr 56px; align-items: center; background: rgba(0, 0, 0, 0.88); padding: 20px; }
+.lightbox[hidden] { display: none; }
+.lightbox figure { margin: 0; text-align: center; min-width: 0; }
+.lightbox img { max-width: 100%; max-height: 80vh; border-radius: 10px; }
+.lightbox figcaption { margin-top: 12px; color: #fff; font-weight: 600; }
+.lb-btn { width: 44px; height: 44px; border: 1px solid rgba(255, 255, 255, 0.4); border-radius: 50%; background: rgba(255, 255, 255, 0.1); color: #fff; font-size: 26px; line-height: 1; cursor: pointer; }
+.lb-btn:hover { background: rgba(255, 255, 255, 0.25); }
+.lb-close { position: absolute; top: 16px; right: 16px; }
+@media (max-width: 640px) { .lightbox { grid-template-columns: 44px 1fr 44px; padding: 10px; } }

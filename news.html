@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Updates | AKDFA Official</title>
-  <meta name="description" content="AKDFA charity activities, upcoming events, and the latest association news and cricket milestones, all in one place.">
+  <meta name="description" content="AKDFA events, charity activities and the latest association news, all in one place.">
   <meta name="theme-color" content="#050505">
   <meta property="og:title" content="Updates | AKDFA Official">
   <meta property="og:description" content="Community action, featured events, and important association updates connected to the spirit that unites AKDFA.">
@@ -17,7 +17,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
   <script src="js/theme.js?v=2"></script>
   <link rel="stylesheet" href="style.css?v=9">
-  <link rel="stylesheet" href="css/pages.css?v=3">
+  <link rel="stylesheet" href="css/pages.css?v=7">
 </head>
 <body class="inner">
   <a class="skip-link" href="#main">Skip to content</a>
@@ -50,168 +50,27 @@
   </header>
 
   <main id="main">
-    <section class="section" id="charity">
-      <div class="section-inner">
-        <div class="section-heading reveal">
-          <p class="eyebrow">Recent Charity Activities</p>
-          <h2>Community action beyond the boundary</h2>
-          <p>Recent activities show how unit-level coordination turns fandom into practical support for people and communities.</p>
-        </div>
-        <div class="card-grid three">
-          <article class="activity-card reveal"><span class="badge">Charity</span><h3>Food Kit Distribution</h3><p class="meta">May 18, 2026 | Ernakulam</p><p>Essential grocery kits distributed to families through district volunteers.</p></article>
-          <article class="activity-card reveal"><span class="badge">Charity</span><h3>Blood Donation Support</h3><p class="meta">April 27, 2026 | Kozhikode</p><p>Member-led donor coordination supporting urgent blood requirements.</p></article>
-          <article class="activity-card reveal"><span class="badge">Charity</span><h3>Student Support Drive</h3><p class="meta">March 30, 2026 | Kannur</p><p>School supply support for students, organized as a demo activity entry.</p></article>
-        </div>
-      </div>
-    </section>
 
     <section class="section" id="events">
       <div class="section-inner">
         <div class="section-heading reveal">
-          <p class="eyebrow">Featured Event</p>
-          <h2>Spotlight event</h2>
-          <p>Featured events bring district units together through sport, celebration, and coordinated participation.</p>
+          <p class="eyebrow">Events</p>
+          <h2>Tournaments, matches and meetings</h2>
+          <p>Everything on the calendar is added by the State Committee.</p>
         </div>
-        <article class="feature-card reveal">
-          <div class="image-frame"><img src="assets/football-tournament.jpg" alt="AKDFA Thrissur 5s Football Tournament" loading="lazy" decoding="async"></div>
-          <div>
-            <p class="eyebrow">AKDFA Thrissur</p>
-            <h3>AKDFA Thrissur 5s Football Tournament</h3>
-            <ul class="detail-list">
-              <li><span>Organized by</span><strong>AKDFA Thrissur</strong></li>
-              <li><span>Date</span><strong>June 13, Saturday</strong></li>
-              <li><span>Time</span><strong>7:30 PM</strong></li>
-              <li><span>Location</span><strong>LaLiga Turf, Thrissur</strong></li>
-              <li><span>Theme</span><strong>In accordance with FIFA World Cup 2026</strong></li>
-            </ul>
-            <button class="btn btn-primary demo-alert" type="button">View Event</button>
-          </div>
-        </article>
+        <div class="filter-bar" id="eventTypeFilters" aria-label="Filter events by type"></div>
+        <div class="events-list" id="eventsCalendar" aria-live="polite"><p class="empty-state">Loading events…</p></div>
       </div>
     </section>
 
-    <section class="section events-calendar-section" id="calendar">
+    <section class="section" id="charity">
       <div class="section-inner">
         <div class="section-heading reveal">
-          <p class="eyebrow">Events Calendar</p>
-          <h2>Tournaments, charity drives &amp; matches</h2>
-          <p>Browse what's coming up across every district, and filter to see only the events near you.</p>
+          <p class="eyebrow">Charity</p>
+          <h2>Community action beyond the boundary</h2>
+          <p>Charity drives and community support run by AKDFA units.</p>
         </div>
-        <div class="filter-bar" id="eventsFilterBar" aria-label="Filter events by district">
-          <button class="filter-btn event-filter-btn is-active" type="button" data-event-filter="all" aria-controls="eventsList">All Districts</button>
-          <button class="filter-btn event-filter-btn" type="button" data-event-filter="Kozhikode" aria-controls="eventsList">Kozhikode</button>
-          <button class="filter-btn event-filter-btn" type="button" data-event-filter="Ernakulam" aria-controls="eventsList">Ernakulam</button>
-          <button class="filter-btn event-filter-btn" type="button" data-event-filter="Alappuzha" aria-controls="eventsList">Alappuzha</button>
-          <button class="filter-btn event-filter-btn" type="button" data-event-filter="Trivandrum" aria-controls="eventsList">Trivandrum</button>
-          <button class="filter-btn event-filter-btn" type="button" data-event-filter="Kottayam" aria-controls="eventsList">Kottayam</button>
-          <button class="filter-btn event-filter-btn" type="button" data-event-filter="Wayanad" aria-controls="eventsList">Wayanad</button>
-          <button class="filter-btn event-filter-btn" type="button" data-event-filter="Idukki" aria-controls="eventsList">Idukki</button>
-          <button class="filter-btn event-filter-btn" type="button" data-event-filter="Palakkad" aria-controls="eventsList">Palakkad</button>
-          <button class="filter-btn event-filter-btn" type="button" data-event-filter="Pathanamthitta" aria-controls="eventsList">Pathanamthitta</button>
-          <button class="filter-btn event-filter-btn" type="button" data-event-filter="Kasaragod" aria-controls="eventsList">Kasaragod</button>
-        </div>
-        <div class="events-list" id="eventsList" aria-live="polite">
-          <article class="event-card reveal" data-event-district="Kozhikode">
-            <div class="event-date"><span class="event-date-day">04</span><span class="event-date-month">Aug</span></div>
-            <div class="event-body">
-              <span class="badge">Tournament</span>
-              <h3>Kozhikode Beach T20</h3>
-              <p class="meta">Kozhikode | Beach Ground</p>
-              <p>A fast-paced T20 tournament played on the sand, open to unit members across the district.</p>
-            </div>
-            <button class="btn btn-outline demo-alert" type="button">View Event</button>
-          </article>
-          <article class="event-card reveal" data-event-district="Ernakulam">
-            <div class="event-date"><span class="event-date-day">18</span><span class="event-date-month">Jul</span></div>
-            <div class="event-body">
-              <span class="badge">Tournament</span>
-              <h3>Ernakulam Corporate Box Cricket League</h3>
-              <p class="meta">Ernakulam | Indoor Arena</p>
-              <p>A box cricket league bringing together unit members and local corporate teams.</p>
-            </div>
-            <button class="btn btn-outline demo-alert" type="button">View Event</button>
-          </article>
-          <article class="event-card reveal" data-event-district="Alappuzha">
-            <div class="event-date"><span class="event-date-day">15</span><span class="event-date-month">Aug</span></div>
-            <div class="event-body">
-              <span class="badge">Tournament</span>
-              <h3>Backwater 6s Cricket Cup</h3>
-              <p class="meta">Alappuzha | Backwater Grounds</p>
-              <p>A 6-a-side cricket tournament held alongside the unit's backwater community drives.</p>
-            </div>
-            <button class="btn btn-outline demo-alert" type="button">View Event</button>
-          </article>
-          <article class="event-card reveal" data-event-district="Trivandrum">
-            <div class="event-date"><span class="event-date-day">22</span><span class="event-date-month">Aug</span></div>
-            <div class="event-body">
-              <span class="badge">Fan Meet</span>
-              <h3>Capital City Corporate Cup</h3>
-              <p class="meta">Trivandrum | City Stadium</p>
-              <p>The state capital's largest AKDFA fan meet, paired with a corporate cricket cup.</p>
-            </div>
-            <button class="btn btn-outline demo-alert" type="button">View Event</button>
-          </article>
-          <article class="event-card reveal" data-event-district="Kottayam">
-            <div class="event-date"><span class="event-date-day">05</span><span class="event-date-month">Sep</span></div>
-            <div class="event-body">
-              <span class="badge">Tournament</span>
-              <h3>Kottayam Inter-Unit Sixes</h3>
-              <p class="meta">Kottayam | District Ground</p>
-              <p>An inter-unit sixes tournament known for producing close, last-ball finishes.</p>
-            </div>
-            <button class="btn btn-outline demo-alert" type="button">View Event</button>
-          </article>
-          <article class="event-card reveal" data-event-district="Wayanad">
-            <div class="event-date"><span class="event-date-day">19</span><span class="event-date-month">Sep</span></div>
-            <div class="event-body">
-              <span class="badge">Tournament</span>
-              <h3>Wayanad Hill Cup</h3>
-              <p class="meta">Wayanad | Hill Ground</p>
-              <p>A hill-country cricket tournament, often played through unpredictable weather.</p>
-            </div>
-            <button class="btn btn-outline demo-alert" type="button">View Event</button>
-          </article>
-          <article class="event-card reveal" data-event-district="Idukki">
-            <div class="event-date"><span class="event-date-day">10</span><span class="event-date-month">Oct</span></div>
-            <div class="event-body">
-              <span class="badge">Tournament</span>
-              <h3>Hill Country T10 Challenge</h3>
-              <p class="meta">Idukki | Estate Ground</p>
-              <p>A fast T10 format tournament set against Idukki's estate-country backdrop.</p>
-            </div>
-            <button class="btn btn-outline demo-alert" type="button">View Event</button>
-          </article>
-          <article class="event-card reveal" data-event-district="Palakkad">
-            <div class="event-date"><span class="event-date-day">17</span><span class="event-date-month">Oct</span></div>
-            <div class="event-body">
-              <span class="badge">Tournament</span>
-              <h3>Palakkad Gap T15 Tournament</h3>
-              <p class="meta">Palakkad | Open Ground</p>
-              <p>A T15 tournament played through the famously windy Palakkad gap conditions.</p>
-            </div>
-            <button class="btn btn-outline demo-alert" type="button">View Event</button>
-          </article>
-          <article class="event-card reveal" data-event-district="Pathanamthitta">
-            <div class="event-date"><span class="event-date-day">07</span><span class="event-date-month">Nov</span></div>
-            <div class="event-body">
-              <span class="badge">Charity</span>
-              <h3>Pilgrim Season Cup</h3>
-              <p class="meta">Pathanamthitta | District Ground</p>
-              <p>A cricket cup paired with volunteer support for the district's pilgrim season.</p>
-            </div>
-            <button class="btn btn-outline demo-alert" type="button">View Event</button>
-          </article>
-          <article class="event-card reveal" data-event-district="Kasaragod">
-            <div class="event-date"><span class="event-date-day">12</span><span class="event-date-month">Dec</span></div>
-            <div class="event-body">
-              <span class="badge">Tournament</span>
-              <h3>Border Districts Friendly Cup</h3>
-              <p class="meta">Kasaragod | Border Ground</p>
-              <p>An annual cross-border friendly against a neighbouring Karnataka fan XI.</p>
-            </div>
-            <button class="btn btn-outline demo-alert" type="button">View Event</button>
-          </article>
-        </div>
+        <div class="card-grid three" id="charityList"></div>
       </div>
     </section>
 
@@ -223,7 +82,6 @@
           <p>Important association updates and meaningful cricket moments connected to the spirit that unites AKDFA.</p>
         </div>
         <article class="feature-card reverse reveal">
-          <div class="image-frame"><img src="assets/khel-ratna-post.jpg" alt="Dhoni Khel Ratna award post" loading="lazy" decoding="async"></div>
           <div>
             <p class="eyebrow">News Update</p>
             <h3>Dhoni - Quickest to Receive the Dhyan Chand Khel Ratna Award</h3>
@@ -250,7 +108,7 @@
           <div>
             <p class="eyebrow">Stay In The Loop</p>
             <h2>Get AKDFA news in your inbox.</h2>
-            <p>A short newsletter with district highlights, upcoming events, and charity updates - for people who aren't ready to join yet.</p>
+            <p>A short newsletter with district highlights and upcoming events - for people who aren't ready to join yet.</p>
           </div>
           <form class="newsletter-form" id="newsletterForm" novalidate>
             <label class="sr-only" for="newsletterEmail">Email address</label>
@@ -287,8 +145,9 @@
 
   <script src="js/config.js"></script>
   <script src="js/api.js"></script>
-  <script src="script.js"></script>
+  <script src="script.js?v=2"></script>
   <script src="js/public.js"></script>
-  <script src="js/public-content.js"></script>
+  <script src="js/public-content.js?v=2"></script>
+  <script src="js/public-media.js"></script>
 </body>
 </html>

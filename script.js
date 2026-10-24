@@ -26,7 +26,6 @@ const committeeData = {
       ["Contact", "JIBIN : +91 82816 16818"]
     ],
     tournaments: ["Backwater 6s Cricket Cup - August 2026", "Alappuzha Beach Football Meet - November 2026"],
-    community: "Regular boat-clinic health camps for fishing communities along the backwaters.",
     standout: "A last-over run chase in the 2025 Backwater 6s final is still talked about at unit meets."
   },
   Ernakulam: {
@@ -36,7 +35,6 @@ const committeeData = {
       ["Contact", "BINSON : +91 70255 93832"]
     ],
     tournaments: ["Ernakulam Corporate Box Cricket League - July 2026", "Kochi Fan Meet & Screening - September 2026"],
-    community: "Coordinates the state's largest blood donation drives, drawing volunteers from every neighbouring unit.",
     standout: "A unit XI upset a touring corporate team in the 2025 Box Cricket League opener."
   },
   Idukki: {
@@ -46,7 +44,6 @@ const committeeData = {
       ["Contact", "SREERAJ : +91 80862 12245"]
     ],
     tournaments: ["Hill Country T10 Challenge - October 2026"],
-    community: "Distributes school supplies to estate-worker families ahead of the academic year.",
     standout: "A century partnership on a rain-shortened hill ground defined the 2025 T10 final."
   },
   Kannur: {
@@ -56,7 +53,6 @@ const committeeData = {
       ["Contact", "DIJIN : +91 77363 66019"]
     ],
     tournaments: ["Kannur District Committee Cup - 2026-2027 season"],
-    community: "Student support drives providing books and supplies, run in partnership with local schools.",
     standout: "The 2026 committee cup opener drew one of the unit's largest match-day crowds yet."
   },
   Kasaragod: {
@@ -66,7 +62,6 @@ const committeeData = {
       ["Contact", "DEVANAND : +91 70224 07770"]
     ],
     tournaments: ["Border Districts Friendly Cup - December 2026"],
-    community: "Joint charity drives with neighbouring Mangalore fan groups across the state border.",
     standout: "A cross-border friendly against a Karnataka fan XI became an annual fixture."
   },
   Kollam: {
@@ -76,7 +71,6 @@ const committeeData = {
       ["Contact", "AADHI : +91 99466 33293"]
     ],
     tournaments: ["Kollam Coastal Cricket Meet - August 2026"],
-    community: "Coastal cleanup drives paired with youth cricket coaching camps.",
     standout: "A coastal-ground washout was rescued by a last-minute indoor-nets exhibition match."
   },
   Kottayam: {
@@ -86,7 +80,6 @@ const committeeData = {
       ["Contact", "ABHIJITH : +91 90483 36175"]
     ],
     tournaments: ["Kottayam Inter-Unit Sixes - September 2026"],
-    community: "Supports flood-relief kit distribution during the monsoon season.",
     standout: "The Inter-Unit Sixes has produced three straight last-ball finishes since 2024."
   },
   Kozhikode: {
@@ -96,7 +89,6 @@ const committeeData = {
       ["Contact", "AKSHAY : 90374 49850"]
     ],
     tournaments: ["Kozhikode Beach T20 - July 2026"],
-    community: "Runs one of the association's most active blood-donor coordination networks.",
     standout: "The 2025 Beach T20 final ended in a super over on the sand."
   },
   Malappuram: {
@@ -106,7 +98,6 @@ const committeeData = {
       ["Contact", "AKHIL : 74068 06810"]
     ],
     tournaments: ["Malappuram Youth Cricket Camp - June 2026"],
-    community: "Youth talent camps aimed at spotting and mentoring local cricketers.",
     standout: "A camp graduate went on to captain a district under-19 side within a year."
   },
   Palakkad: {
@@ -116,7 +107,6 @@ const committeeData = {
       ["Contact", "KESHAV : 97907 61667"]
     ],
     tournaments: ["Palakkad Gap T15 Tournament - October 2026"],
-    community: "Farmer-family support drives during harvest season.",
     standout: "A record chase in windy Palakkad-gap conditions headlined the 2025 T15."
   },
   Pathanamthitta: {
@@ -126,7 +116,6 @@ const committeeData = {
       ["Contact", "AJI P JOSE : +966 55 747 4198"]
     ],
     tournaments: ["Pathanamthitta Pilgrim Season Cup - November 2026"],
-    community: "Volunteer support during the pilgrim season alongside local authorities.",
     standout: "A unit team's unbeaten run through the 2025 Pilgrim Season Cup group stage."
   },
   Trivandrum: {
@@ -136,7 +125,6 @@ const committeeData = {
       ["Contact", "SANJAY : 95676 62914"]
     ],
     tournaments: ["Capital City Corporate Cup - August 2026"],
-    community: "Organizes the state capital's largest AKDFA fan-meet and screening events.",
     standout: "A capacity fan-meet screening turnout made headlines in 2025."
   },
   Thrissur: {
@@ -146,7 +134,6 @@ const committeeData = {
       ["Contact", "JISHNU : 98468 88301"]
     ],
     tournaments: ["AKDFA Thrissur 5s Football Tournament - June 2026"],
-    community: "Runs recurring food-kit distribution drives across Thrissur neighbourhoods.",
     standout: "The 5s Football Tournament, themed around the FIFA World Cup 2026, is the unit's flagship event."
   },
   Wayanad: {
@@ -156,7 +143,6 @@ const committeeData = {
       ["Contact", "BASIL : 80750 44074"]
     ],
     tournaments: ["Wayanad Hill Cup - September 2026"],
-    community: "Supports post-monsoon relief and rebuilding drives in vulnerable hill communities.",
     standout: "A monsoon-delayed Hill Cup final was completed under floodlights borrowed from a local ground."
   },
   Chennai: {
@@ -165,7 +151,6 @@ const committeeData = {
       ["President", "Contact unit for current committee details"]
     ],
     tournaments: ["Chennai Malayali Premier League - 2026-2027 season"],
-    community: "Connects the Kerala diaspora in Chennai through cricket meets and festival events.",
     standout: "The unit fields a mixed-diaspora XI that has become a fixture of the local Malayali league."
   },
   Bangalore: {
@@ -174,7 +159,6 @@ const committeeData = {
       ["President", "Contact unit for current committee details"]
     ],
     tournaments: ["Bangalore Weekend Box Cricket Series - ongoing through 2026"],
-    community: "Regular blood donation and community meetups for the Kerala diaspora in Bangalore.",
     standout: "The weekend box cricket series regularly draws members from across the city's tech corridor."
   },
   Ladies: {
@@ -183,7 +167,6 @@ const committeeData = {
       ["Email", "akdfagirlswing7@gmail.com"]
     ],
     tournaments: ["AKDFA Ladies Friendly Cricket Meet - 2026"],
-    community: "Leads women-focused outreach and charity initiatives across all 17 units.",
     standout: "The Ladies Friendly Cricket Meet was the unit's first standalone tournament."
   }
 };

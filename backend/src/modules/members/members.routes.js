@@ -191,6 +191,7 @@ router.get(
       card: {
         memberNumber: member.memberNumber,
         fullName: member.fullName,
+        photoUrl: member.profilePhotoUrl || null,
         role: member.role,
         district: member.district.name,
         unit: member.unit.name,
@@ -231,6 +232,11 @@ router.post(
       category: "ANNOUNCEMENT",
       force: true,
     });
+    sendMail({
+      to: member.email,
+      subject: "Welcome to AKDFA: your membership is approved",
+      text: `Hi ${member.fullName},\n\nYour AKDFA membership (${member.memberNumber}) has been approved. Sign in to see your digital membership card, events and polls:\n${env.siteBaseUrl.replace(/\/$/, "")}/login.html\n\nWelcome to the family.`,
+    }).catch(() => {}); // never let a mail problem undo an approval
     await logAudit(req.auth.id, "MEMBER_APPROVED", "Member", member.id);
     res.json({ member: publicMember(member) });
   })
@@ -325,6 +331,61 @@ router.post(
     }).catch(() => {});
     await logAudit(req.auth.id, "PASSWORD_RESET_BY_ADMIN", "Member", target.id, { mode: "reset-link" });
     res.json({ ok: true, mode: "link", resetUrl });
+  })
+);
+
+// Suspend / reinstate: an admin switches a member off (and back on) without deleting anything.
+// Same scope rules as everything else: unit admin → own unit, district admin → own district, state → anyone.
+// You cannot suspend yourself or anyone at or above your own level (except the State Committee).
+async function loadForStatusChange(req) {
+  const target = await prisma.member.findUnique({ where: { id: req.params.id } });
+  if (!target) throw ApiError.notFound("Member not found");
+  assertCanManage(req.auth, scopeOfMember(target), "You can only change members in your own unit or district");
+  if (target.id === req.auth.id) throw ApiError.badRequest("You cannot change your own membership status");
+  if (req.auth.role !== "STATE_ADMIN" && RANK[target.role] >= RANK[req.auth.role]) throw ApiError.forbidden("You cannot change an admin at or above your own level");
+  return target;
+}
+
+router.post(
+  "/:id/suspend",
+  requireAuth,
+  requireRole("UNIT_ADMIN"),
+  validate({ body: z.object({ reason: z.string().max(500).optional() }).optional() }),
+  asyncHandler(async (req, res) => {
+    const target = await loadForStatusChange(req);
+    if (!["ACTIVE", "LAPSED"].includes(target.status)) throw ApiError.badRequest("Only active or lapsed members can be suspended");
+    const [member] = await prisma.$transaction([
+      prisma.member.update({ where: { id: target.id }, data: { status: "SUSPENDED" } }),
+      prisma.refreshToken.updateMany({ where: { memberId: target.id, revokedAt: null }, data: { revokedAt: new Date() } }), // sign out everywhere
+    ]);
+    sendMail({
+      to: target.email,
+      subject: "Your AKDFA membership has been suspended",
+      text: `Hi ${target.fullName},\n\nYour AKDFA membership (${target.memberNumber}) has been suspended by your unit or district committee.${req.body?.reason ? `\nReason: ${req.body.reason}` : ""}\nPlease contact your unit admin if you think this is a mistake.`,
+    }).catch(() => {});
+    await logAudit(req.auth.id, "MEMBER_SUSPENDED", "Member", target.id, { reason: req.body?.reason, previousStatus: target.status });
+    res.json({ member: publicMember(member) });
+  })
+);
+
+router.post(
+  "/:id/reinstate",
+  requireAuth,
+  requireRole("UNIT_ADMIN"),
+  asyncHandler(async (req, res) => {
+    const target = await loadForStatusChange(req);
+    if (target.status !== "SUSPENDED") throw ApiError.badRequest("Only suspended members can be reinstated");
+    // If their year ran out while suspended they come back as LAPSED and can renew online.
+    const expired = target.membershipExpiresAt && target.membershipExpiresAt < new Date();
+    const member = await prisma.member.update({ where: { id: target.id }, data: { status: expired ? "LAPSED" : "ACTIVE" } });
+    await notify(member.id, {
+      title: "Membership reinstated",
+      body: expired ? "Your suspension has been lifted. Your membership year has ended, so please renew it under Membership Fee." : "Your suspension has been lifted. Welcome back.",
+      category: "MEMBERSHIP",
+      force: true,
+    });
+    await logAudit(req.auth.id, "MEMBER_REINSTATED", "Member", target.id, { newStatus: member.status });
+    res.json({ member: publicMember(member) });
   })
 );
 

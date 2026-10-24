@@ -17,7 +17,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
   <script src="js/theme.js?v=2"></script>
   <link rel="stylesheet" href="style.css?v=9">
-  <link rel="stylesheet" href="css/portal.css?v=5">
+  <link rel="stylesheet" href="css/portal.css?v=6">
 </head>
 <body class="portal">
   <a class="skip-link" href="#main">Skip to content</a>
@@ -69,19 +69,7 @@
             <div class="slide-actions"><a class="pill pill-light" href="join.html">Join the Association</a><a class="pill" href="units.html">Explore Units</a></div>
           </div>
         </article>
-        <article class="slide" data-title="5s Tournament">
-          <img src="assets/5s%20tournament.jpg" alt="AKDFA 5s tournament" loading="lazy">
-          <div class="slide-copy"><span class="tag">Tournaments</span><h2>AKDFA 5s Tournament</h2><a class="pill pill-light" href="gallery.html">See the gallery</a></div>
-        </article>
-        <article class="slide" data-title="Football Tournament">
-          <img src="assets/football-tournament.jpg" alt="AKDFA football tournament" loading="lazy">
-          <div class="slide-copy"><span class="tag">Community</span><h2>AKDFA Football Tournament</h2><a class="pill pill-light" href="news.html">Latest updates</a></div>
-        </article>
-        <article class="slide" data-title="Committee, Kannur">
-          <img src="assets/committee-kannur.jpg" alt="AKDFA Kannur committee" loading="lazy">
-          <div class="slide-copy"><span class="tag">Units</span><h2>Meet the units across Kerala</h2><a class="pill pill-light" href="units.html">Find your district</a></div>
-        </article>
-      </div>
+        </div>
       <div class="carousel-ui">
         <button type="button" class="arrow" data-prev aria-label="Previous slide"><i class="fa-solid fa-chevron-left"></i></button>
         <div class="dots" data-dots></div>
@@ -91,8 +79,8 @@
 
     <!-- At a glance -->
     <section class="wrap glance" aria-label="AKDFA at a glance">
-      <div><strong>17</strong><span>Units</span></div>
-      <div><strong>14</strong><span>Districts</span></div>
+      <div><strong data-live="units">17</strong><span>Units</span></div>
+      <div><strong data-live="districts">14</strong><span>Districts</span></div>
       <div><strong>949/17</strong><span>Registration No</span></div>
       <div><strong>1st</strong><span>Registered fan association for a sportsperson</span></div>
     </section>
@@ -101,9 +89,9 @@
     <section class="wrap block" aria-labelledby="newsHead">
       <div class="block-head"><h2 id="newsHead">Latest News</h2><a href="news.html">More <i class="fa-solid fa-arrow-right"></i></a></div>
       <div class="cards" id="homeNews">
-        <a class="card" href="news.html"><span class="tag">Updates</span><h3>Follow AKDFA news and events across Kerala</h3><small>akdfa.org</small></a>
+        <a class="card" href="news.html"><span class="tag">Updates</span><h3>Follow AKDFA news across Kerala</h3><small>akdfa.org</small></a>
         <a class="card" href="units.html"><span class="tag">Units</span><h3>17 units, 14 districts: find your local unit</h3><small>Our Units</small></a>
-        <a class="card" href="join.html"><span class="tag">Membership</span><h3>Become a member and join your district's events</h3><small>Join Us</small></a>
+        <a class="card" href="join.html"><span class="tag">Membership</span><h3>Become a member and join your district's unit</h3><small>Join Us</small></a>
       </div>
     </section>
 
@@ -123,16 +111,17 @@
       </div>
     </section>
 
-    <!-- Gallery rail -->
-    <section class="wrap block" aria-labelledby="galHead">
-      <div class="block-head"><h2 id="galHead">From the Units</h2><a href="gallery.html">Gallery <i class="fa-solid fa-arrow-right"></i></a></div>
-      <div class="rail">
-        <img src="assets/5s%20tournament.jpg" alt="5s tournament" loading="lazy">
-        <img src="assets/football-tournament.jpg" alt="Football tournament" loading="lazy">
-        <img src="assets/committee-kannur.jpg" alt="Kannur committee" loading="lazy">
-        <img src="assets/done%20recive%20award.jpg" alt="Receiving an award" loading="lazy">
-        <img src="assets/khel-ratna-post.jpg" alt="Khel Ratna post" loading="lazy">
-      </div>
+
+    <!-- Photos from State Committee events (hidden until there are some) -->
+    <section class="wrap block" id="homePhotos" aria-labelledby="homePhotosHead" hidden>
+      <div class="block-head"><h2 id="homePhotosHead">From our events</h2><a href="gallery.html">Gallery <i class="fa-solid fa-arrow-right"></i></a></div>
+      <div class="rail" id="homePhotosRail"></div>
+    </section>
+
+    <!-- Social media added by the State Committee (hidden until there are some) -->
+    <section class="wrap block" id="homeSocial" aria-labelledby="homeSocialHead" hidden>
+      <div class="block-head"><h2 id="homeSocialHead">Follow AKDFA</h2></div>
+      <div class="social-links" id="homeSocialLinks"></div>
     </section>
 
     <!-- Honours -->
@@ -150,7 +139,7 @@
       <div class="cta-band">
         <div>
           <h2>1 association. 17 units.</h2>
-          <p>Become part of a growing family across 14 districts. Membership connects you to your local unit, district events, and the wider AKDFA community.</p>
+          <p>Become part of a growing family across 14 districts. Membership connects you to your local unit and the wider AKDFA community.</p>
         </div>
         <div class="slide-actions">
           <a class="pill pill-light" href="join.html">Join Now</a>
@@ -184,8 +173,9 @@
 
   <script src="js/config.js"></script>
   <script src="js/api.js"></script>
-  <script src="script.js"></script>
+  <script src="script.js?v=2"></script>
   <script src="js/public.js"></script>
-  <script src="js/portal.js"></script>
+  <script src="js/portal.js?v=3"></script>
+  <script src="js/public-media.js?v=2"></script>
 </body>
 </html>

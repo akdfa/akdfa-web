@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Gallery | AKDFA Official</title>
-  <meta name="description" content="Browse visual highlights from AKDFA events, charity drives, fan meets, celebrations, units, and media coverage.">
+  <meta name="description" content="Photos from AKDFA tournaments, matches, charity drives and meetings.">
   <meta name="theme-color" content="#050505">
   <meta property="og:title" content="Gallery | AKDFA Official">
   <meta property="og:description" content="Official moments archive - AKDFA events, charity drives, fan meets, and celebrations.">
@@ -17,7 +17,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
   <script src="js/theme.js?v=2"></script>
   <link rel="stylesheet" href="style.css?v=9">
-  <link rel="stylesheet" href="css/pages.css?v=3">
+  <link rel="stylesheet" href="css/pages.css?v=7">
 </head>
 <body class="inner">
   <a class="skip-link" href="#main">Skip to content</a>
@@ -54,26 +54,12 @@
       <div class="section-inner">
         <div class="section-heading reveal">
           <p class="eyebrow">Gallery</p>
-          <h2>Official moments archive</h2>
-          <p>Browse visual highlights from events, charity drives, fan meets, celebrations, units, and media coverage.</p>
+          <h2>Moments from our events</h2>
+          <p>Photos from tournaments, matches, charity drives and meetings, added by the State Committee.</p>
         </div>
-        <div class="filter-bar" aria-label="Gallery categories">
-          <button class="filter-btn is-active" type="button" data-filter="all" aria-controls="galleryGrid">All</button>
-          <button class="filter-btn" type="button" data-filter="events" aria-controls="galleryGrid">Events</button>
-          <button class="filter-btn" type="button" data-filter="charity" aria-controls="galleryGrid">Charity</button>
-          <button class="filter-btn" type="button" data-filter="fan-meets" aria-controls="galleryGrid">Fan Meets</button>
-          <button class="filter-btn" type="button" data-filter="celebrations" aria-controls="galleryGrid">Celebrations</button>
-          <button class="filter-btn" type="button" data-filter="units" aria-controls="galleryGrid">Units</button>
-          <button class="filter-btn" type="button" data-filter="media" aria-controls="galleryGrid">Media Coverage</button>
-        </div>
-        <div class="masonry-grid" id="galleryGrid" aria-live="polite">
-          <article class="gallery-tile tall reveal" data-category="events"><img src="assets/football-tournament.jpg" alt="AKDFA Thrissur football tournament poster" loading="lazy" decoding="async"><span>Event Poster</span></article>
-          <article class="gallery-tile reveal" data-category="charity"><div class="placeholder-art gold"></div><span>Food Kit Drive</span></article>
-          <article class="gallery-tile wide reveal" data-category="fan-meets"><div class="placeholder-art green"></div><span>Fan Meet Stage</span></article>
-          <article class="gallery-tile reveal" data-category="celebrations"><div class="placeholder-art light"></div><span>Celebration Night</span></article>
-          <article class="gallery-tile tall reveal" data-category="media"><img src="assets/khel-ratna-post.jpg" alt="Dhoni Khel Ratna award news post" loading="lazy" decoding="async"><span>News Graphic</span></article>
-          <article class="gallery-tile reveal" data-category="units"><div class="placeholder-art pitch"></div><span>District Unit Meet</span></article>
-        </div>
+        <div class="filter-bar" id="galleryFilters" aria-label="Gallery categories"></div>
+        <div class="masonry-grid" id="galleryGrid" aria-live="polite"></div>
+        <p class="empty-state" id="galleryEmpty" hidden>No photos yet. They appear here as soon as the State Committee adds them to an event.</p>
       </div>
     </section>
   </main>
@@ -104,5 +90,7 @@
   <script src="js/api.js"></script>
   <script src="script.js"></script>
   <script src="js/public.js"></script>
+  <script src="js/public-media.js"></script>
+  <script src="js/lightbox.js"></script>
 </body>
 </html>

@@ -14,6 +14,19 @@ Full request/response shapes are defined by the route handlers in `backend/src/m
 | POST | `/auth/logout` | — | Revokes a refresh token |
 | GET | `/auth/me` | Member | Current member profile |
 
+## Public helpers
+
+| Method | Path | Notes |
+|---|---|---|
+| GET | `/public/config` | `{ membershipFeeInr }`: the join page fee preview |
+| GET | `/public/members/lookup?number=AKDFA-00001` | `{ found, valid, membershipStatus, name (masked, e.g. "Akhil K."), district, expiresAt }`. Rate-limited (20 per 15 min per IP) |
+
+Admin approval now also emails the member a welcome message. Audit-log rows carry the caller's IP in `metadata.ip`.
+
+Note: `GET /news` and `GET /news/:id` only return published posts written by a State admin, so the home page, Updates and the member feed all show State Committee news.
+
+Public content is State-managed: `POST/PATCH/DELETE` on `/news`, `/events` (including photos and charity reports), `/units` and `/sponsors` require a State admin. `GET /events` and `GET /news` return only items a State admin created, which is what feeds the home page, Updates, Gallery and the photo rail. Charity and Tournament are event types, so adding an event with type `CHARITY` and photos fills the Charity section and the Gallery.
+
 ## Authorization scope
 
 Role level alone never grants access to a record. State admins act anywhere; district admins only on records in their own district; unit admins only on records in their own unit; creators can always manage their own items. Out-of-scope requests return `403`. Lists (members, store orders, sponsor payments) are filtered the same way.
@@ -28,8 +41,8 @@ Role level alone never grants access to a record. State admins act anywhere; dis
 | PATCH | `/districts/:id` | State admin | Edit district (bio, banner, etc.) |
 | GET | `/units` | — | Filter by `districtId`, `status` (default `APPROVED`) |
 | GET | `/units/:id` | — | Unit detail + teams |
-| POST | `/units` | Member | Propose a new unit → lands `PENDING`. A district admin (own district) or the State admin creates it `APPROVED` straight away |
-| POST | `/units/:id/approve` | District admin | Approves a pending unit |
+| POST | `/units` | State admin | Creates a unit, approved straight away. Members and district admins can no longer add units |
+| DELETE | `/units/:id` | State admin | Deletes a unit and its teams; `409` if it still has members. Audit-logged |
 
 ## Members — `/members` (Phase 2/3/4)
 
@@ -41,6 +54,8 @@ Role level alone never grants access to a record. State admins act anywhere; dis
 | GET | `/members/:id/card` | Member (self or admin) | Digital membership card data (ACTIVE only) |
 | POST | `/members/:id/approve` | Unit admin | `PENDING → ACTIVE`, 1-year expiry, marks referral JOINED, sends welcome notification |
 | PATCH | `/members/:id` | Member (self) | Update own profile (`fullName`, `phone`, `profilePhotoUrl`) |
+| POST | `/members/:id/suspend` | Unit admin+ (in scope) | `{ reason? }` — status → `SUSPENDED`, signs the member out everywhere, emails them, audit-logged. Not yourself, not an admin at or above your level (State admin can) |
+| POST | `/members/:id/reinstate` | Unit admin+ (in scope) | `SUSPENDED` → `ACTIVE`, or `LAPSED` if their year ended while suspended; notifies the member |
 | POST | `/members/:id/reset-password` | State admin | Resets an **admin** account's password (regular members are refused; they use `/auth/forgot-password`). No body → one-time reset link (emailed, returned as `resetUrl`, valid 24 h); `{ password }` → temporary password. Signs the account out everywhere; audit-logged |
 | PATCH | `/members/:id/role` | District admin | Change role; granting `DISTRICT_ADMIN`/`STATE_ADMIN` requires State admin |
 
@@ -56,8 +71,8 @@ Role level alone never grants access to a record. State admins act anywhere; dis
 |---|---|---|---|
 | GET | `/news` | — | Filter by `districtId`, `scope`; published only |
 | GET | `/news/:id` | — | Post detail |
-| POST | `/news` | Unit admin | State-scope posts require State admin |
-| DELETE | `/news/:id` | Unit admin | |
+| POST | `/news` | State admin | Only the State Committee posts news |
+| DELETE | `/news/:id` | State admin | |
 
 ## Events — `/events` (Phase 1/2)
 
@@ -276,7 +291,6 @@ On any successful payment (verify or webhook) a receipt/invoice URL is generated
 | Method | Path | Auth | Notes |
 |---|---|---|---|
 | POST | `/members/:id/reject` | Unit admin | Pending → `REJECTED` (can't log in) |
-| POST | `/units/:id/reject` | District admin | Pending unit → `REJECTED` |
 | PATCH | `/polls/:id` · POST `/polls/:id/close` · DELETE `/polls/:id` | Unit admin | Edit / close early / delete; voting a closed poll is rejected |
 | PATCH | `/store/products/:id` | State admin | Price, stock, `isActive`, … |
 | GET | `/store/products?all=true` | State admin | Includes hidden products |

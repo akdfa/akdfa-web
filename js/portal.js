@@ -4,6 +4,10 @@
   const dotsEl = document.querySelector("[data-dots]");
   if (slidesEl && dotsEl) {
     const slides = [...slidesEl.children];
+    if (slides.length < 2) {
+      // a single slide needs no arrows, dots or autoplay
+      document.querySelector(".carousel-ui")?.setAttribute("hidden", "");
+    }
     slides.forEach((s, i) => {
       const b = document.createElement("button");
       b.type = "button";
@@ -35,7 +39,7 @@
     slidesEl.addEventListener("pointerenter", stop);
     slidesEl.addEventListener("pointerleave", play);
     mark();
-    play();
+    if (slides.length > 1) play();
   }
 
   // click-to-play: only loads YouTube when asked
@@ -64,6 +68,17 @@
         <h3>${esc(p.title)}</h3>
         <small>${esc(new Date(p.publishedAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }))}</small>
       </a>`).join("");
+    }).catch(() => {});
+  }
+
+  // Home stats come from the data the State Committee maintains: approved units, and Kerala districts
+  // (Out of State and Statewide entries such as Chennai, Bangalore and the Ladies unit are not districts).
+  if (window.AKDFA) {
+    const put = (key, n) => document.querySelectorAll(`[data-live="${key}"]`).forEach((el) => (el.textContent = String(n)));
+    window.AKDFA.get("/units").then((r) => r.units && r.units.length && put("units", r.units.length)).catch(() => {});
+    window.AKDFA.get("/districts").then((r) => {
+      const kerala = (r.districts || []).filter((d) => !/^(out of state|statewide)$/i.test(d.region || ""));
+      if (kerala.length) put("districts", kerala.length);
     }).catch(() => {});
   }
 })();

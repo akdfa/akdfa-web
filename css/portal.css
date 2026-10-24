@@ -132,3 +132,4 @@ body.portal .footer { background: var(--section); }
 /* carousel dots: visible 9px dot, 28px touch area */
 .dots button { position: relative; }
 .dots button::after { content: ""; position: absolute; inset: -10px -6px; }
+.carousel-ui[hidden] { display: none; }

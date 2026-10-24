@@ -7,6 +7,7 @@ const rateLimit = require("express-rate-limit");
 const env = require("./config/env");
 const apiRoutes = require("./routes");
 const { notFoundHandler, errorHandler } = require("./middleware/errorHandler");
+const requestContext = require("./utils/requestContext");
 
 const app = express();
 
@@ -57,6 +58,7 @@ app.use(
   })
 );
 app.use(express.urlencoded({ extended: true }));
+app.use(requestContext.middleware); // lets the audit log record the caller's IP
 app.use(morgan(process.env.NODE_ENV === "production" ? "combined" : "dev"));
 
 // Locally-stored uploads (profile photos, documents, product images).
@@ -100,7 +102,7 @@ app.get("/api/v1", (req, res) =>
     version: "1",
     status: "ok",
     docs: "docs/api/API_REFERENCE.md",
-    modules: ["auth", "districts", "units", "members", "news", "events", "polls", "cricket", "sponsors", "growth", "notifications", "reports", "admin", "payments", "store", "feedback", "uploads", "public"],
+    modules: ["auth", "districts", "units", "members", "news", "events", "polls", "cricket", "sponsors", "social", "growth", "notifications", "reports", "admin", "payments", "store", "feedback", "uploads", "public"],
   })
 );
 

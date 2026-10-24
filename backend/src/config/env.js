@@ -61,6 +61,9 @@ if (isProd) {
   if ((process.env.MAIL_DRIVER || "log") === "smtp" && !process.env.SMTP_HOST) {
     throw new Error("MAIL_DRIVER=smtp needs SMTP_HOST");
   }
+  if ((process.env.MAIL_DRIVER || "log") === "resend" && !process.env.RESEND_API_KEY) {
+    throw new Error("MAIL_DRIVER=resend needs RESEND_API_KEY");
+  }
 }
 
 // CORS_ORIGIN may be "*", a single origin, or a comma-separated list.
@@ -113,7 +116,8 @@ module.exports = {
     publicBaseUrl: process.env.S3_PUBLIC_BASE_URL || "", // CDN / bucket URL for public files
   },
   mail: {
-    driver: process.env.MAIL_DRIVER || "log", // "log" | "smtp"
+    driver: process.env.MAIL_DRIVER || "log", // "log" | "smtp" | "resend"
+    resendApiKey: process.env.RESEND_API_KEY || "",
     from: process.env.MAIL_FROM || "AKDFA <no-reply@akdfa.org>",
     smtp: {
       host: process.env.SMTP_HOST || "",

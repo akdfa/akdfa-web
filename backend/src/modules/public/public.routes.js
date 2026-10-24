@@ -2,6 +2,7 @@ const { Router } = require("express");
 const { z } = require("zod");
 const prisma = require("../../config/prisma");
 const validate = require("../../middleware/validate");
+const rateLimit = require("express-rate-limit");
 const asyncHandler = require("../../utils/asyncHandler");
 const ApiError = require("../../utils/ApiError");
 const { blindIndex, cardVerifyToken } = require("../../utils/crypto");
@@ -88,6 +89,35 @@ router.get(
         status: member.status,
         expiresAt: member.membershipExpiresAt,
       },
+    });
+  })
+);
+
+// Public numbers the website shows (so the join page can preview the fee without hard-coding it).
+router.get("/config", (req, res) => res.json({ membershipFeeInr: Number(process.env.MEMBERSHIP_FEE_INR || 500) }));
+
+// "Is this person a member?": type a membership number instead of scanning the card.
+// Deliberately tells you very little (masked name, district, status) and is rate-limited so numbers can't be farmed.
+const lookupLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: Number(process.env.LOOKUP_RATE_LIMIT_MAX || 20), message: { error: { message: "Too many lookups, try again later" } } });
+router.get(
+  "/members/lookup",
+  lookupLimiter,
+  validate({ query: z.object({ number: z.string().trim().min(3).max(24).regex(/^[A-Za-z0-9-]+$/) }) }),
+  asyncHandler(async (req, res) => {
+    const member = await prisma.member.findUnique({
+      where: { memberNumber: req.query.number.toUpperCase() },
+      include: { district: { select: { name: true } } },
+    });
+    if (!member) return res.json({ found: false });
+    const [first, ...rest] = String(member.fullName).split(" ");
+    const active = member.status === "ACTIVE" && (!member.membershipExpiresAt || member.membershipExpiresAt > new Date());
+    res.json({
+      found: true,
+      valid: active,
+      membershipStatus: member.status,
+      name: rest.length ? `${first} ${rest[rest.length - 1][0]}.` : first,
+      district: member.district.name,
+      expiresAt: active ? member.membershipExpiresAt : null,
     });
   })
 );

@@ -822,3 +822,14 @@ model OrderItem {
 
   @@map("order_items")
 }
+
+// Social media profiles shown on the public home page; only the State Committee manages them.
+model SocialLink {
+  id        String   @id @default(cuid())
+  platform  String // facebook | instagram | x | youtube | whatsapp | telegram | linkedin | website
+  url       String
+  label     String?
+  createdAt DateTime @default(now())
+
+  @@map("social_links")
+}

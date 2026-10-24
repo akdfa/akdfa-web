@@ -9,7 +9,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
   <script src="js/theme.js?v=2"></script>
   <link rel="stylesheet" href="style.css?v=9">
-  <link rel="stylesheet" href="css/pages.css?v=3">
+  <link rel="stylesheet" href="css/pages.css?v=7">
 </head>
 <body class="inner">
   <main id="main" style="max-width:440px;margin:0 auto;padding:60px 24px;text-align:center">
@@ -28,7 +28,26 @@
       const sig = q.get("sig") || (location.href.match(/[?&]sig=([^&#]+)/) || [])[1];
       const box = document.getElementById("result");
       const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-      if (!m || !sig) { box.innerHTML = '<p class="form-message is-visible form-message--error">Invalid link.</p>'; return; }
+      if (!m || !sig) {
+        // No signed card link: let the visitor type a membership number instead.
+        box.innerHTML =
+          '<p style="margin:0 0 12px;color:var(--muted)">Scan a member\'s QR code, or enter their membership number.</p>' +
+          '<form id="lookupForm" style="display:grid;gap:10px"><input id="lookupNo" placeholder="AKDFA-00001" autocomplete="off" required style="padding:12px 14px;border-radius:10px;border:1px solid var(--border);background:var(--card-elevated);color:var(--text);font:inherit;text-transform:uppercase">' +
+          '<button class="btn btn-primary" type="submit">Check membership</button></form><div id="lookupOut" style="margin-top:14px"></div>';
+        document.getElementById("lookupForm").addEventListener("submit", function (e) {
+          e.preventDefault();
+          const out = document.getElementById("lookupOut");
+          out.textContent = "Checking…";
+          api.get("/public/members/lookup?number=" + encodeURIComponent(document.getElementById("lookupNo").value.trim()))
+            .then((r) => {
+              if (!r.found) out.innerHTML = '<div style="font-size:2.4rem;color:#f27575">&#10007;</div><h2 style="margin:4px 0">No such member</h2>';
+              else if (r.valid) out.innerHTML = '<div style="font-size:2.4rem;color:var(--green)">&#10004;</div><h2 style="margin:4px 0">Active member</h2><p style="font-weight:800;margin:0">' + esc(r.name) + '</p><p style="color:var(--muted);margin:4px 0 0">' + esc(r.district) + (r.expiresAt ? " · valid until " + new Date(r.expiresAt).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" }) : "") + "</p>";
+              else out.innerHTML = '<div style="font-size:2.4rem;color:#f27575">&#10007;</div><h2 style="margin:4px 0">Not active</h2><p style="color:var(--muted)">Membership ' + esc(String(r.membershipStatus).toLowerCase()) + ".</p>";
+            })
+            .catch((err) => { out.innerHTML = '<p class="form-message is-visible form-message--error">' + esc(err && err.message ? err.message : "Could not reach the AKDFA server.") + "</p>"; });
+        });
+        return;
+      }
       api.get("/public/members/verify?m=" + encodeURIComponent(m) + "&sig=" + encodeURIComponent(sig))
         .then((r) => {
           if (r.valid) {

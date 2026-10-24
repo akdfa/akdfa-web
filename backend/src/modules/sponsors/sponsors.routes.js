@@ -60,7 +60,7 @@ router.post(
 router.post(
   "/",
   requireAuth,
-  requireRole("DISTRICT_ADMIN"),
+  requireRole("STATE_ADMIN"),
   validate({
     body: z.object({
       name: z.string().min(2),
@@ -85,7 +85,7 @@ router.post(
 router.patch(
   "/:id",
   requireAuth,
-  requireRole("DISTRICT_ADMIN"),
+  requireRole("STATE_ADMIN"),
   validate({
     body: z.object({
       name: z.string().min(2).optional(),
@@ -110,7 +110,7 @@ router.patch(
 router.delete(
   "/:id",
   requireAuth,
-  requireRole("DISTRICT_ADMIN"),
+  requireRole("STATE_ADMIN"),
   asyncHandler(async (req, res) => {
     await loadManageableSponsor(req);
     await prisma.sponsor.delete({ where: { id: req.params.id } });

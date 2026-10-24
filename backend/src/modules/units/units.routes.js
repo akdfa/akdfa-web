@@ -7,7 +7,6 @@ const { requireRole } = require("../../middleware/requireRole");
 const asyncHandler = require("../../utils/asyncHandler");
 const ApiError = require("../../utils/ApiError");
 const { logAudit } = require("../admin/audit.service");
-const { assertCanManage, scopeOfUnit } = require("../../middleware/scope");
 
 const router = Router();
 
@@ -48,62 +47,35 @@ router.get(
   })
 );
 
-// Phase 3 — "Manage local units: Add and approve local clubs within their district."
-// Any authenticated member can propose a new unit; it lands PENDING for a district admin.
+// Units are managed by the State Committee only: they add units (approved straight away) and delete them.
 router.post(
   "/",
   requireAuth,
+  requireRole("STATE_ADMIN"),
   validate({ body: createSchema }),
   asyncHandler(async (req, res) => {
-    // Admins add units directly: a district admin inside their own district, the state committee anywhere.
-    // Anyone else's proposal lands PENDING for approval.
-    const isAdmin = req.auth.role === "DISTRICT_ADMIN" || req.auth.role === "STATE_ADMIN";
-    if (req.auth.role === "DISTRICT_ADMIN" && req.body.districtId !== req.auth.districtId) {
-      throw ApiError.forbidden("You can only add units in your own district");
-    }
-    if (isAdmin) {
-      const district = await prisma.district.findUnique({ where: { id: req.body.districtId } });
-      if (!district) throw ApiError.badRequest("Unknown district");
-    }
-    const unit = await prisma.unit.create({
-      data: isAdmin ? { ...req.body, status: "APPROVED", approvedById: req.auth.id } : req.body,
-    });
-    if (isAdmin) await logAudit(req.auth.id, "UNIT_CREATED", "Unit", unit.id, { districtId: unit.districtId });
+    const district = await prisma.district.findUnique({ where: { id: req.body.districtId } });
+    if (!district) throw ApiError.badRequest("Unknown district");
+    const unit = await prisma.unit.create({ data: { ...req.body, status: "APPROVED", approvedById: req.auth.id } });
+    await logAudit(req.auth.id, "UNIT_CREATED", "Unit", unit.id, { districtId: unit.districtId, name: unit.name });
     res.status(201).json({ unit });
   })
 );
 
-router.post(
-  "/:id/approve",
+// A unit that still has members cannot be deleted (move or remove the members first); its teams go with it.
+router.delete(
+  "/:id",
   requireAuth,
-  requireRole("DISTRICT_ADMIN"),
+  requireRole("STATE_ADMIN"),
   asyncHandler(async (req, res) => {
-    const existing = await prisma.unit.findUnique({ where: { id: req.params.id } });
-    if (!existing) throw ApiError.notFound("Unit not found");
-    assertCanManage(req.auth, scopeOfUnit(existing), "You can only review units in your own district");
-    const unit = await prisma.unit.update({
-      where: { id: req.params.id },
-      data: { status: "APPROVED", approvedById: req.auth.id },
-    });
-    await logAudit(req.auth.id, "UNIT_APPROVED", "Unit", unit.id);
-    res.json({ unit });
-  })
-);
-
-router.post(
-  "/:id/reject",
-  requireAuth,
-  requireRole("DISTRICT_ADMIN"),
-  asyncHandler(async (req, res) => {
-    const existing = await prisma.unit.findUnique({ where: { id: req.params.id } });
-    if (!existing) throw ApiError.notFound("Unit not found");
-    assertCanManage(req.auth, scopeOfUnit(existing), "You can only review units in your own district");
-    const unit = await prisma.unit.update({
-      where: { id: req.params.id },
-      data: { status: "REJECTED", approvedById: req.auth.id },
-    });
-    await logAudit(req.auth.id, "UNIT_REJECTED", "Unit", unit.id);
-    res.json({ unit });
+    const unit = await prisma.unit.findUnique({ where: { id: req.params.id }, include: { _count: { select: { members: true } } } });
+    if (!unit) throw ApiError.notFound("Unit not found");
+    if (unit._count.members > 0) {
+      throw ApiError.conflict(`${unit.name} still has ${unit._count.members} member${unit._count.members === 1 ? "" : "s"}. Move or remove them before deleting the unit.`);
+    }
+    await prisma.unit.delete({ where: { id: unit.id } });
+    await logAudit(req.auth.id, "UNIT_DELETED", "Unit", unit.id, { name: unit.name, districtId: unit.districtId });
+    res.status(204).send();
   })
 );
 
